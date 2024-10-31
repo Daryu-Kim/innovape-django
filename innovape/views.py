@@ -6,6 +6,8 @@ from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 import time
 import bcrypt
 import pybase64
@@ -59,5 +61,37 @@ def get_access_interpark_info(request):
   return JsonResponse({'status': 'error', 'data': None})
 
 def get_access_sixshop_info(request):
-  driver = webdriver.Chrome()
+  service = Service('') # '' 안에 서버에서 사용할 크롬 드라이버 경로를 넣어줘야함.
+
+  options = Options()
+  options.add_argument('--headless')  # 헤드리스 모드
+  options.add_argument('--no-sandbox')  # 샌드박스 모드 비활성화
+  options.add_argument('--disable-dev-shm-usage')  # 메모리 제한 비활성화
+
+  driver = webdriver.Chrome(service=service, options=options)
   driver.get('https://www.sixshop.com/member/login')
+
+  username = driver.find_element(By.ID, 'loginEmail')
+  password = driver.find_element(By.ID, 'loginPassword')
+
+  username.send_keys('innobite')
+  password.send_keys('Dnjswo1613^^')
+  password.send_keys(Keys.RETURN)
+
+  time.sleep(2)
+
+  try:
+    user_element = driver.find_element(By.CLASS_NAME, 'member-name')
+    return JsonResponse({'status': 'success', 'data': None})
+  except:
+    return JsonResponse({'status': 'error', 'data': None})
+  
+def get_access_cafe24_info(request):
+  url = "https://innovape.cafe24api.com/api/v2/admin/store?shop_no=1"
+  headers = {
+      'Authorization': "Bearer {access_token}",
+      'Content-Type': "application/json",
+      'X-Cafe24-Api-Version': "{version}"
+      }
+  response = requests.request("GET", url, headers=headers)
+  print(response.text)

@@ -63,6 +63,11 @@ $(document).ready(function() {
 				$("#access-naver-active").addClass('text-danger');
 				$("#access-naver-active").text('인증 실패');
 			}
+		},
+		error: function() {
+			$("#access-naver").css('filter', 'grayscale(100%)');
+			$("#access-naver-active").addClass('text-danger');
+			$("#access-naver-active").text('인증 실패');
 		}
 	})
 
@@ -79,6 +84,11 @@ $(document).ready(function() {
 				$("#access-coupang-expires").addClass('text-danger');
 				$("#access-coupang-expires").text('인증 실패');
 			}
+		},
+		error: function() {
+			$('#access-coupang').css('filter', 'grayscale(100%)');
+			$("#access-coupang-expires").addClass('text-danger');
+			$("#access-coupang-expires").text('인증 실패');
 		}
 	})
 
@@ -95,6 +105,11 @@ $(document).ready(function() {
 				$("#access-interpark-active").addClass('text-danger');
 				$("#access-interpark-active").text('인증 실패');
 			}
+		},
+		error: function(response) {
+			$('#access-interpark').css('filter', 'grayscale(100%)');
+			$("#access-interpark-active").addClass('text-danger');
+			$("#access-interpark-active").text('인증 실패');
 		}
 	})
 
@@ -111,6 +126,32 @@ $(document).ready(function() {
 				$("#access-sixshop-active").addClass('text-danger');
 				$("#access-sixshop-active").text('인증 실패');
 			}
+		},
+		error: function() {
+			$('#access-sixshop').css('filter', 'grayscale(100%)');
+			$("#access-sixshop-active").addClass('text-danger');
+			$("#access-sixshop-active").text('인증 실패');
+		}
+	})
+
+	$.ajax({
+		url: '{% url "get_access_cafe24_info" %}',
+		success: function(response) {
+			console.log(response)
+			if (response.status === "success") {
+				$("#access-cafe24").css('filter', 'none');
+				$("#access-cafe24-active").text('인증 완료')
+				$("#access-cafe24-active").addClass('text-success');
+			} else {
+				$('#access-cafe24').css('filter', 'grayscale(100%)');
+				$("#access-cafe24-active").addClass('text-danger');
+				$("#access-cafe24-active").text('인증 실패');
+			}
+		},
+		error: function() {
+			$('#access-cafe24').css('filter', 'grayscale(100%)');
+			$("#access-cafe24-active").addClass('text-danger');
+			$("#access-cafe24-active").text('인증 실패');
 		}
 	})
 })
