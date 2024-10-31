@@ -1,0 +1,18 @@
+*{
+	margin: 0 !important;
+	padding: 0 !important;
+	box-sizing: border-box !important;
+}
+
+html {
+	font-size: 10px !important;
+}
+
+body {
+	width: 100%
+}
+
+.content {
+	width: 100vw !important;
+	min-height: 100vh !important;
+}

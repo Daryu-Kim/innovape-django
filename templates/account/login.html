@@ -1,5 +1,49 @@
-{% extends 'login_base.html' %}
+{% extends 'base.html' %}
+{% load static %}
 {% block title %}로그인{% endblock %}
-<div class="">
-
+{% block extrahead %} <link rel="stylesheet" href="{% static 'css/account/login_base.css' %}" /> {% endblock %}
+{%block content %}
+<div class="inner card-body shadow-lg p-5 bg-light">
+  <p class="h4 text-center fw-bold">INNOVAPE 관리자님 환영합니다!</p>
+	<form id="login-form" class="mt-4">
+			{% csrf_token %}
+			<div class="form-group">
+					<input type="text" name="username" class="form-control p-3 fs-6" placeholder="아이디" required>
+			</div>
+			<div class="form-group">
+					<input type="password" name="password" class="form-control p-3 fs-6 mt-2" placeholder="비밀번호" required>
+			</div>
+			<button type="submit" class="btn btn-primary btn-block p-3 w-100 mt-4 fw-bold fs-6">관리자 로그인</button>
+	</form>
 </div>
+
+<script>
+		$(document).ready(function() {
+			$('#login-form').on('submit', function(event) {
+				event.preventDefault(); // 기본 폼 제출 방지
+				$.ajax({
+						type: 'POST',
+						url: '{% url "account_login" %}',  // 로그인 URL
+						data: $(this).serialize(), // 폼 데이터 직렬화
+						success: function(response) {
+								if (response.success) {
+										window.location.href = response.redirect_url; // 로그인 성공 시 리다이렉트
+								} else {
+										Toastify({
+											text: response.message,
+											duration: 3000,
+											gravity: "top",
+											position: "right",
+											className: "bg-danger",
+											style: {
+												background: "none",
+												boxShadow: "none"
+											}
+										}).showToast();
+								}
+						}
+				});
+			});
+		});
+</script>
+{% endblock %}

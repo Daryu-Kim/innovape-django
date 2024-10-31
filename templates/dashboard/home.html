@@ -1,0 +1,118 @@
+{% extends 'logged_base.html' %}
+{% load static %}
+{% block title %}대시보드{% endblock %}
+{% block main_content %}
+<div>
+	<div class="card p-3 rounded shadow border-info border-2" style="background-color: #fff;">
+		<p class="fw-bold fs-4">
+			쇼핑몰 연동 정보
+		</p>
+		<hr class="mt-3 mb-3" />
+		<div class="row">
+			<div class="d-flex flex-column align-items-center col">
+				<img id="access-naver" src="https://www.naver.com/favicon.ico?1" style="width: 24px; height: 24px;" />
+				<p class="mt-1">
+					스마트스토어
+				</p>
+				<span class="fw-bold" id="access-naver-active" style="font-size: 12px;"></span>
+			</div>
+			<div class="d-flex flex-column align-items-center col">
+				<img id="access-interpark" src="https://qi-o.qoo10cdn.com/shop_favicon.ico" style="width: 24px; height: 24px;" />
+				<p class="mt-1">
+					인터파크
+				</p>
+				<span class="fw-bold" id="access-interpark-active" style="font-size: 12px;"></span>
+			</div>
+			<div class="d-flex flex-column align-items-center col">
+				<img id="access-coupang" src="https://image9.coupangcdn.com/image/coupang/favicon/v2/favicon.ico" style="width: 24px; height: 24px;" />
+				<p class="mt-1">
+					쿠팡
+				</p>
+				<span class="fw-bold" id="access-coupang-expires" style="font-size: 12px;"></span>
+			</div>
+			<div class="d-flex flex-column align-items-center col">
+				<img id="access-sixshop" src="https://static.sixshop.com/resources/images/common/favicon.ico" style="width: 24px; height: 24px;" />
+				<p class="mt-1">
+					식스샵
+				</p>
+				<span class="fw-bold" id="access-sixshop-active" style="font-size: 12px;"></span>
+			</div>
+			<div class="d-flex flex-column align-items-center col">
+				<img id="access-cafe24" src="https://img.echosting.cafe24.com/imgcafe24com/favicon/cafe24.svg" style="width: 24px; height: 24px;" />
+				<p class="mt-1">
+					카페24
+				</p>
+				<span class="fw-bold" id="access-cafe24-active" style="font-size: 12px;"></span>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+$(document).ready(function() {
+	$.ajax({
+		url: '{% url "get_access_naver_info" %}',
+		success: function(response) {
+			console.log(response)
+			if (response.status === "success") {
+				$("#access-naver").css('filter', 'none');
+				$("#access-naver-active").addClass('text-success');
+				$("#access-naver-active").text('인증 완료');
+			} else {
+				$("#access-naver").css('filter', 'grayscale(100%)');
+				$("#access-naver-active").addClass('text-danger');
+				$("#access-naver-active").text('인증 실패');
+			}
+		}
+	})
+
+	$.ajax({
+		url: '{% url "get_access_coupang_info" %}',
+		success: function(response) {
+			console.log(response)
+			if (response.status === "success") {
+				$("#access-coupang").css('filter', 'none');
+				$("#access-coupang-expires").text(`${response.data}일 남음`)
+				$("#access-coupang-expires").addClass('text-success');
+			} else {
+				$('#access-coupang').css('filter', 'grayscale(100%)');
+				$("#access-coupang-expires").addClass('text-danger');
+				$("#access-coupang-expires").text('인증 실패');
+			}
+		}
+	})
+
+	$.ajax({
+		url: '{% url "get_access_interpark_info" %}',
+		success: function(response) {
+			console.log(response)
+			if (response.status === "success") {
+				$("#access-interpark").css('filter', 'none');
+				$("#access-interpark-active").text('인증 완료')
+				$("#access-interpark-active").addClass('text-success');
+			} else {
+				$('#access-interpark').css('filter', 'grayscale(100%)');
+				$("#access-interpark-active").addClass('text-danger');
+				$("#access-interpark-active").text('인증 실패');
+			}
+		}
+	})
+
+	$.ajax({
+		url: '{% url "get_access_sixshop_info" %}',
+		success: function(response) {
+			console.log(response)
+			if (response.status === "success") {
+				$("#access-sixshop").css('filter', 'none');
+				$("#access-sixshop-active").text('인증 완료')
+				$("#access-sixshop-active").addClass('text-success');
+			} else {
+				$('#access-sixshop').css('filter', 'grayscale(100%)');
+				$("#access-sixshop-active").addClass('text-danger');
+				$("#access-sixshop-active").text('인증 실패');
+			}
+		}
+	})
+})
+</script>
+{% endblock %}
