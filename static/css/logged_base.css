@@ -19,3 +19,65 @@
 .main-content {
 	
 }
+
+.sidebar a {
+	cursor: pointer !important;
+}
+
+.sub-menu-item {
+	position: absolute;
+	display: none;
+	background-color: #fff;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	width: 200px;
+	z-index: 1000;
+}
+
+@media (max-width: 767px) {
+	.sidebar {
+		width: 56px;
+	}
+	.mobile {
+		display: none;
+	}
+
+	.sidebar p, .right-side i {
+		display: none;
+	}
+
+	.sidebar a {
+        justify-content: center !important; /* 버튼 중앙 정렬 */
+    }
+
+    .sidebar a i, .bi-windows {
+        font-size: 1.6rem !important; /* 아이콘 크기 조정 */
+    }
+}
+
+@media (max-width: 767px) {
+	.custom-grid {
+		display: grid;
+		grid-template-columns: repeat(1, 1fr);
+	}
+}
+
+@media (max-width: 991px) {
+	.custom-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (max-width: 1199px) {
+	.custom-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+@media (min-width: 1400px) {
+	.custom-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+	}
+}

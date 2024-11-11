@@ -1,159 +1,241 @@
 {% extends 'logged_base.html' %}
 {% load static %}
 {% block title %}대시보드{% endblock %}
+{% block extrahead %}
+<link rel="stylesheet" href="{% static 'css/logged_base.css' %}" />
+<link rel="stylesheet" href="{% static 'css/dashboard/home.css' %}" />
+{% endblock %}
 {% block main_content %}
-<div>
-	<div class="card p-3 rounded shadow border-info border-2" style="background-color: #fff;">
-		<p class="fw-bold fs-4">
-			쇼핑몰 연동 정보
-		</p>
-		<hr class="mt-3 mb-3" />
-		<div class="row">
-			<div class="d-flex flex-column align-items-center col">
-				<img id="access-naver" src="https://www.naver.com/favicon.ico?1" style="width: 24px; height: 24px;" />
-				<p class="mt-1">
-					스마트스토어
+<div class="row gap-3">
+	<div class="d-flex justify-content-between">
+		<p class="fw-bold fs-3" style="white-space: nowrap;">메인 페이지</p>
+		<div class="d-flex flex-wrap gap-1 ms-4 justify-content-end">
+			<a href="https://innovape.co.kr/" target="_blank" class="btn btn-danger ps-2 pe-2 pt-1 pb-1">
+				<i class="bi bi-link-45deg me-1"></i>
+				(구) 이노베이프 몰
+			</a>
+			<a href="https://innovape.shop/" target="_blank" class="btn btn-danger ps-2 pe-2 pt-1 pb-1">
+				<i class="bi bi-link-45deg me-1"></i>
+				(신) 이노베이프 몰
+			</a>
+			<a href="https://smartstore.naver.com/innobite" target="_blank" class="btn btn-primary ps-2 pe-2 pt-1 pb-1">
+				<i class="bi bi-link-45deg me-1"></i>
+				스마트스토어
+			</a>
+			<a href="https://store.interpark.com/innovape" target="_blank" class="btn btn-primary ps-2 pe-2 pt-1 pb-1">
+				<i class="bi bi-link-45deg me-1"></i>
+				인터파크
+			</a>
+			<a href="https://shop.coupang.com/innovape" target="_blank" class="btn btn-primary ps-2 pe-2 pt-1 pb-1">
+				<i class="bi bi-link-45deg me-1"></i>
+				쿠팡
+			</a>
+			<a href="https://searchad.naver.com/" target="_blank" class="btn btn-secondary ps-2 pe-2 pt-1 pb-1">
+				<i class="bi bi-link-45deg me-1"></i>
+				네이버 검색광고
+			</a>
+			<a href="https://ads.google.com/intl/ko_KR/home/" target="_blank" class="btn btn-secondary ps-2 pe-2 pt-1 pb-1">
+				<i class="bi bi-link-45deg me-1"></i>
+				구글 애즈광고
+			</a>
+		</div>
+	</div>
+	<div class="row gap-2">
+		<div class="card p-3 rounded shadow border-info border-2 col-12 col-md-6 col-lg-4 col-xl-3" style="background-color: #fff;">
+			<div class="d-flex justify-content-between align-items-center">
+				<p class="fw-bold fs-4">
+					쇼핑몰 연동 정보
 				</p>
-				<span class="fw-bold" id="access-naver-active" style="font-size: 12px;"></span>
+				<i class="bi bi-link-45deg text-secondary fs-4"></i>
 			</div>
-			<div class="d-flex flex-column align-items-center col">
-				<img id="access-interpark" src="https://qi-o.qoo10cdn.com/shop_favicon.ico" style="width: 24px; height: 24px;" />
-				<p class="mt-1">
-					인터파크
-				</p>
-				<span class="fw-bold" id="access-interpark-active" style="font-size: 12px;"></span>
+			<hr class="mt-3 mb-3" />
+			<div class="row">
+				<div class="d-flex flex-column align-items-center col">
+					<img id="access-naver" src="https://www.naver.com/favicon.ico?1" style="width: 24px; height: 24px;" />
+					<p class="mt-1 shop-name">
+						스마트스토어
+					</p>
+					<span class="fw-bold" id="access-naver-active" style="font-size: 12px;"></span>
+				</div>
+				<div class="d-flex flex-column align-items-center col">
+					<img id="access-interpark" src="https://qi-o.qoo10cdn.com/shop_favicon.ico"
+						style="width: 24px; height: 24px;" />
+					<p class="mt-1 shop-name">
+						인터파크
+					</p>
+					<span class="fw-bold" id="access-interpark-active" style="font-size: 12px;"></span>
+				</div>
+				<div class="d-flex flex-column align-items-center col">
+					<img id="access-coupang" src="https://image9.coupangcdn.com/image/coupang/favicon/v2/favicon.ico"
+						style="width: 24px; height: 24px;" />
+					<p class="mt-1 shop-name">
+						쿠팡
+					</p>
+					<span class="fw-bold" id="access-coupang-active" style="font-size: 12px;"></span>
+				</div>
+				<div class="d-flex flex-column align-items-center col">
+					<img id="access-sixshop" src="https://static.sixshop.com/resources/images/common/favicon.ico"
+						style="width: 24px; height: 24px;" />
+					<p class="mt-1 shop-name">
+						식스샵
+					</p>
+					<span class="fw-bold" id="access-sixshop-active" style="font-size: 12px;"></span>
+				</div>
+				<div class="d-flex flex-column align-items-center col">
+					<img id="access-cafe24" src="https://img.echosting.cafe24.com/imgcafe24com/favicon/cafe24.svg"
+						style="width: 24px; height: 24px;" />
+					<p class="mt-1 shop-name">
+						카페24
+					</p>
+					<span class="fw-bold" id="access-cafe24-active" style="font-size: 12px;"></span>
+				</div>
 			</div>
-			<div class="d-flex flex-column align-items-center col">
-				<img id="access-coupang" src="https://image9.coupangcdn.com/image/coupang/favicon/v2/favicon.ico" style="width: 24px; height: 24px;" />
-				<p class="mt-1">
-					쿠팡
+		</div>
+		<div class="card p-3 rounded shadow border-primary border-2 col-12 col-md-6 col-lg-4 col-xl-3" style="background-color: #fff;">
+			<div class="d-flex justify-content-between align-items-center">
+				<p class="fw-bold fs-4">
+					신규주문
 				</p>
-				<span class="fw-bold" id="access-coupang-expires" style="font-size: 12px;"></span>
+				<i class="bi bi-receipt text-secondary fs-4"></i>
 			</div>
-			<div class="d-flex flex-column align-items-center col">
-				<img id="access-sixshop" src="https://static.sixshop.com/resources/images/common/favicon.ico" style="width: 24px; height: 24px;" />
-				<p class="mt-1">
-					식스샵
-				</p>
-				<span class="fw-bold" id="access-sixshop-active" style="font-size: 12px;"></span>
+			<hr class="mt-3 mb-3" />
+			<div class="row">
+				<div class="d-flex align-items-center justify-content-between">
+					<p class="fs-6">오늘출발</p>
+					<p><span class="fs-5 fw-bold text-primary">0</span> 건</p>
+				</div>
+				<div class="d-flex align-items-center justify-content-between">
+					<p class="fs-6">내일출발</p>
+					<p><span class="fs-5 fw-bold text-primary">0</span> 건</p>
+				</div>
+				<div class="d-flex align-items-center justify-content-between">
+					<p class="fs-6">일반출발</p>
+					<p><span class="fs-5 fw-bold text-primary">0</span> 건</p>
+				</div>
 			</div>
-			<div class="d-flex flex-column align-items-center col">
-				<img id="access-cafe24" src="https://img.echosting.cafe24.com/imgcafe24com/favicon/cafe24.svg" style="width: 24px; height: 24px;" />
-				<p class="mt-1">
-					카페24
+		</div>
+		<div class="card p-3 rounded shadow border-primary border-2 col-12 col-md-6 col-lg-4 col-xl-3" style="background-color: #fff;">
+			<div class="d-flex justify-content-between align-items-center">
+				<p class="fw-bold fs-4">
+					발송대기
 				</p>
-				<span class="fw-bold" id="access-cafe24-active" style="font-size: 12px;"></span>
+				<i class="bi bi-box2 text-secondary fs-4"></i>
+			</div>
+			<hr class="mt-3 mb-3" />
+			<div class="row">
+				<div class="d-flex align-items-center justify-content-between">
+					<p class="fs-6">송장부여</p>
+					<p><span class="fs-5 fw-bold text-primary">0</span> 건</p>
+				</div>
+				<div class="d-flex align-items-center justify-content-between">
+					<p class="fs-6">송장출력</p>
+					<p><span class="fs-5 fw-bold text-primary">0</span> 건</p>
+				</div>
+				<div class="d-flex align-items-center justify-content-between">
+					<p class="fs-6">송장번호 생성오류</p>
+					<p><span class="fs-5 fw-bold text-danger">0</span> 건</p>
+				</div>
+			</div>
+		</div>
+		<div class="card p-3 rounded shadow border-success border-2 col-12 col-md-6 col-lg-4 col-xl-3" style="background-color: #fff;">
+			<div class="d-flex justify-content-between align-items-center">
+				<p class="fw-bold fs-4">
+					배송중
+				</p>
+				<i class="bi bi-truck text-secondary fs-4"></i>
+			</div>
+			<hr class="mt-3 mb-3" />
+			<div class="row">
+				<div class="d-flex align-items-center justify-content-between">
+					<p class="fs-6">수거예정</p>
+					<p><span class="fs-5 fw-bold text-success">0</span> 건</p>
+				</div>
+				<div class="d-flex align-items-center justify-content-between">
+					<p class="fs-6">배송중</p>
+					<p><span class="fs-5 fw-bold text-success">0</span> 건</p>
+				</div>
+				<div class="d-flex align-items-center justify-content-between">
+					<p class="fs-6">7일 배송완료</p>
+					<p><span class="fs-5 fw-bold text-success">0</span> 건</p>
+				</div>
+			</div>
+		</div>
+		<div class="card p-3 rounded shadow border-danger border-2 col-12 col-md-6 col-lg-4 col-xl-3" style="background-color: #fff;">
+			<div class="d-flex justify-content-between align-items-center">
+				<p class="fw-bold fs-4">
+					클레임 요청
+				</p>
+				<i class="bi bi-x-lg text-secondary fs-4"></i>
+			</div>
+			<hr class="mt-3 mb-3" />
+			<div class="row">
+				<div class="d-flex align-items-center justify-content-between">
+					<p class="fs-6">취소요청</p>
+					<p><span class="fs-5 fw-bold text-danger">0</span> 건</p>
+				</div>
+				<div class="d-flex align-items-center justify-content-between">
+					<p class="fs-6">환불요청</p>
+					<p><span class="fs-5 fw-bold text-danger">0</span> 건</p>
+				</div>
+				<div class="d-flex align-items-center justify-content-between">
+					<p class="fs-6">교환요청</p>
+					<p><span class="fs-5 fw-bold text-danger">0</span> 건</p>
+				</div>
+				<div class="d-flex align-items-center justify-content-between">
+					<p class="fs-6">재발송요청</p>
+					<p><span class="fs-5 fw-bold text-danger">0</span> 건</p>
+				</div>
 			</div>
 		</div>
 	</div>
 </div>
 
 <script>
-$(document).ready(function() {
-	$.ajax({
-		url: '{% url "get_access_naver_info" %}',
-		success: function(response) {
-			console.log(response)
+	$(document).ready(function () {
+		function handleResponse(selector, response) {
 			if (response.status === "success") {
-				$("#access-naver").css('filter', 'none');
-				$("#access-naver-active").addClass('text-success');
-				$("#access-naver-active").text('인증 완료');
+				$(selector).css({
+					'filter': 'none',
+					'cursor': 'pointer' // 클릭 가능한 상태로 커서 변경
+				});
+				if (response.data === null) {
+					$(selector + "-active").text('수동 연결').addClass('text-warning');
+				} else {
+					$(selector + "-active").text('인증 완료').addClass('text-success');
+				}
 			} else {
-				$("#access-naver").css('filter', 'grayscale(100%)');
-				$("#access-naver-active").addClass('text-danger');
-				$("#access-naver-active").text('인증 실패');
+				$(selector).css('filter', 'grayscale(100%)');
+				$(selector + "-active").text('인증 실패').addClass('text-danger');
 			}
-		},
-		error: function() {
-			$("#access-naver").css('filter', 'grayscale(100%)');
-			$("#access-naver-active").addClass('text-danger');
-			$("#access-naver-active").text('인증 실패');
 		}
-	})
 
-	$.ajax({
-		url: '{% url "get_access_coupang_info" %}',
-		success: function(response) {
-			console.log(response)
-			if (response.status === "success") {
-				$("#access-coupang").css('filter', 'none');
-				$("#access-coupang-expires").text(`${response.data}일 남음`)
-				$("#access-coupang-expires").addClass('text-success');
-			} else {
-				$('#access-coupang').css('filter', 'grayscale(100%)');
-				$("#access-coupang-expires").addClass('text-danger');
-				$("#access-coupang-expires").text('인증 실패');
-			}
-		},
-		error: function() {
-			$('#access-coupang').css('filter', 'grayscale(100%)');
-			$("#access-coupang-expires").addClass('text-danger');
-			$("#access-coupang-expires").text('인증 실패');
-		}
-	})
+		function ajaxRequest(url, selector, redirectUrl) {
+			$.ajax({
+				url: url,
+				success: function (response) {
+					console.log(response);
+					handleResponse(selector, response);
 
-	$.ajax({
-		url: '{% url "get_access_interpark_info" %}',
-		success: function(response) {
-			console.log(response)
-			if (response.status === "success") {
-				$("#access-interpark").css('filter', 'none');
-				$("#access-interpark-active").text('인증 완료')
-				$("#access-interpark-active").addClass('text-success');
-			} else {
-				$('#access-interpark').css('filter', 'grayscale(100%)');
-				$("#access-interpark-active").addClass('text-danger');
-				$("#access-interpark-active").text('인증 실패');
-			}
-		},
-		error: function(response) {
-			$('#access-interpark').css('filter', 'grayscale(100%)');
-			$("#access-interpark-active").addClass('text-danger');
-			$("#access-interpark-active").text('인증 실패');
+					// 인증이 완료된 경우 클릭 이벤트 추가
+					if (response.status === "success") {
+						$(selector).off('click').on('click', function () {
+							window.open(redirectUrl, '_blank');
+						});
+					}
+				},
+				error: function () {
+					$(selector).css('filter', 'grayscale(100%)');
+					$(selector + "-active").text('인증 실패').addClass('text-danger');
+				}
+			});
 		}
-	})
 
-	$.ajax({
-		url: '{% url "get_access_sixshop_info" %}',
-		success: function(response) {
-			console.log(response)
-			if (response.status === "success") {
-				$("#access-sixshop").css('filter', 'none');
-				$("#access-sixshop-active").text('인증 완료')
-				$("#access-sixshop-active").addClass('text-success');
-			} else {
-				$('#access-sixshop').css('filter', 'grayscale(100%)');
-				$("#access-sixshop-active").addClass('text-danger');
-				$("#access-sixshop-active").text('인증 실패');
-			}
-		},
-		error: function() {
-			$('#access-sixshop').css('filter', 'grayscale(100%)');
-			$("#access-sixshop-active").addClass('text-danger');
-			$("#access-sixshop-active").text('인증 실패');
-		}
-	})
-
-	$.ajax({
-		url: '{% url "get_access_cafe24_info" %}',
-		success: function(response) {
-			console.log(response)
-			if (response.status === "success") {
-				$("#access-cafe24").css('filter', 'none');
-				$("#access-cafe24-active").text('인증 완료')
-				$("#access-cafe24-active").addClass('text-success');
-			} else {
-				$('#access-cafe24').css('filter', 'grayscale(100%)');
-				$("#access-cafe24-active").addClass('text-danger');
-				$("#access-cafe24-active").text('인증 실패');
-			}
-		},
-		error: function() {
-			$('#access-cafe24').css('filter', 'grayscale(100%)');
-			$("#access-cafe24-active").addClass('text-danger');
-			$("#access-cafe24-active").text('인증 실패');
-		}
-	})
-})
+		// 각 플랫폼에 대한 AJAX 요청
+		ajaxRequest('{% url "get_access_naver_info" %}', '#access-naver', 'https://sell.smartstore.naver.com/');
+		ajaxRequest('{% url "get_access_coupang_info" %}', '#access-coupang', 'https://wing.coupang.com/');
+		ajaxRequest('{% url "get_access_interpark_info" %}', '#access-interpark', 'https://seller.interpark.com/login');
+		ajaxRequest('{% url "get_access_sixshop_info" %}', '#access-sixshop', 'https://www.sixshop.com/member/login');
+		ajaxRequest('{% url "get_access_cafe24_info" %}', '#access-cafe24', 'https://www.cafe24.com/member/login.html');
+	});
 </script>
 {% endblock %}
