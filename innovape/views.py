@@ -1,3 +1,4 @@
+from urllib.parse import urlencode
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -12,6 +13,7 @@ import time
 import bcrypt
 import pybase64
 import requests
+import base64
 
 def login_check_view(request):
   if request.user.is_authenticated:
@@ -23,7 +25,6 @@ def get_access_naver_info(request):
   client_id = config('NAVER_COMMERCE_ID')
   cilent_secret = config('NAVER_COMMERCE_SECRET')
   timestamp = int(time.time() * 1000)
-  print(client_id, cilent_secret, timestamp)
   
   password = client_id + "_" + str(timestamp)
   hashed = bcrypt.hashpw(password.encode('utf-8'), cilent_secret.encode('utf-8'))
@@ -61,37 +62,78 @@ def get_access_interpark_info(request):
   return JsonResponse({'status': 'error', 'data': None})
 
 def get_access_sixshop_info(request):
-  service = Service('') # '' 안에 서버에서 사용할 크롬 드라이버 경로를 넣어줘야함.
+  return JsonResponse({'status': 'success', 'data': None})
 
-  options = Options()
-  options.add_argument('--headless')  # 헤드리스 모드
-  options.add_argument('--no-sandbox')  # 샌드박스 모드 비활성화
-  options.add_argument('--disable-dev-shm-usage')  # 메모리 제한 비활성화
+  # Selenium 가능 환경에서 재개발 필요.
+  # service = Service('') # '' 안에 서버에서 사용할 크롬 드라이버 경로를 넣어줘야함.
 
-  driver = webdriver.Chrome(service=service, options=options)
-  driver.get('https://www.sixshop.com/member/login')
+  # options = Options()
+  # options.add_argument('--headless')  # 헤드리스 모드
+  # options.add_argument('--no-sandbox')  # 샌드박스 모드 비활성화
+  # options.add_argument('--disable-dev-shm-usage')  # 메모리 제한 비활성화
 
-  username = driver.find_element(By.ID, 'loginEmail')
-  password = driver.find_element(By.ID, 'loginPassword')
+  # driver = webdriver.Chrome(service=service, options=options)
+  # driver.get('https://www.sixshop.com/member/login')
 
-  username.send_keys('innobite')
-  password.send_keys('Dnjswo1613^^')
-  password.send_keys(Keys.RETURN)
+  # username = driver.find_element(By.ID, 'loginEmail')
+  # password = driver.find_element(By.ID, 'loginPassword')
 
-  time.sleep(2)
+  # username.send_keys('innobite')
+  # password.send_keys('Dnjswo1613^^')
+  # password.send_keys(Keys.RETURN)
 
-  try:
-    user_element = driver.find_element(By.CLASS_NAME, 'member-name')
-    return JsonResponse({'status': 'success', 'data': None})
-  except:
-    return JsonResponse({'status': 'error', 'data': None})
+  # time.sleep(2)
+
+  # try:
+  #   user_element = driver.find_element(By.CLASS_NAME, 'member-name')
+  #   return JsonResponse({'status': 'success', 'data': None})
+  # except:
+  #   return JsonResponse({'status': 'error', 'data': None})
   
 def get_access_cafe24_info(request):
-  url = "https://innovape.cafe24api.com/api/v2/admin/store?shop_no=1"
+  return JsonResponse({'status': 'success', 'data': None})
+  auth_url = "https://innovape.cafe24api.com/api/v2/oauth/authorize"
+  params = {
+      'response_type': 'code',
+      'client_id': config('CAFE24_CLIENT_ID'),
+      'state': "innovape",
+      'redirect_uri': f"https://super-space-system-rqx764v9wx2w4w-8000.app.github.dev/get-cafe24-auth-code",
+      'scope': "mall.read_application"
+  }
+  url = f"{auth_url}?{urlencode(params)}"
+  return redirect(url)
+
+def get_cafe24_auth_code(request):
+  code = request.GET.get('code')
+  state = request.GET.get('state')
+
+  if code:
+      access_token = get_access_token(code)
+      return JsonResponse({'access_token': access_token})
+  else:
+      return JsonResponse({'error': 'Authorization code not provided'}, status=400)
+
+def get_access_token(code):
+  client_id = config('CAFE24_CLIENT_ID')
+  client_secret = config('CAFE24_CLIENT_SECRET_KEY')
+  redirect_uri = f"https://super-space-system-rqx764v9wx2w4w-8000.app.github.dev/get-cafe24-auth-code"
+
+  url = "https://innovape.cafe24api.com/api/v2/oauth/token"
+  payload = {
+      'grant_type': 'authorization_code',
+      'code': code,
+      'redirect_uri': redirect_uri
+  }
+  
   headers = {
-      'Authorization': "Bearer {access_token}",
-      'Content-Type': "application/json",
-      'X-Cafe24-Api-Version': "{version}"
-      }
-  response = requests.request("GET", url, headers=headers)
-  print(response.text)
+      'Authorization': f"Basic {base64.b64encode(f'{client_id}:{client_secret}'.encode()).decode()}",
+      'Content-Type': "application/x-www-form-urlencoded"
+  }
+
+  response = requests.post(url, data=payload, headers=headers)
+
+  if response.status_code == 200:
+      return response.json()  # JSON 응답을 반환
+  else:
+      # 오류 처리 추가
+      return {'error': response.text, 'status_code': response.status_code}

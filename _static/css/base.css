@@ -2,10 +2,11 @@
 	margin: 0 !important;
 	padding: 0 !important;
 	box-sizing: border-box !important;
+	font-family: 'SUITE', sans-serif;
 }
 
 html {
-	font-size: 10px !important;
+	font-size: 14px !important;
 }
 
 body {
@@ -15,4 +16,10 @@ body {
 .content {
 	width: 100vw !important;
 	min-height: 100vh !important;
+}
+
+.toastify {
+	padding: 16px 24px !important;
+	border-radius: 8px !important;
+	font-size: 14px !important;
 }
