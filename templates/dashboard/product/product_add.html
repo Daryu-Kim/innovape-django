@@ -1,0 +1,399 @@
+{% extends 'logged_base.html' %}
+{% load static %}
+{% block title %}상품 등록{% endblock %}
+{% block extrahead %}
+<link rel="stylesheet" href="{% static 'css/logged_base.css' %}" />
+{% endblock %}
+{% block main_content %}
+<div class="row gap-3">
+    <p class="fw-bold fs-2">상품 등록</p>
+    <div class="row gap-2 row-cols-1">
+        <div>
+            <p class="fw-bold fs-4">상품 사전등록</p>
+            <div class="input-group mt-2">
+                <input id="excel-data" class="form-control p-2" />
+                <button id="excel-convert-btn" class="btn btn-outline-primary p-2" type="button">적용</button>
+        </div>
+        <div class="mt-3">
+            <p class="fw-bold fs-4">상품 등록코드</p>
+            <input id="product-code" class="form-control p-2 mt-2" type="text" maxlength="7" required />
+        </div>
+        <div class="mt-3">
+            <p class="fw-bold fs-4">상품명</p>
+            <input id="product-name" class="form-control p-2 mt-2" type="text" maxlength="100" required value="[] " />
+        </div>
+        <div class="mt-3">
+            <p class="fw-bold fs-4">상품명 (관리용)</p>
+            <input id="product-manage-name" class="form-control p-2 mt-2" type="text" maxlength="100" required />
+        </div>
+        <div class="mt-3">
+            <p class="fw-bold fs-4 mb-2">카테고리</p>
+            <select id="category-select" class="form-control d-flex align-items-center" multiple="multiple">
+                {% for category in categories %}
+                    {% if category.category_parent is None %}
+                    <option value="{{ category.id }}">{{ category.category_name }}</option> <!-- 부모 카테고리 추가 -->
+                        {% for child_category in categories %}
+                            {% if child_category.category_parent == category %}
+                            <option value="{{ child_category.id }}" style="padding-left: 20px;">{{ category.category_name }} > {{ child_category.category_name }}
+                            </option>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">진열방식</p>
+            <select id="display-select" class="form-control d-flex align-items-center" multiple="multiple">
+                {% for display in displays %}
+                <option value="{{ display.id }}">{{ display.display_name }} <span class="fs-6 fw-bold ps-2 text-primary">[{{display.display_description }}]</span></option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">상품 요약설명</p>
+            <input id="product-description" class="form-control p-2 mt-2" type="text" maxlength="200" required />
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">상품 상세페이지</p>
+            <button id="detail-view-btn" type="button" class="btn btn-secondary pt-1 pb-1 ps-2 pe-2" disabled data-bs-toggle="modal" data-bs-target="#detail-modal">
+                상세페이지 미리보기
+            </button>
+            <div class="input-group mt-2">
+                <textarea id="input-html-content" class="form-control p-2" rows="10" cols="50" placeholder="공급사 상품 URL 입력" aria-label="공급사 상품 URL 입력"
+                    aria-describedby="button-addon2"></textarea>
+                <button id="detail-dropdown-btn" class="btn btn-outline-secondary dropdown-toggle p-2" type="button" data-bs-toggle="dropdown"
+                    aria-expanded="false">공급사 선택 후 변환</button>
+                <ul id="dropdown" class="dropdown-menu dropdown-menu-end p-2">
+                    <li><button class="dropdown-item p-1 rounded detail-convert-btn">메두사</button></li>
+                    <li><button class="dropdown-item p-1 rounded detail-convert-btn">베이프컴퍼니</button></li>
+                    <li><button class="dropdown-item p-1 rounded detail-convert-btn">베이프토피아</button></li>
+                    <li><button class="dropdown-item p-1 rounded detail-convert-btn">베이프몬스터</button></li>
+                    <li><button class="dropdown-item p-1 rounded detail-convert-btn">퓨어클라우드</button></li>
+                    <li><button class="dropdown-item p-1 rounded detail-convert-btn">샤슈컴퍼니</button></li>
+                    <li><button class="dropdown-item p-1 rounded detail-convert-btn">붐붐리퀴드</button></li>
+                    <li><button class="dropdown-item p-1 rounded detail-convert-btn">팀 베놈</button></li>
+                </ul>
+            </div>
+            <div class="modal fade" id="detail-modal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered rounded h-100 m-auto">
+                    <div class="modal-content">
+                        <div class="modal-header pt-2 pb-2 ps-3 pe-3 d-flex align-items-center justify-content-between">
+                            <h5 class="modal-title" id="modalLabel">상세페이지 미리보기</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" style="max-height: 80vh; overflow-y: scroll;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">상품 검색어 <span class="fs-6 ms-2 text-primary">","로 구분, 최대 500자</span></p>
+            <input class="form-control p-2 mt-2" type="text" maxlength="500" required value="이노베이프,전자담배,전담," />
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">상품 소비자가</p>
+            <input id="customer-price" class="form-control p-2 mt-2" type="number" maxlength="10" required />
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">상품 판매가</p>
+            <input id="sell-price" class="form-control p-2 mt-2" type="number" maxlength="10" required />
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">상품 공급가</p>
+            <input id="supply-price" class="form-control p-2 mt-2" type="number" maxlength="10" required />
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">상품 판매가 대체 텍스트 <span class="fs-6 ms-2 text-danger">"판매가"가 "0"원일때만 입력하세요.</span>
+            </p>
+            <input class="form-control p-2 mt-2" maxlength="20" />
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">상품 이미지</p>
+            <label for="input-thumbnail-img" class="rounded border mt-2 d-flex justify-content-center align-items-center" style="aspect-ratio: 1/1; width: 256px; cursor: pointer; position: relative;">
+                <i class="bi bi-image " style="font-size: 6.4rem; z-index: 0; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></i>
+                <img class="w-100 h-100 rounded" src="" id="thumbnail-img" style="z-index: 1; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); object-fit: cover;" />
+            </label>
+            <input id="input-thumbnail-img" class="form-control d-none" type="file" accept="image/*"  required />
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">상품 옵션</p>
+            <div class="input-group mt-2 options">
+                <input id="input-option-title" class="form-control p-2" style="width: 128px !important;" placeholder="옵션 제목" value="출고방식 선택" disabled />
+                <input id="input-option-name" class="form-control p-2" style="width: 295.8px !important;" placeholder="옵션명" value="빠른 출고 [2영업일 이내 출고],순차 출고 [4영업일 이내 출고]" disabled />
+            </div>
+            <div class="input-group mt-2 options">
+                <input id="product-option-title" class="form-control p-2" style="width: 128px !important;" placeholder="옵션 제목" />
+                <input id="product-option-name" class="form-control p-2" style="width: 295.8px !important;" placeholder="옵션명" />
+                <!-- <input id="input-option-name" class="form-control p-2" style="width: 256px !important;" placeholder="옵션명" /> -->
+                <!-- <button class="btn btn-outline-primary detail-dropdown-btn p-2" type="button">추가</button> -->
+            </div>
+            <button class="btn btn-primary mt-3 pt-1 pb-1 ps-3 pe-3" id="convert-option-btn">옵션 적용하기</button>
+        </div>
+        <div class="mt-3" id="option-detail">
+            <p class="fs-4 mb-2 fw-bold">상품 재고</p>
+            <div class="mt-2" id="option-none">
+                <p class="text-danger">상품 옵션을 먼저 적용해주세요!</p>
+            </div>
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">추가 상품 <span class="fs-6 ms-2 text-primary">[같은 계열 상품 / 최대 5개]</span></p>
+            <select id="optional-product-select" class="form-control d-flex align-items-center" multiple="multiple">
+                {% for product in products %}
+                <option value="{{ product.product_name }}">{{ product.product_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">관련 상품 <span class="fs-6 ms-2 text-primary">[추천 상품 / 최대 4개]</span></p>
+            <select id="related-product-select" class="form-control d-flex align-items-center" multiple="multiple">
+                {% for product in products %}
+                <option value="{{ product.product_name }}">{{ product.product_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">검색용 사이트 제목</p>
+            <input id="product-seo-title" class="form-control p-2 mt-2" type="text" maxlength="200" required />
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">검색용 게시자</p>
+            <input id="product-seo-author" class="form-control p-2 mt-2" type="text" maxlength="200" required value="이노베이프 INNOVAPE" />
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">검색용 요약설명</p>
+            <input id="product-seo-description" class="form-control p-2 mt-2" type="text" maxlength="200" required />
+        </div>
+        <div class="mt-3">
+            <p class="fs-4 mb-2 fw-bold">검색용 검색명</p>
+            <input id="product-seo-keywords" class="form-control p-2 mt-2" type="text" maxlength="200" required value="이노베이프,전자담배,전담," />
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        $('#category-select, #display-select').select2({
+            closeOnSelect: false
+        });
+
+        $('#optional-product-select').select2({
+            closeOnSelect: false
+        }).on('select2:select', function(e) {
+            const selected = $(this).val();
+            const maxSelections = 5;
+            if (selected.length > maxSelections) {
+                // 최대 선택 개수를 초과하면 마지막 선택을 취소
+                $(this).val(selected.slice(0, maxSelections)).trigger('change');
+                alert('최대 ' + maxSelections + '개 항목만 선택할 수 있습니다.');
+            }
+        });
+
+        $('#related-product-select').select2({
+            closeOnSelect: false
+        }).on('select2:select', function(e) {
+            const selected = $(this).val();
+            const maxSelections = 4;
+            if (selected.length > maxSelections) {
+                // 최대 선택 개수를 초과하면 마지막 선택을 취소
+                $(this).val(selected.slice(0, maxSelections)).trigger('change');
+                alert('최대 ' + maxSelections + '개 항목만 선택할 수 있습니다.');
+            }
+        });
+
+        $('#excel-convert-btn').click(function() {
+            const data = $('#excel-data').val().split(',');
+
+            $('#product-code').val(data[0]);
+            $('#product-name, #product-manage-name').val(`[${data[1]}] ${data[2]} ${data[3]}`)
+            $('#product-description').val(data[5]);
+            $('#product-seo-title').val(`[${data[1]}] ${data[2]} ${data[4]}`);
+            $('#product-seo-description').val(data[5]);
+        })
+
+        $('#input-thumbnail-img').change(function(event) {
+            const file = event.target.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    const size = Math.min(img.width, img.height);
+
+                    canvas.width = size;
+                    canvas.height = size;
+
+                    ctx.drawImage(
+                        img,
+                        (img.width - size) / 2,
+                        (img.height - size) / 2,
+                        size, size,
+                        0, 0, size, size
+                    );
+
+                    const dataURL = canvas.toDataURL('image/png');
+                    $('#thumbnail-img').attr('src', dataURL);
+                };
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        $(document).on('click', '.detail-dropdown-btn',function() {
+            if ($(this).hasClass('btn-outline-primary')) {
+                if (!$(this).is('.detail-dropdown-btn:first')) {
+                    $(this).removeClass('btn-outline-primary');
+                    $(this).addClass('btn-outline-danger');
+                    $(this).text('삭제');
+                }
+                var parentDiv = $(this).closest('div').clone();
+                $(this).closest('div').after(parentDiv);
+                parentDiv.find('.detail-dropdown-btn').removeClass('btn-outline-primary');
+                parentDiv.find('.detail-dropdown-btn').addClass('btn-outline-danger');
+                parentDiv.find('.detail-dropdown-btn').text('삭제');
+            } else {
+                $(this).closest('div').remove();
+            }
+        });
+        
+        $("#category-select").on('change', function() {
+            let selectedValues = $(this).val();
+            console.log(selectedValues)
+            
+            if (
+                selectedValues.includes("4") ||
+                selectedValues.includes("5")
+            ) {
+                $("#product-option-title").val('색상 선택');
+            } else if (
+                selectedValues.includes("6") ||
+                selectedValues.includes("7") ||
+                selectedValues.includes("8") ||
+                selectedValues.includes("9")
+            ) {
+                $("#product-option-title").val('맛 선택');
+            } else {
+                $("#product-option-title").val('선택');
+            }
+        })
+
+        $('#convert-option-btn').click(function() {
+            if ($('#product-option-title').val() && $('#product-option-name').val()) {
+                const delivery = $('#input-option-name').val().split(',');
+                const optionTitle = $('#product-option-title').val();
+                const optionName = $('#product-option-name').val().split(',');
+                const categoryValues = $("#category-select").val();
+                var addPrice = 0;
+
+                if (
+                    categoryValues.includes('4') ||
+                    categoryValues.includes('5')
+                ) {
+                    addPrice = -3000;
+                } else if (
+                    categoryValues.includes("6") ||
+                    categoryValues.includes("7") ||
+                    categoryValues.includes("8") ||
+                    categoryValues.includes("9") ||
+                    categoryValues.includes("10")
+                ) {
+                    addPrice = -1000;
+                } else {
+                    addPrice = -100;
+                }
+                
+                $('#option-none').css('display', 'none');
+
+                $('.option-detail-child').remove();
+
+                for (let i = 0; i < delivery.length; i++) {
+                    for (let j = 0; j < optionName.length; j++) {
+                        if (i === 0) {
+                            $('#option-detail').append(`
+                                <div class="input-group mt-2 option-detail-child">
+                                    <input id="output-option-name" class="form-control p-2" style="width: 128px !important;" placeholder="상품 옵션명" value="${optionName[j]}" disabled />
+                                    <input id="output-option-display-name" class="form-control p-2" style="width: 256px !important;" placeholder="상품 옵션명 (관리용)" value="${delivery[i]} > ${optionName[j]}" disabled />
+                                    <input id="output-option-stock" class="form-control p-2" style="width: 64px !important;" type="number" placeholder="상품 재고수량" value="0" />
+                                    <input id="output-option-price" class="form-control p-2" style="width: 64px !important;" type="number" placeholder="상품 옵션가" value="0" />
+                                </div>
+                            `);
+                        } else {
+                            $('#option-detail').append(`
+                                <div class="input-group mt-2 option-detail-child">
+                                    <input id="output-option-name" class="form-control p-2" style="width: 128px !important;" placeholder="상품 옵션명" value="${optionName[j]}" disabled />
+                                    <input id="output-option-display-name" class="form-control p-2" style="width: 256px !important;" placeholder="상품 옵션명 (관리용)" value="${delivery[i]} > ${optionName[j]}" disabled />
+                                    <input id="output-option-stock" class="form-control p-2" style="width: 64px !important;" type="number" placeholder="상품 재고수량" value="9999" />
+                                    <input id="output-option-price" class="form-control p-2" style="width: 64px !important;" type="number" placeholder="상품 옵션가" value="${addPrice}" />
+                                </div>
+                            `);
+                        }
+                        
+                    }
+                }
+            } else {
+                alert('옵션 제목 및 옵션명을 작성해주세요!');
+                return false;
+            }
+            
+        });
+
+        $('.detail-convert-btn').click(function() {
+            const htmlContent = $('#input-html-content').val();
+
+            if (htmlContent.length < 1) {
+                alert("HTML 코드를 입력해주세요!");
+                return false;
+            }
+
+            $('#detail-modal .modal-body').html('')
+            $('#thumbnail-img').removeAttr('src');
+            $("#detail-dropdown-btn").attr('aria-expanded', false);
+            $("#detail-dropdown-btn").attr('disabled', 'disabled');
+            $("#dropdown").removeClass('show');
+            $("#detail-view-btn").addClass('btn-secondary');
+            $("#detail-view-btn").removeClass('btn-primary');
+            $("#detail-view-btn").attr('disabled', 'disabled');
+
+            $.ajax({
+                type: 'post',
+                url : '{% url "dashboard_product_add" %}',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                data : {
+                    "code" : 'parse_html',
+                    "mall" : $(this).text(),
+                    "html_content" : htmlContent,
+                },
+                success : function(result) {
+                    console.log(result);
+                    $("#supply-price").val(result['data']['supply_price']);
+                    $("#customer-price, #sell-price").val(result['data']['customer_price']);
+                    result['data']['detail_urls'].forEach(element => {
+                        $('#detail-modal .modal-body').append(`<img src="${element}" class="w-100" />`)
+                    });
+                    $('#thumbnail-img').attr('src', `data:image/png;base64,${result['data']['thumbnail_binary_data']}`)
+                    $("#detail-dropdown-btn").removeAttr('disabled');
+                    $("#detail-view-btn").addClass('btn-primary');
+                    $("#detail-view-btn").removeClass('btn-secondary');
+                    $("#detail-view-btn").removeAttr('disabled');
+                    $("#product-option-name").val(result['data']['options']);
+                },
+                error : function(xhr, status, error) {
+                    alert(xhr.responseJSON.message)
+                    $("#detail-dropdown-btn").removeAttr('disabled');
+                }
+            })
+        })
+    });
+</script>
+{% endblock %}
