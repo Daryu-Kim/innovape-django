@@ -5,6 +5,10 @@
 <link rel="stylesheet" href="{% static 'css/logged_base.css' %}" />
 <link rel="stylesheet" href="{% static 'css/dashboard/home.css' %}" />
 {% endblock %}
+{% block extrahead %}
+<link rel="stylesheet" href="{% static 'css/logged_base.css' %}" />
+<link rel="stylesheet" href="{% static 'css/dashboard/home.css' %}" />
+{% endblock %}
 {% block main_content %}
 <div class="row gap-3">
 	<div class="d-flex justify-content-between">
@@ -201,7 +205,18 @@
 <script>
 	$(document).ready(function () {
 		function handleResponse(selector, response) {
+	$(document).ready(function () {
+		function handleResponse(selector, response) {
 			if (response.status === "success") {
+				$(selector).css({
+					'filter': 'none',
+					'cursor': 'pointer' // 클릭 가능한 상태로 커서 변경
+				});
+				if (response.data === null) {
+					$(selector + "-active").text('수동 연결').addClass('text-warning');
+				} else {
+					$(selector + "-active").text('인증 완료').addClass('text-success');
+				}
 				$(selector).css({
 					'filter': 'none',
 					'cursor': 'pointer' // 클릭 가능한 상태로 커서 변경
@@ -214,9 +229,39 @@
 			} else {
 				$(selector).css('filter', 'grayscale(100%)');
 				$(selector + "-active").text('인증 실패').addClass('text-danger');
+				$(selector).css('filter', 'grayscale(100%)');
+				$(selector + "-active").text('인증 실패').addClass('text-danger');
 			}
 		}
 
+		function ajaxRequest(url, selector, redirectUrl) {
+			$.ajax({
+				url: url,
+				success: function (response) {
+					console.log(response);
+					handleResponse(selector, response);
+
+					// 인증이 완료된 경우 클릭 이벤트 추가
+					if (response.status === "success") {
+						$(selector).off('click').on('click', function () {
+							window.open(redirectUrl, '_blank');
+						});
+					}
+				},
+				error: function () {
+					$(selector).css('filter', 'grayscale(100%)');
+					$(selector + "-active").text('인증 실패').addClass('text-danger');
+				}
+			});
+		}
+
+		// 각 플랫폼에 대한 AJAX 요청
+		ajaxRequest('{% url "get_access_naver_info" %}', '#access-naver', 'https://sell.smartstore.naver.com/');
+		ajaxRequest('{% url "get_access_coupang_info" %}', '#access-coupang', 'https://wing.coupang.com/');
+		ajaxRequest('{% url "get_access_interpark_info" %}', '#access-interpark', 'https://seller.interpark.com/login');
+		ajaxRequest('{% url "get_access_sixshop_info" %}', '#access-sixshop', 'https://www.sixshop.com/member/login');
+		ajaxRequest('{% url "get_access_cafe24_info" %}', '#access-cafe24', 'https://www.cafe24.com/member/login.html');
+	});
 		function ajaxRequest(url, selector, redirectUrl) {
 			$.ajax({
 				url: url,

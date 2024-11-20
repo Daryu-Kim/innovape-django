@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 
 # Create your views here.
 class DashboardHomeView(LoginRequiredMixin, TemplateView):
+class DashboardHomeView(LoginRequiredMixin, TemplateView):
     template_name = 'dashboard/home.html'  # 사용할 템플릿 파일 지정
     login_url = reverse_lazy('account_login')
 
