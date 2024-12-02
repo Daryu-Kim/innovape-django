@@ -1,18 +1,686 @@
+import base64
+import requests
+import pprint
+import json
+import re
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
+from .models import Category, Product, ProductOptions, Consumer
+from django.http import JsonResponse
+from bs4 import BeautifulSoup
+from django.utils import timezone
+from django.db.models import Q
+from django.db.models import F
+from django.db.models import Func
+from django.db import models
+from django.core.files.base import ContentFile
+from datetime import datetime, timedelta, date
+from account.models import Member
+from io import BytesIO
+import pandas as pd
+
 
 # Create your views here.
 class DashboardHomeView(LoginRequiredMixin, TemplateView):
-    template_name = 'dashboard/home.html'  # 사용할 템플릿 파일 지정
-    login_url = reverse_lazy('account_login')
+    template_name = "dashboard/home.html"  # 사용할 템플릿 파일 지정
+    login_url = reverse_lazy("account_login")
+
 
 class DashboardOrderHome(LoginRequiredMixin, TemplateView):
-    template_name = 'dashboard/order/order_home.html'
-    login_url = reverse_lazy('account_login')
+    template_name = "dashboard/order/order_home.html"
+    login_url = reverse_lazy("account_login")
+
 
 class DashboardProductHome(LoginRequiredMixin, TemplateView):
-    template_name = 'dashboard/product/product_home.html'
-    login_url = reverse_lazy('account_login')
+    template_name = "dashboard/product/product_home.html"
+    login_url = reverse_lazy("account_login")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        products = Product.objects.all()
+        
+        context["uploaded_products"] = products.count()
+        
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        if request.FILES.get('product') and request.FILES.get('product_option'):
+            product_file = request.FILES['product']
+            product_option_file = request.FILES['product_option']
+            
+            try:
+                product_df = pd.read_csv(product_file)
+                product_option_df = pd.read_csv(product_option_file)
+                
+                for index, row in product_df.iterrows():
+                    if (
+                        row["자체 상품코드"] is not None
+                        and str(int(row["자체 상품코드"])) != ""
+                    ):
+                        product_cafe24_code, product_option_title = self.upload_cafe24_product_excel(row)
+                        filtered_product_option_df = product_option_df[product_option_df['상품코드'] == product_cafe24_code]
+                        self.upload_cafe24_product_option_excel(filtered_product_option_df, product_cafe24_code, product_option_title)
+                
+                return JsonResponse({'status': 'success'})
+            except Exception as e:
+                print(e)
+                
+    def upload_cafe24_product_option_excel(self, row, cafe24_code, option_title):
+        try:
+            for index, data in row.iterrows():
+                # 필터링된 상품 코드로 Product 객체 가져오기
+                filtered_product = Product.objects.get(product_cafe24_code=str(cafe24_code))
 
+                # 재고수량 및 가격을 int로 변환할 때 오류 처리 추가
+                try:
+                    stock_quantity = int(data["재고수량"]) if str(data["재고수량"]).isdigit() else 0
+                except ValueError:
+                    stock_quantity = 0  # 숫자로 변환할 수 없는 경우 0으로 처리
+
+                try:
+                    option_price = int(data["옵션 추가금액"]) if str(data["옵션 추가금액"]).isdigit() else 0
+                except ValueError:
+                    option_price = 0  # 숫자로 변환할 수 없는 경우 0으로 처리
+
+                # 옵션 이름, 옵션 제목, 가격 등 처리
+                option_code = str(data["품목코드"])
+                option_name = str(data["품목명"]).split('/')[1] if '/' in str(data["품목명"]) else str(data["품목명"])
+                option_display_name = str(data["품목명"])
+                
+                # Product 객체 업데이트/생성
+                option, created = ProductOptions.objects.update_or_create(
+                    product_option_code=option_code,
+                    defaults={
+                        "product": filtered_product,
+                        "product_option_stock": stock_quantity,
+                        "product_option_title": option_title,
+                        "product_option_name": option_name,
+                        "product_option_display_name": option_display_name,
+                        "product_option_price": option_price,
+                    },
+                )
+                option.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            print(e)
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+    def upload_cafe24_product_excel(self, row):
+        try:
+            categories = Category.objects.filter(
+                category_code__in=row["상품분류 번호"].split("|")
+            )
+
+            # 썸네일 추출
+            thumbnail_src = (
+                "https://ecimg.cafe24img.com/pg1094b33231538027/innovape/web/product/big/"
+                + row["이미지등록(상세)"]
+            )
+
+            try:
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                    "Referer": "https://ecimg.cafe24img.com/",  # 요청을 보낸 페이지의 URL로 설정
+                }
+                response = requests.get(thumbnail_src, headers=headers)
+                response.raise_for_status()  # 요청 실패 시 예외 발생
+
+                if response.status_code == 200:
+                    print("Image fetched successfully!")
+                    # 이미지 데이터를 바이너리 형식으로 가져옴
+                    image_data = response.content
+
+                    # ContentFile을 사용하여 Django의 BinaryField에 맞는 형식으로 변환
+                    thumbnail_file = ContentFile(image_data)
+                    print("Image data is now ready for use.")
+                else:
+                    print(
+                        f"Failed to fetch image, status code: {response.status_code}"
+                    )
+            except requests.RequestException as e:
+                print(f"Error fetching image from {thumbnail_src}: {e}")
+
+            # 상세페이지 추출
+            try:
+                uploaded_images = self.extract_and_upload_images(
+                    row["상품 상세설명"],
+                    "https://ecimg.cafe24img.com/pg1094b33231538027/innovape/",
+                )
+                print("Detail Image data is now ready for use.")
+            except Exception as e:
+                print(f"Error extracting or uploading images: {e}")
+                uploaded_images = []  # 예외 발생 시 빈 리스트로 처리
+            
+            product_alternative_price = row["판매가 대체문구"] if pd.notna(row["판매가 대체문구"]) else ""
+            product_author = Member.objects.get(id=self.request.user.id)
+            thumbnail_bytes = thumbnail_file.read()
+            
+            # 옵션 타이틀 추출
+            option_title = row["옵션입력"].split('//')[1].split('{')[0]
+
+            new_product, created = Product.objects.update_or_create(
+                product_code=str(int(row["자체 상품코드"])),
+                defaults={
+                    "product_cafe24_code": str(row["상품코드"]),
+                    "product_name": str(row["상품명"]),
+                    "product_manage_name": str(row["상품명"]),
+                    "product_description": str(row["상품 요약설명"]),
+                    "product_keywords": str(row["검색어설정"]),
+                    "product_consumer_price": int(row["소비자가"]),
+                    "product_sell_price": int(row["판매가"]),
+                    "product_supply_price": int(row["공급가"]),
+                    "product_alternative_price": product_alternative_price,
+                    "product_thumbnail_image": thumbnail_bytes,
+                    "product_seo_title": str(row["검색엔진최적화(SEO) Title"]),
+                    "product_seo_author": str(row["검색엔진최적화(SEO) Author"]),
+                    "product_seo_description": str(row["검색엔진최적화(SEO) Description"]),
+                    "product_seo_keywords": str(row["검색엔진최적화(SEO) Keywords"]),
+                    "product_author": product_author,
+                    "product_created_datetime": datetime.strptime(row["상품등록일"], "%Y-%m-%d"),
+                    "product_modified_datetime": datetime.strptime(row["최근수정일"], "%Y-%m-%d"),
+                },
+            )
+
+            new_product.product_category.set(categories)
+            new_product.set_product_detail(uploaded_images)
+
+            new_product.save()
+            print("Product updated or created successfully.")
+            
+            return str(row["상품코드"]), option_title
+
+        except Exception as e:
+            print(f"Error occurred: {e}")
+
+    def upload_to_imgbb(self, binary_data):
+        imgbb_api_key = (
+            "d871f58378653057ddb74a4a23a7e629"  # 여기에 imgbb API 키를 입력하세요.
+        )
+        url = "https://api.imgbb.com/1/upload"
+        files = {"image": binary_data}
+        params = {"key": imgbb_api_key}
+
+        response = requests.post(url, params=params, files=files)
+        if response.status_code == 200:
+            return response.json()
+        return None
+
+
+    def extract_and_upload_images(self, html_content, base_url):
+        # BeautifulSoup을 사용하여 HTML에서 img 태그의 src 속성 추출
+        soup = BeautifulSoup(html_content, "html.parser")
+        img_tags = soup.find_all("img")
+
+        uploaded_images = []
+
+        for img_tag in img_tags:
+            src = img_tag.get("src")
+            if not src:
+                continue
+            formatted_src = src.replace("//innovape.cafe24.com/", "")
+
+            # base_url과 결합하여 절대 URL 생성
+            full_url = f"{base_url}{formatted_src}"
+
+            # 이미지를 다운로드
+            try:
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                    "Referer": "https://ecimg.cafe24img.com/",  # 요청을 보낸 페이지의 URL로 설정
+                }
+                response = requests.get(full_url, headers=headers)
+                response.raise_for_status()  # 요청 실패 시 예외 발생
+
+                # 이미지 파일을 바이너리 형태로 변환
+                binary_data = BytesIO(response.content)
+
+                # 이미지를 imgbb에 업로드
+                upload_result = self.upload_to_imgbb(binary_data)
+
+                # 업로드 성공 시 이미지 URL을 저장
+                if upload_result:
+                    uploaded_images.append(upload_result["data"]["url"])
+            except requests.RequestException as e:
+                print(f"Error fetching image from {full_url}: {e}")
+
+        return uploaded_images
+
+
+class DashboardProductAdd(LoginRequiredMixin, TemplateView):
+    template_name = "dashboard/product/product_add.html"
+    login_url = reverse_lazy("account_login")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        categories = Category.objects.all()
+        products = Product.objects.all()
+
+        context["categories"] = categories
+        context["products"] = products
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("code") == "parse_html":
+            html_content = request.POST.get("html_content")
+            urls = []
+            options = []
+            thumbnail_binary_data = b""
+            supply_price_text = 0
+
+            # HTML 유효성 검사
+            if not self.is_valid_html(html_content):
+                return JsonResponse(
+                    {"status": "error", "message": "유효하지 않은 HTML 형식입니다."},
+                    status=400,
+                )
+
+            # HTML이 유효한 경우 처리
+            soup = BeautifulSoup(html_content, "html.parser")
+
+            if request.POST.get("mall") == "메두사":
+                # CSS 선택자를 사용하여 img 태그 선택
+                base_url = "https://medusamall.com"
+                img_tags = soup.select("#prdDetail > div.cont img")
+                thumbnail_img_tag = soup.select_one("#big_img_box > div > img")
+                supply_price_tag = soup.select_one("#span_product_price_text")
+                option_tags = soup.select("#product_option_id1 > optgroup > option")
+
+                if not option_tags:
+                    option_tags = soup.select("#product_option_id1 > option")
+
+                # 공급가 크롤링
+                if supply_price_tag:
+                    supply_price_text = supply_price_tag.get_text(strip=True)
+
+                    if len(supply_price_text) > 0:
+                        supply_price_text = supply_price_text.replace(",", "")
+                        supply_price_text = supply_price_text[:-1]
+
+                # 옵션 크롤링
+                if option_tags:
+                    for option in option_tags:
+                        opt = option.get_text(strip=True)
+                        if opt:
+                            options.append(opt)
+
+                # 썸네일 크롤링
+                thumbnail_src = thumbnail_img_tag.get("src")
+                if thumbnail_src:
+                    if thumbnail_src.startswith("data:image/"):  # Base64 이미지 처리
+                        # Base64 데이터에서 MIME 타입과 데이터를 분리
+                        header, encoded = thumbnail_src.split(",", 1)
+                        thumbnail_binary_data = base64.b64decode(encoded)
+                    else:  # URL 방식의 이미지 처리
+                        # URL이 상대 경로인 경우 절대 경로로 변환
+                        if not thumbnail_src.startswith(
+                            "http://"
+                        ) and not thumbnail_src.startswith("https://"):
+                            thumbnail_src = "https:" + thumbnail_src
+
+                        try:
+                            headers = {
+                                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                                "Referer": "https://medusamall.com/",  # 요청을 보낸 페이지의 URL로 설정
+                            }
+                            response = requests.get(thumbnail_src, headers=headers)
+                            response.raise_for_status()  # 요청 실패 시 예외 발생
+                            base64_encoded_data = base64.b64encode(
+                                response.content
+                            ).decode("utf-8")
+                            json_data = json.dumps({"image_data": base64_encoded_data})
+                            loaded_data = json.loads(json_data)
+                            thumbnail_binary_data = loaded_data["image_data"]
+                        except requests.RequestException as e:
+                            print(f"Error fetching image from {thumbnail_src}: {e}")
+
+                # 상세페이지 크롤링
+                for img in img_tags:
+                    src = img.get("src")
+                    if src:
+                        if src.startswith("data:image/"):  # Base64 이미지 처리
+                            # Base64 데이터에서 MIME 타입과 데이터를 분리
+                            header, encoded = src.split(",", 1)
+                            binary_data = base64.b64decode(encoded)
+                        else:  # URL 방식의 이미지 처리
+                            # URL이 상대 경로인 경우 절대 경로로 변환
+                            if not src.startswith("http://") and not src.startswith(
+                                "https://"
+                            ):
+                                src = base_url + src.replace("//", "/")
+
+                            try:
+                                headers = {
+                                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                                    "Referer": "https://medusamall.com/",  # 요청을 보낸 페이지의 URL로 설정
+                                }
+                                response = requests.get(src, headers=headers)
+                                response.raise_for_status()  # 요청 실패 시 예외 발생
+                                binary_data = response.content
+                            except requests.RequestException as e:
+                                print(f"Error fetching image from {src}: {e}")
+                                continue  # 오류가 발생한 경우 다음 이미지로 넘어감
+
+                        # imgbb에 업로드
+                        response = self.upload_to_imgbb(binary_data)
+                        if response and "data" in response:
+                            urls.append(response["data"]["url"])
+
+            return JsonResponse(
+                {
+                    "status": "success",
+                    "data": {
+                        "detail_urls": urls,
+                        "thumbnail_binary_data": thumbnail_binary_data,
+                        "supply_price": supply_price_text,
+                        "options": options,
+                    },
+                }
+            )
+
+        elif request.POST.get("code") == "product_add":
+            data = json.loads(request.POST.get("data"))
+
+            # 제품 코드 생성
+            product_cafe24_code = self.generate_product_code()
+
+            # 카테고리, 디스플레이, 옵션 제품, 관련 제품을 한 번에 조회
+            categories = Category.objects.filter(id__in=data["product_category"])
+            related_products = Product.objects.filter(
+                product_name__in=data["product_related_products"]
+            )
+
+            # 제품 업데이트 또는 생성
+            new_product, created = Product.objects.update_or_create(
+                product_code=data["product_code"],
+                defaults={
+                    'product_cafe24_code': product_cafe24_code,
+                    "product_name": data["product_name"],
+                    "product_manage_name": data["product_manage_name"],
+                    "product_description": data["product_description"],
+                    "product_keywords": data["product_keywords"],
+                    "product_consumer_price": int(data["product_customer_price"]),
+                    "product_sell_price": int(data["product_sell_price"]),
+                    "product_supply_price": int(data["product_supply_price"]),
+                    "product_alternative_price": data["product_alternative_price"],
+                    "product_thumbnail_image": base64.b64decode(
+                        data["product_thumbnail_image"]
+                    ),
+                    "product_seo_title": data["product_seo_title"],
+                    "product_seo_author": data["product_seo_author"],
+                    "product_seo_description": data["product_seo_description"],
+                    "product_seo_keywords": data["product_seo_keywords"],
+                    "product_author": request.user,
+                    "product_created_datetime": timezone.now(),
+                },
+            )
+            # 상품코드,자체상품코드,품목명,재고수량,옵션추가금액
+
+            # 관계 설정 (중간 리스트 없이 바로 set() 호출)
+            new_product.product_category.set(categories)
+            new_product.set_product_detail(
+                data["product_detail"]
+            )
+            new_product.product_related_products.set(related_products)
+
+            # 제품 저장
+            new_product.save()
+
+            return JsonResponse({"status": "success"})
+        elif request.POST.get("code") == "product_options_add":
+            data = json.loads(request.POST.get("data"))
+            product = Product.objects.get(product_code=data["product_code"])
+
+            for option in data["options_data"]:
+                new_option, created = ProductOptions.objects.update_or_create(
+                    product=product,
+                    product_option_title=data["product_option_title"],
+                    product_option_name=option["product_option_name"],
+                    product_option_display_name=option["product_option_display_name"],
+                    product_stock=option["product_stock"],
+                    product_option_price=option["product_option_price"],
+                )
+
+            return JsonResponse({"status": "success"})
+
+    def is_valid_html(self, html):
+        try:
+            # BeautifulSoup을 사용하여 HTML 파싱
+            soup = BeautifulSoup(html, "html.parser")
+            return bool(soup.find())  # 유효한 HTML이면 True 반환
+        except Exception:
+            return False  # 예외가 발생하면 유효하지 않음
+
+    def upload_to_imgbb(self, binary_data):
+        imgbb_api_key = (
+            "d871f58378653057ddb74a4a23a7e629"  # 여기에 imgbb API 키를 입력하세요.
+        )
+        url = "https://api.imgbb.com/1/upload"
+        files = {"image": binary_data}
+        params = {"key": imgbb_api_key}
+
+        response = requests.post(url, params=params, files=files)
+        pprint.pprint(response)
+        if response.status_code == 200:
+            return response.json()
+        return None
+
+    def generate_product_code(self):
+        prefix = "P"  # 상품 코드 앞부분 (P)
+        num_digits = 6  # 숫자 부분의 자리수 (6자리)
+        letter_max = 26  # 알파벳 A-Z (26글자)
+
+        # 마지막 상품 코드 가져오기
+        last_product = Product.objects.all().order_by("-product_cafe24_code").first()
+
+        if last_product:
+            last_code = last_product.product_cafe24_code
+
+            # 'P'로 시작하는지 확인
+            if not last_code.startswith("P"):
+                raise ValueError("코드는 'P'로 시작해야 합니다.")
+
+            # 숫자 부분과 알파벳 부분 분리
+            num_part = re.search(r"\d+", last_code[1:]).group()  # 숫자 부분
+            letter_part = re.sub(r"\d", "", last_code[1:])  # 알파벳 부분
+
+            # 알파벳 부분이 전부 'Z'인 경우 처리
+            if letter_part == "Z" * len(letter_part):
+                # 알파벳 부분이 모두 'Z'일 경우
+                new_num_length = len(num_part) - 1  # 숫자 자릿수는 1자리 줄어듬
+                new_letter_length = len(letter_part) + 1  # 알파벳 자리는 1자리 늘어남
+
+                # 숫자는 자릿수를 줄여서 0으로 채운다
+                next_num_part = "0" * new_num_length
+                # 알파벳 부분은 길이를 늘려서 'A'로 채운다
+                next_letter_part = "A" * new_letter_length
+
+            else:
+                # 알파벳 부분에서 끝이 'Z'일 경우, 끝부터 차례대로 변경
+                next_letter_part = list(letter_part)  # 알파벳을 리스트로 다룬다
+                for i in range(len(next_letter_part) - 1, -1, -1):
+                    if next_letter_part[i] == "Z":
+                        next_letter_part[i] = "A"  # Z는 A로 변경
+                    else:
+                        next_letter_part[i] = chr(
+                            ord(next_letter_part[i]) + 1
+                        )  # Z가 아니면 1 증가
+                        break
+                next_letter_part = "".join(next_letter_part)  # 다시 문자열로 합침
+
+                # 숫자 부분 1 증가
+                next_num_part = str(int(num_part)).zfill(
+                    len(num_part)
+                )  # 자리수 맞추기 위해 zfill 사용
+
+            # 최종적으로 'P' + 숫자 부분 + 알파벳 부분을 반환
+            print(next_num_part, next_letter_part)
+            return "P" + next_num_part + next_letter_part
+
+
+class DashboardProductList(LoginRequiredMixin, TemplateView):
+    template_name = "dashboard/product/product_list.html"
+    login_url = reverse_lazy("account_login")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # 카테고리 데이터를 가져옵니다.
+        categories = Category.objects.all()
+        context["categories"] = categories
+
+        return context
+
+    def get_filtered_products(
+        self, search_field, search_title, search_category, start_date, end_date
+    ):
+        # 기본 쿼리셋
+        queryset = Product.objects.all()
+
+        # 검색 필드 및 제목에 따른 필터링
+        if search_field:
+            queryset = queryset.filter(**{f"{search_title}__icontains": search_field})
+
+        # 카테고리 필터링
+        if search_category:
+            queryset = queryset.filter(category__in=search_category)
+
+        # 날짜 범위 필터링
+        if start_date and end_date:
+            queryset = queryset.filter(created_datetime__range=[start_date, end_date])
+
+        return queryset
+
+    def render_to_response(self, context, **response_kwargs):
+        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            # GET 요청으로 필터링 조건을 받아옵니다.
+            search_field = self.request.GET.get("search_field", "")
+            search_title = self.request.GET.get("search_title", "name")
+            search_category = self.request.GET.getlist("search_category", [])
+            start_date = self.request.GET.get("start_date", "")
+            end_date = self.request.GET.get("end_date", "")
+
+            # 필터링된 제품을 가져옵니다.
+            filtered_products = self.get_filtered_products(
+                search_field, search_title, search_category, start_date, end_date
+            )
+
+            # 각 제품에 대한 카테고리와 디스플레이 값 처리
+            data = []
+            for product in filtered_products:
+                # 카테고리 이름을 쉼표로 구분된 문자열로 결합
+                categories = '<br>'.join([category.category_name for category in product.product_category.all()])
+                data.append({
+                    'id': product.id,
+                    'product_code': product.product_code,
+                    'product_name': product.product_name,
+                    'product_categories': categories,
+                    'product_consumer_price': product.product_consumer_price,
+                    'product_sell_price': product.product_sell_price,
+                    'product_supply_price': product.product_supply_price,
+                    'product_author': product.product_author.username,
+                    'product_created_datetime': product.product_created_datetime,
+                    'product_modified_datetime': product.product_modified_datetime,
+                })
+
+            return JsonResponse(
+                {
+                    "draw": int(self.request.GET.get("draw", 0)),
+                    "recordsTotal": Product.objects.count(),
+                    "recordsFiltered": filtered_products.count(),
+                    "data": data,
+                }
+            )
+
+        return super().render_to_response(context, **response_kwargs)
+
+
+class DashboardProductCategory(LoginRequiredMixin, TemplateView):
+    template_name = "dashboard/product/product_add.html"
+    login_url = reverse_lazy("account_login")
+
+
+class DashboardProductDisplay(LoginRequiredMixin, TemplateView):
+    template_name = "dashboard/product/product_add.html"
+    login_url = reverse_lazy("account_login")
+
+
+class DashboardProductInventory(LoginRequiredMixin, TemplateView):
+    template_name = "dashboard/product/product_add.html"
+    login_url = reverse_lazy("account_login")
+
+
+class DashboardProductOutofstock(LoginRequiredMixin, TemplateView):
+    template_name = "dashboard/product/product_add.html"
+    login_url = reverse_lazy("account_login")
+
+
+class DashboardConsumerHome(LoginRequiredMixin, TemplateView):
+    template_name = "dashboard/consumer/consumer_home.html"
+    login_url = reverse_lazy("account_login")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        new_consumers = Consumer.objects.filter(
+            consumer_register_dt__gte=(date.today() - timedelta(days=7)),
+            consumer_register_dt__lte=date.today()
+        )
+        not_verified_consumers = Consumer.objects.filter(consumer_verified='F')
+        all_consumers = Consumer.objects.all()
+        
+        context["new_consumers"] = new_consumers.count()
+        context["not_verified_consumers"] = not_verified_consumers.count()
+        context["all_consumers"] = all_consumers.count()
+        
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        if request.FILES.get('consumer'):
+            consumer_file = request.FILES['consumer']
+            
+            try:
+                consumer_df = pd.read_csv(consumer_file)
+                
+                for index, row in consumer_df.iterrows():
+                    self.upload_cafe24_consumer_excel(row)
+                
+                return JsonResponse({'status': 'success'})
+            except Exception as e:
+                print(e)
+
+    def upload_cafe24_consumer_excel(self, row):
+        try:
+            new_consumer, created = Consumer.objects.update_or_create(
+                consumer_id=str(row["아이디"]),
+                defaults={
+                    "consumer_grade": str(row["회원등급"]),
+                    "consumer_name": str(row["이름"]),
+                    "consumer_phone_number": str(row["휴대폰번호"]),
+                    "consumer_email": str(row["이메일"]),
+                    "consumer_verified": str(row["회원인증여부"]),
+                    "consumer_birth": datetime.strptime(str(row["생년월일"]), '%Y-%m-%d'),
+                    "consumer_area": str(row["지역"]),
+                    "consumer_base_address": str(row["주소1"]),
+                    "consumer_detail_address": str(row["주소2"]),
+                    "consumer_refund_account": str(row["환불계좌정보(은행/계좌/예금주)"]) if str(row["환불계좌정보(은행/계좌/예금주)"]) and str(row["환불계좌정보(은행/계좌/예금주)"]).lower() != "nan" else '',
+                    "consumer_total_visits": int(row["총 방문횟수(1년 내)"]),
+                    "consumer_total_orders": int(row["총 실주문건수"]),
+                    "consumer_total_purchase": int(row["총구매금액"]),
+                    "consumer_last_order_dt": datetime.strptime(str(row["최종주문일"]), "%Y-%m-%d %H:%M:%S") if str(row["최종주문일"]) and str(row["최종주문일"]).lower() != "nan" else None,
+                    "consumer_last_connection_dt": datetime.strptime(str(row["최종접속일"]), "%Y-%m-%d %H:%M:%S") if str(row["최종접속일"]) and str(row["최종접속일"]).lower() != "nan" else None,
+                    "consumer_register_dt": datetime.strptime(str(row["회원 가입일"]), "%Y-%m-%d"),
+                    "consumer_register_path": str(row["회원 가입경로"]),
+                },
+            )
+            new_consumer.save()
+            print("Consumer updated or created successfully.")
+            
+            return JsonResponse({'status', 'success'})
+
+        except Exception as e:
+            print(f"Error occurred: {e}")

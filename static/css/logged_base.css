@@ -4,10 +4,11 @@
 
 .main-area {
 	flex: 1;
+	background-color: #F4F5FA;
 }
 
 .sidebar {
-	
+	min-width: 240px;
 }
 
 .top-bar {
@@ -33,10 +34,138 @@
 	z-index: 1000;
 }
 
+/* select2의 기본 스타일 오버라이드 */
+.select2-container .select2-selection--multiple {
+	padding: 0.5rem !important; /* 세로 패딩 */
+	border: 1px solid #ced4da; /* 테두리 스타일 */
+	border-radius: 0.25rem; /* 테두리 반경 */
+	height: auto !important; /* 높이 자동 조정 */
+}
+
+.select2-container .select2-selection__choice {
+	background-color: #007bff !important; /* 선택 항목 배경색 */
+	color: white; /* 선택 항목 텍스트 색상 */
+	padding: 0.25rem 0.5rem !important; /* 선택 항목 패딩 */
+	margin: 0.5rem; /* 선택 항목 간격 */
+	border-radius: 0.25rem; /* 선택 항목 테두리 반경 */
+	border: none !important;
+}
+
+.select2-container .select2-selection__choice .select2-selection__choice__remove {
+	margin-left: 5px; /* X 버튼과 텍스트 사이의 간격 */
+}
+
+.select2-container .select2-selection__placeholder {
+	display: flex;
+	align-items: center; /* 세로 가운데 정렬 */
+	height: 100%; /* 높이 100% */
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__rendered {
+	display: flex;
+	align-items: center; /* 세로 가운데 정렬 */
+	gap: 0.5rem; /* 항목 간의 간격 */
+}
+
+.select2-container .select2-results__option {
+	padding: 0.5rem 0.75rem !important;
+}
+
+.select2-container .select2-selection__choice__remove {
+	padding-right: 0.25rem !important;
+	color: white !important;
+}
+
+.tooltip-inner {
+	padding: 8px !important;
+	word-break: keep-all !important;
+}
+
+.table {
+	table-layout: auto;
+	width: 100%;
+	border-collapse: collapse;
+}
+
+#product-table {
+	width: 100%;
+	/* table-layout: fixed; */
+	border-collapse: collapse;
+}
+
+#product-table thead th {
+	background-color: #f3f3f3 !important;
+}
+
+#product-table th,
+#product-table td {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.table-wrapper {
+	overflow-x: auto;
+	max-width: 100%;
+	-webkit-overflow-scrolling: touch;
+	margin: 0 auto;
+}
+
+.table th,
+.table td {
+	padding: 8px !important;
+	vertical-align: top;
+	border: 1px solid #dee2e6;
+}
+
+.table th-#product-table * {
+	padding-top: 12px !important;
+	padding-bottom: 12px !important;
+	width: 100%;
+}
+
+.table tr-#product-table * {
+	display: flex;
+}
+
+.table td-.table td.options-#product-table * {
+	display: flex !important;
+	align-items: stretch !important;
+}
+
+.table td:first-child-#product-table * {
+	display: flex;
+	width: 180px;
+	white-space: nowrap;
+	background-color: #f3f3f3;
+}
+
+.table td:last-child-#product-table *  {
+	flex: 1;
+}
+
+.table td button.tooltip-btn-#product-table * {
+	height: fit-content;
+}
+
+.options table input {
+	border: none;
+	background: none;
+}
+
+.options table input:focus {
+	outline: none;
+}
+
+.custom-grid {
+	display: grid !important;
+}
+
 @media (max-width: 767px) {
 	.sidebar {
-		width: 56px;
+		min-width: 56px !important;
 	}
+
 	.mobile {
 		display: none;
 	}
@@ -56,28 +185,30 @@
 
 @media (max-width: 767px) {
 	.custom-grid {
-		display: grid;
 		grid-template-columns: repeat(1, 1fr);
 	}
 }
 
 @media (max-width: 991px) {
 	.custom-grid {
-		display: grid;
 		grid-template-columns: repeat(2, 1fr);
 	}
 }
 
 @media (max-width: 1199px) {
+	.sidebar {
+		min-width: 220px;
+	}
+}
+
+@media (max-width: 1399px) {
 	.custom-grid {
-		display: grid;
 		grid-template-columns: repeat(3, 1fr);
 	}
 }
 
 @media (min-width: 1400px) {
 	.custom-grid {
-		display: grid;
 		grid-template-columns: repeat(4, 1fr);
 	}
 }

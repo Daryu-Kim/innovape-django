@@ -1,3 +1,53 @@
 from django.contrib import admin
+from .models import Category, Product, ProductOptions, Consumer
 
 # Register your models here.
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ('category_name', 'category_code', 'category_parent')
+    search_fields = ('category_name',)
+    list_filter = ('category_name',)
+
+    # readonly_fields = ('category_seo_author',)
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+
+        if not obj:
+            form.base_fields['category_seo_title'].initial = " - 이노베이프 INNOVAPE"
+            form.base_fields['category_seo_author'].initial = "이노베이프 INNOVAPE"
+            form.base_fields['category_seo_keywords'].initial = "이노베이프,전자담배,전담,"
+        
+        return form
+
+admin.site.register(Category, CategoryAdmin)
+    
+
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ('product_name', 'get_product_categories', 'product_consumer_price', 'product_sell_price', 'product_supply_price', 'product_author',)
+    search_fields = ('product_name',)
+    list_filter = ('product_name',)
+    filter_horizontal = ('product_category', 'product_related_products',)
+
+    def get_product_categories(self, obj):
+        # Many-to-Many 관계의 항목들을 표시하는 방법
+        return ", ".join([str(product) for product in obj.product_category.all()])
+    
+    get_product_categories.short_description = '상품 카테고리'
+
+admin.site.register(Product, ProductAdmin)
+    
+
+class ProductOptionsAdmin(admin.ModelAdmin):
+    list_display = ('product', 'product_option_code', 'product_option_display_name', 'product_option_price', 'product_option_stock',)
+    search_fields = ('product',)
+    list_filter = ('product',)
+
+admin.site.register(ProductOptions, ProductOptionsAdmin)
+
+
+class ConsumerAdmin(admin.ModelAdmin):
+    list_display = ('consumer_id', 'consumer_name', 'consumer_phone_number', 'consumer_birth', 'consumer_total_purchase', 'consumer_register_dt', 'consumer_verified',)
+    search_fields = ('consumer_id', 'consumer_name', 'consumer_phone_number',)
+    list_filter = ('consumer_verified', 'consumer_area', 'consumer_register_path',)
+
+admin.site.register(Consumer, ConsumerAdmin)

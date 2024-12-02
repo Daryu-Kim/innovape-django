@@ -5,14 +5,14 @@
 <div class="sidebar bg-danger pt-3 pb-3 ps-4 pe-4">
 	<div class="d-flex align-items-center justify-content-center">
 		<i class="bi bi-windows" style="font-size: 2.4rem; color: white;"></i>
-		<p class="text-center fw-bold text-light ms-3 fs-6">
+		<p class="text-center fw-bold text-light ms-3 fs-5">
 			이노베이프<br/>관리자 전용 페이지
 		</p>
 	</div>
 	<hr class="mt-3 mb-3 border-light" />
 	<a href="{% url 'dashboard_home' %}" class="w-100 d-flex align-items-center">
 		<i class="bi bi-house" style="font-size: 1.4rem; color: white;"></i>
-		<p class="text-light ms-2" style="font-size: 0.8rem;">
+		<p class="text-light ms-2 fs-6" style="font-size: 0.8rem;">
 			메인
 		</p>
 	</a>
@@ -20,7 +20,7 @@
 	<a href="{% url 'dashboard_order_home' %}" class="w-100 d-flex align-items-center justify-content-between">
 		<div class="left-side d-flex align-items-center">
 			<i class="bi bi-bag" style="font-size: 1.4rem; color: white;"></i>
-			<p class="text-light ms-2" style="font-size: 0.8rem;">
+			<p class="text-light ms-2 fs-6" style="font-size: 0.8rem;">
 				주문관리
 			</p>
 		</div>
@@ -32,7 +32,7 @@
 	<a class="w-100 d-flex align-items-center justify-content-between">
 		<div class="left-side d-flex align-items-center">
 			<i class="bi bi-credit-card" style="font-size: 1.4rem; color: white;"></i>
-			<p class="text-light ms-2" style="font-size: 0.8rem;">
+			<p class="text-light ms-2 fs-6" style="font-size: 0.8rem;">
 				발주관리
 			</p>
 		</div>
@@ -44,8 +44,20 @@
 	<a href="{% url 'dashboard_product_home' %}" class="w-100 d-flex align-items-center justify-content-between main-menu-item">
 		<div class="left-side d-flex align-items-center">
 			<i class="bi bi-app-indicator" style="font-size: 1.4rem; color: white;"></i>
-			<p class="text-light ms-2" style="font-size: 0.8rem;">
+			<p class="text-light ms-2 fs-6" style="font-size: 0.8rem;">
 				상품관리
+			</p>
+		</div>
+		<div class="right-side">
+			<i class="bi bi-chevron-right" style="font-size: 1.2rem; color: white;"></i>
+		</div>
+	</a>
+	<div class="mt-3 mb-3"></div>
+	<a href="{% url 'dashboard_consumer_home' %}" class="w-100 d-flex align-items-center justify-content-between main-menu-item">
+		<div class="left-side d-flex align-items-center">
+			<i class="bi bi-person" style="font-size: 1.4rem; color: white;"></i>
+			<p class="text-light ms-2 fs-6" style="font-size: 0.8rem;">
+				고객관리
 			</p>
 		</div>
 		<div class="right-side">
@@ -56,7 +68,7 @@
 	<a class="w-100 d-flex align-items-center justify-content-between">
 		<div class="left-side d-flex align-items-center">
 			<i class="bi bi-boxes" style="font-size: 1.4rem; color: white;"></i>
-			<p class="text-light ms-2" style="font-size: 0.8rem;">
+			<p class="text-light ms-2 fs-6" style="font-size: 0.8rem;">
 				배송조회
 			</p>
 		</div>
@@ -68,7 +80,7 @@
 	<a class="w-100 d-flex align-items-center justify-content-between">
 		<div class="left-side d-flex align-items-center">
 			<i class="bi bi-arrow-clockwise" style="font-size: 1.4rem; color: white;"></i>
-			<p class="text-light ms-2" style="font-size: 0.8rem;">
+			<p class="text-light ms-2 fs-6" style="font-size: 0.8rem;">
 				CS 요청 / 관리
 			</p>
 		</div>
@@ -80,7 +92,7 @@
 	<a class="w-100 d-flex align-items-center justify-content-between">
 		<div class="left-side d-flex align-items-center">
 			<i class="bi bi-cash-coin" style="font-size: 1.4rem; color: white;"></i>
-			<p class="text-light ms-2" style="font-size: 0.8rem;">
+			<p class="text-light ms-2 fs-6" style="font-size: 0.8rem;">
 				매출관리
 			</p>
 		</div>
@@ -92,7 +104,7 @@
 	<a class="w-100 d-flex align-items-center justify-content-between">
 		<div class="left-side d-flex align-items-center">
 			<i class="bi bi-send" style="font-size: 1.4rem; color: white;"></i>
-			<p class="text-light ms-2" style="font-size: 0.8rem;">
+			<p class="text-light ms-2 fs-6" style="font-size: 0.8rem;">
 				정산관리
 			</p>
 		</div>

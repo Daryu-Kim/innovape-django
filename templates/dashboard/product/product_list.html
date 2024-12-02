@@ -1,0 +1,229 @@
+{% extends 'logged_base.html' %}
+{% load static %}
+{% block title %}상품 등록{% endblock %}
+{% block extrahead %}
+<link rel="stylesheet" href="{% static 'css/logged_base.css' %}" />
+{% endblock %}
+{% block main_content %}
+<div class="row gap-3">
+    <p class="fw-bold fs-2">상품 목록</p>
+    <form action="">
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td>
+                        <p class="fs-6">검색분류</p>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <select id="search-title" class="form-select p-2 w-auto" style="min-width: 160px;">
+                                <option value="name">상품명</option>
+                                <option value="manage_name">상품명 (관리용)</option>
+                                <option value="cafe24_code">카페24 상품코드</option>
+                                <option value="code">상품 분류코드</option>
+                                <option value="author">상품 게시자</option>
+                            </select>
+                            <input id="search-field" class="form-control p-2" style="flex-grow: 1;" />
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <p class="fs-6">카테고리</p>
+                    </td>
+                    <td>
+                        <select id="search-category" class="form-control d-flex align-items-center" multiple="multiple">
+                            {% for category in categories %}
+                            {% if category.category_parent is None %}
+                            <option value="{{ category.id }}">{{ category.category_name }}</option> <!-- 부모 카테고리 추가 -->
+                            {% for child_category in categories %}
+                            {% if child_category.category_parent == category %}
+                            <option value="{{ child_category.id }}" style="padding-left: 20px;">{{
+                                category.category_name }} > {{ child_category.category_name }}
+                            </option>
+                            {% endif %}
+                            {% endfor %}
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <p class="fs-6">상품등록일</p>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <select id="search-date-title" class="form-select p-2 w-auto" style="min-width: 128px;">
+                                <option value="created">상품등록일</option>
+                                <option value="modified">상품수정일</option>
+                            </select>
+                            <button class="btn btn-outline-secondary p-2 ps-3 pe-3 date-btn" value="today">오늘</button>
+                            <button class="btn btn-outline-secondary p-2 ps-3 pe-3 date-btn" value="week">1주일</button>
+                            <button class="btn btn-outline-secondary p-2 ps-3 pe-3 date-btn" value="month">1개월</button>
+                            <button class="btn btn-outline-secondary p-2 ps-3 pe-3 date-btn"
+                                value="3months">3개월</button>
+                            <button class="btn btn-outline-secondary p-2 ps-3 pe-3 date-btn" value="year">1년</button>
+                            <input type="date" id="search-start-datepicker" class="form-control fs-6 p-2"
+                                style="width: 112px;" />
+                            <span> ~ </span>
+                            <input type="date" id="search-end-datepicker" class="form-control fs-6 p-2"
+                                style="width: 112px;" />
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="d-flex mt-3 align-items-center justify-content-center gap-2">
+            <button type="submit" class="btn btn-primary p-2" style="width: 80px;">검색</button>
+            <button id="search-reset-btn" class="btn btn-outline-secondary p-2" style="width: 80px;">초기화</button>
+        </div>
+    </form>
+    <div class="table-wrapper">
+        <table class="table table-hover" id="product-table">
+            <thead>
+                <tr>
+                    {% comment %} <th><input type="checkbox" /></th> {% endcomment %}
+                    <th>No</th>
+                    <th>상품 분류코드</th>
+                    <th>상품명</th>
+                    <th>카테고리</th>
+                    <th>소비자가</th>
+                    <th>판매가</th>
+                    <th>공급가</th>
+                    <th>게시자</th>
+                    <th>생성일</th>
+                    <th>수정일</th>
+                </tr>
+            </thead>
+        </table>
+    </div>>
+</div>
+<script>
+    $(document).ready(function () {
+        $('#search-category').select2({
+            closeOnSelect: false
+        });
+
+        $("#product-table").DataTable({
+            processing: true,
+            serverSide: true,
+            autoWidth: true,
+            ajax: {
+                url: "{% url 'dashboard_product_list' %}",  // 실제 URL을 적어주세요.
+                data: function (d) {
+                    // DataTable의 필터링 값도 포함하여 요청
+                    d.search_field = $("#search-field").val();
+                    d.search_title = $("#search-title").val();
+                    d.search_category = $("#search-category").val();
+                    d.start_date = $("#search-start-datepicker").val();
+                    d.end_date = $("#search-end-datepicker").val();
+                }
+            },
+            columns: [
+                { data: 'id' },
+                { data: 'product_code' },
+                { data: 'product_name' },
+                {
+                    data: 'product_categories',
+                    render: function (data, type, row) {
+                        return data;
+                    }
+                },
+                {
+                    data: 'product_consumer_price',
+                    render: function (data, type, row) {
+                        return data.toLocaleString() + '원';
+                    }
+                },
+                {
+                    data: 'product_sell_price',
+                    render: function (data, type, row) {
+                        return data.toLocaleString() + '원';
+                    }
+                },
+                {
+                    data: 'product_supply_price',
+                    render: function (data, type, row) {
+                        return data.toLocaleString() + '원';
+                    }
+                },
+                {
+                    data: 'product_author',
+                    render: function (data, type, row) {
+                        return data;
+                    }
+                },
+                {
+                    data: 'product_created_datetime',
+                    render: function (data, type, row) {
+                        const date = new Date(data);
+                        return date.toISOString().slice(0, 10);
+                    }
+                },
+                {
+                    data: 'product_modified_datetime',
+                    render: function (data, type, row) {
+                        const date = new Date(data);
+                        var formattedDate = date.toISOString().slice(0, 10);
+                        return formattedDate === "1970-01-01" ? "-" : formattedDate;
+                    }
+                },
+            ],
+        }).columns.adjust();
+
+        $(".date-btn").click(function (e) {
+            e.preventDefault();
+            const date = new Date();
+            const endDate = date.toISOString().split('T')[0];
+            switch ($(this).val()) {
+                case "today":
+                    $("#search-start-datepicker, #search-end-datepicker").val(endDate);
+                    break;
+                case "week":
+                    var targetDate = new Date();
+                    targetDate.setDate(targetDate.getDate() - 7);
+                    var startDate = targetDate.toISOString().split('T')[0]
+                    $("#search-start-datepicker").val(startDate);
+                    $("#search-end-datepicker").val(endDate);
+                    break;
+                case "month":
+                    var targetDate = new Date();
+                    targetDate.setMonth(targetDate.getMonth() - 1);
+                    var startDate = targetDate.toISOString().split('T')[0]
+                    console.log(targetDate, startDate)
+                    $("#search-start-datepicker").val(startDate);
+                    $("#search-end-datepicker").val(endDate);
+                    break;
+                case "3months":
+                    var targetDate = new Date();
+                    targetDate.setMonth(targetDate.getMonth() - 3);
+                    var startDate = targetDate.toISOString().split('T')[0]
+                    $("#search-start-datepicker").val(startDate);
+                    $("#search-end-datepicker").val(endDate);
+                    break;
+                case "year":
+                    var targetDate = new Date();
+                    targetDate.setFullYear(targetDate.getFullYear() - 1);
+                    var startDate = targetDate.toISOString().split('T')[0]
+                    $("#search-start-datepicker").val(startDate);
+                    $("#search-end-datepicker").val(endDate);
+                    break;
+                default:
+                    break;
+            }
+        });
+
+        $("#search-reset-btn").click(function (e) {
+            e.preventDefault();
+
+            $("#search-title").val('name');
+            $("#search-field").val('');
+            $("#search-category").val('');
+            $("#search-date-title").val('created');
+            $("#search-start-datepicker").val('');
+            $("#search-end-datepicker").val('');
+        });
+    });
+</script>
+{% endblock %}
