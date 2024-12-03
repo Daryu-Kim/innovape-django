@@ -22,6 +22,7 @@ class Product(models.Model):
     product_category = models.ManyToManyField(Category, related_name='product_category', verbose_name='상품 카테고리')
     product_description = models.CharField(max_length=200, verbose_name='상품 요약설명')
     product_detail = models.CharField(max_length=2000, verbose_name='상품 상세페이지')
+    product_option = models.CharField(max_length=1000, blank=True, verbose_name='상품 옵션')
     product_keywords = models.CharField(max_length=500, verbose_name='상품 검색어')
     product_consumer_price = models.PositiveIntegerField(verbose_name='상품 소비자가')
     product_sell_price = models.PositiveIntegerField(verbose_name='상품 판매가')

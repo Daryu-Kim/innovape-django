@@ -36,8 +36,15 @@
 				<h5 class="card-title">카페24 상품 가져오기</h5>
 				<p class="card-text keep-all mt-2">현재 시점까지의 모든 카페24 상품의 정보가 담긴 엑셀 파일을 불러옵니다.</p>
 				<input type="file" class="form-control p-2 mt-3" id="import-cafe24-file" accept=".csv" />
-				<input type="file" class="form-control p-2 mt-1" id="import-cafe24-option-file" accept=".csv" />
 				<button class="btn btn-primary ps-3 pe-3 pt-1 pb-1 mt-3" id="import-cafe24-btn" >불러오기</a>
+			</div>
+		</div>
+		<div class="card p-3">
+			<div class="card-body">
+				<h5 class="card-title">카페24 상품 옵션 가져오기</h5>
+				<p class="card-text keep-all mt-2">현재 시점까지의 모든 카페24 상품의 옵션 정보가 담긴 엑셀 파일을 불러옵니다.</p>
+				<input type="file" class="form-control p-2 mt-3" id="import-cafe24-option-file" accept=".csv" />
+				<button class="btn btn-primary ps-3 pe-3 pt-1 pb-1 mt-3" id="import-cafe24-option-btn" >불러오기</a>
 			</div>
 		</div>
 		<div class="card p-3">
@@ -88,16 +95,14 @@
 	$(document).ready(function() {
 		$("#import-cafe24-btn").click(function() {
 			productFile = $("#import-cafe24-file")[0].files[0];
-			productOptionFile = $("#import-cafe24-option-file")[0].files[0];
 
-			if (!productFile || !productOptionFile) {
-				alert("파일을 모두 등록해주세요!");
+			if (!productFile) {
+				alert("파일을 등록해주세요!");
 				return false;
 			}
 
 			var formData = new FormData();
 			formData.append("product", productFile);
-			formData.append("product_option", productOptionFile);
 
 			alert("상품을 불러옵니다.")
 			$.ajax({
@@ -115,6 +120,37 @@
 				},
 				error: function(xhr, status, error) {
 					alert("카페24 상품 불러오기에 실패했습니다!");
+				}
+			});
+		});
+
+		$("#import-cafe24-option-btn").click(function() {
+			productOptionFile = $("#import-cafe24-option-file")[0].files[0];
+
+			if (!productOptionFile) {
+				alert("파일을 등록해주세요!");
+				return false;
+			}
+
+			var formData = new FormData();
+			formData.append("product_option", productOptionFile);
+
+			alert("상품 옵션을 불러옵니다.")
+			$.ajax({
+				url: '{% url "dashboard_product_home" %}',
+				type: 'POST',
+				data: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+				processData: false,
+				contentType: false,
+				success: function(response) {
+					alert("카페24 상품 옵션 불러오기에 성공했습니다!");
+					window.location.reload();
+				},
+				error: function(xhr, status, error) {
+					alert("카페24 상품 옵션 불러오기에 실패했습니다!");
 				}
 			});
 		});

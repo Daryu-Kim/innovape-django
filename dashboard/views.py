@@ -47,153 +47,149 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
         return context
     
     def post(self, request, *args, **kwargs):
-        if request.FILES.get('product') and request.FILES.get('product_option'):
+        if request.FILES.get('product'):
+            print("상품 업로드 시작")
             product_file = request.FILES['product']
-            product_option_file = request.FILES['product_option']
             
             try:
                 product_df = pd.read_csv(product_file)
-                product_option_df = pd.read_csv(product_option_file)
                 
                 for index, row in product_df.iterrows():
                     if (
                         row["자체 상품코드"] is not None
                         and str(int(row["자체 상품코드"])) != ""
                     ):
-                        product_cafe24_code, product_option_title = self.upload_cafe24_product_excel(row)
-                        filtered_product_option_df = product_option_df[product_option_df['상품코드'] == product_cafe24_code]
-                        self.upload_cafe24_product_option_excel(filtered_product_option_df, product_cafe24_code, product_option_title)
-                
+                        try:
+                            categories = Category.objects.filter(
+                                category_code__in=row["상품분류 번호"].split("|")
+                            )
+
+                            # 썸네일 추출
+                            thumbnail_src = (
+                                "https://ecimg.cafe24img.com/pg1094b33231538027/innovape/web/product/big/"
+                                + row["이미지등록(상세)"]
+                            )
+
+                            try:
+                                headers = {
+                                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                                    "Referer": "https://ecimg.cafe24img.com/",  # 요청을 보낸 페이지의 URL로 설정
+                                }
+                                response = requests.get(thumbnail_src, headers=headers)
+                                response.raise_for_status()  # 요청 실패 시 예외 발생
+
+                                if response.status_code == 200:
+                                    print("Image fetched successfully!")
+                                    # 이미지 데이터를 바이너리 형식으로 가져옴
+                                    image_data = response.content
+
+                                    # ContentFile을 사용하여 Django의 BinaryField에 맞는 형식으로 변환
+                                    thumbnail_file = ContentFile(image_data)
+                                    print("Image data is now ready for use.")
+                                else:
+                                    print(
+                                        f"Failed to fetch image, status code: {response.status_code}"
+                                    )
+                            except requests.RequestException as e:
+                                print(f"Error fetching image from {thumbnail_src}: {e}")
+
+                            # 상세페이지 추출
+                            try:
+                                uploaded_images = self.extract_and_upload_images(
+                                    row["상품 상세설명"],
+                                    "https://ecimg.cafe24img.com/pg1094b33231538027/innovape/",
+                                )
+                                print("Detail Image data is now ready for use.")
+                            except Exception as e:
+                                print(f"Error extracting or uploading images: {e}")
+                                uploaded_images = []  # 예외 발생 시 빈 리스트로 처리
+                            
+                            product_alternative_price = row["판매가 대체문구"] if pd.notna(row["판매가 대체문구"]) else ""
+                            product_author = Member.objects.get(id=self.request.user.id)
+                            thumbnail_bytes = thumbnail_file.read()
+                            
+                            # 옵션 타이틀 추출
+                            option_title = row["옵션입력"].split('//')[1].split('{')[0]
+
+                            new_product, created = Product.objects.update_or_create(
+                                product_code=str(int(row["자체 상품코드"])),
+                                defaults={
+                                    "product_cafe24_code": str(row["상품코드"]),
+                                    "product_name": str(row["상품명"]),
+                                    "product_manage_name": str(row["상품명"]),
+                                    "product_description": str(row["상품 요약설명"]),
+                                    "product_option": str(row["옵션입력"]),
+                                    "product_keywords": str(row["검색어설정"]),
+                                    "product_consumer_price": int(row["소비자가"]),
+                                    "product_sell_price": int(row["판매가"]),
+                                    "product_supply_price": int(row["공급가"]),
+                                    "product_alternative_price": product_alternative_price,
+                                    "product_thumbnail_image": thumbnail_bytes,
+                                    "product_seo_title": str(row["검색엔진최적화(SEO) Title"]),
+                                    "product_seo_author": str(row["검색엔진최적화(SEO) Author"]),
+                                    "product_seo_description": str(row["검색엔진최적화(SEO) Description"]),
+                                    "product_seo_keywords": str(row["검색엔진최적화(SEO) Keywords"]),
+                                    "product_author": product_author,
+                                    "product_created_datetime": datetime.strptime(row["상품등록일"], "%Y-%m-%d"),
+                                    "product_modified_datetime": datetime.strptime(row["최근수정일"], "%Y-%m-%d"),
+                                },
+                            )
+
+                            new_product.product_category.set(categories)
+                            new_product.set_product_detail(uploaded_images)
+
+                            new_product.save()
+                            print("Product updated or created successfully.")
+
+                        except Exception as e:
+                            print(f"Error occurred: {e}")
                 return JsonResponse({'status': 'success'})
             except Exception as e:
                 print(e)
                 
-    def upload_cafe24_product_option_excel(self, row, cafe24_code, option_title):
-        try:
-            for index, data in row.iterrows():
-                # 필터링된 상품 코드로 Product 객체 가져오기
-                filtered_product = Product.objects.get(product_cafe24_code=str(cafe24_code))
-
-                # 재고수량 및 가격을 int로 변환할 때 오류 처리 추가
-                try:
-                    stock_quantity = int(data["재고수량"]) if str(data["재고수량"]).isdigit() else 0
-                except ValueError:
-                    stock_quantity = 0  # 숫자로 변환할 수 없는 경우 0으로 처리
-
-                try:
-                    option_price = int(data["옵션 추가금액"]) if str(data["옵션 추가금액"]).isdigit() else 0
-                except ValueError:
-                    option_price = 0  # 숫자로 변환할 수 없는 경우 0으로 처리
-
-                # 옵션 이름, 옵션 제목, 가격 등 처리
-                option_code = str(data["품목코드"])
-                option_name = str(data["품목명"]).split('/')[1] if '/' in str(data["품목명"]) else str(data["품목명"])
-                option_display_name = str(data["품목명"])
-                
-                # Product 객체 업데이트/생성
-                option, created = ProductOptions.objects.update_or_create(
-                    product_option_code=option_code,
-                    defaults={
-                        "product": filtered_product,
-                        "product_option_stock": stock_quantity,
-                        "product_option_title": option_title,
-                        "product_option_name": option_name,
-                        "product_option_display_name": option_display_name,
-                        "product_option_price": option_price,
-                    },
-                )
-                option.save()
-            return JsonResponse({'status': 'success'})
-        except Exception as e:
-            print(e)
-            return JsonResponse({'status': 'error', 'message': str(e)})
-
-    def upload_cafe24_product_excel(self, row):
-        try:
-            categories = Category.objects.filter(
-                category_code__in=row["상품분류 번호"].split("|")
-            )
-
-            # 썸네일 추출
-            thumbnail_src = (
-                "https://ecimg.cafe24img.com/pg1094b33231538027/innovape/web/product/big/"
-                + row["이미지등록(상세)"]
-            )
-
+        elif request.FILES.get('product_option'):
+            print("상품 옵션 업로드 시작")
+            product_option_file = request.FILES['product_option']
             try:
-                headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                    "Referer": "https://ecimg.cafe24img.com/",  # 요청을 보낸 페이지의 URL로 설정
-                }
-                response = requests.get(thumbnail_src, headers=headers)
-                response.raise_for_status()  # 요청 실패 시 예외 발생
+                product_option_df = pd.read_csv(product_option_file)
+                for index, row in product_option_df.iterrows():
+                    # 필터링된 상품 코드로 Product 객체 가져오기
+                    product = Product.objects.get(product_cafe24_code=str(row["상품코드"]))
+                    option_title = product.product_option.split('//')[1].split('{')[0]
 
-                if response.status_code == 200:
-                    print("Image fetched successfully!")
-                    # 이미지 데이터를 바이너리 형식으로 가져옴
-                    image_data = response.content
+                    # 재고수량 및 가격을 int로 변환할 때 오류 처리 추가
+                    try:
+                        stock_quantity = int(row["재고수량"]) if str(row["재고수량"]).isdigit() else 0
+                    except ValueError:
+                        stock_quantity = 0  # 숫자로 변환할 수 없는 경우 0으로 처리
 
-                    # ContentFile을 사용하여 Django의 BinaryField에 맞는 형식으로 변환
-                    thumbnail_file = ContentFile(image_data)
-                    print("Image data is now ready for use.")
-                else:
-                    print(
-                        f"Failed to fetch image, status code: {response.status_code}"
+                    try:
+                        option_price = int(row["옵션 추가금액"]) if str(row["옵션 추가금액"]).isdigit() else 0
+                    except ValueError:
+                        option_price = 0  # 숫자로 변환할 수 없는 경우 0으로 처리
+
+                    # 옵션 이름, 옵션 제목, 가격 등 처리
+                    option_code = str(row["품목코드"])
+                    option_name = str(row["품목명"]).split('/')[1] if '/' in str(row["품목명"]) else str(row["품목명"])
+                    option_display_name = str(row["품목명"])
+                    
+                    # Product 객체 업데이트/생성
+                    option, created = ProductOptions.objects.update_or_create(
+                        product_option_code=option_code,
+                        defaults={
+                            "product": product,
+                            "product_option_stock": stock_quantity,
+                            "product_option_title": option_title,
+                            "product_option_name": option_name,
+                            "product_option_display_name": option_display_name,
+                            "product_option_price": option_price,
+                        },
                     )
-            except requests.RequestException as e:
-                print(f"Error fetching image from {thumbnail_src}: {e}")
-
-            # 상세페이지 추출
-            try:
-                uploaded_images = self.extract_and_upload_images(
-                    row["상품 상세설명"],
-                    "https://ecimg.cafe24img.com/pg1094b33231538027/innovape/",
-                )
-                print("Detail Image data is now ready for use.")
+                    option.save()
+                return JsonResponse({'status': 'success'})
             except Exception as e:
-                print(f"Error extracting or uploading images: {e}")
-                uploaded_images = []  # 예외 발생 시 빈 리스트로 처리
-            
-            product_alternative_price = row["판매가 대체문구"] if pd.notna(row["판매가 대체문구"]) else ""
-            product_author = Member.objects.get(id=self.request.user.id)
-            thumbnail_bytes = thumbnail_file.read()
-            
-            # 옵션 타이틀 추출
-            option_title = row["옵션입력"].split('//')[1].split('{')[0]
-
-            new_product, created = Product.objects.update_or_create(
-                product_code=str(int(row["자체 상품코드"])),
-                defaults={
-                    "product_cafe24_code": str(row["상품코드"]),
-                    "product_name": str(row["상품명"]),
-                    "product_manage_name": str(row["상품명"]),
-                    "product_description": str(row["상품 요약설명"]),
-                    "product_keywords": str(row["검색어설정"]),
-                    "product_consumer_price": int(row["소비자가"]),
-                    "product_sell_price": int(row["판매가"]),
-                    "product_supply_price": int(row["공급가"]),
-                    "product_alternative_price": product_alternative_price,
-                    "product_thumbnail_image": thumbnail_bytes,
-                    "product_seo_title": str(row["검색엔진최적화(SEO) Title"]),
-                    "product_seo_author": str(row["검색엔진최적화(SEO) Author"]),
-                    "product_seo_description": str(row["검색엔진최적화(SEO) Description"]),
-                    "product_seo_keywords": str(row["검색엔진최적화(SEO) Keywords"]),
-                    "product_author": product_author,
-                    "product_created_datetime": datetime.strptime(row["상품등록일"], "%Y-%m-%d"),
-                    "product_modified_datetime": datetime.strptime(row["최근수정일"], "%Y-%m-%d"),
-                },
-            )
-
-            new_product.product_category.set(categories)
-            new_product.set_product_detail(uploaded_images)
-
-            new_product.save()
-            print("Product updated or created successfully.")
-            
-            return str(row["상품코드"]), option_title
-
-        except Exception as e:
-            print(f"Error occurred: {e}")
+                print(f"Error is : {e}")
+                return JsonResponse({'status': 'error', 'message': str(e)})
 
     def upload_to_imgbb(self, binary_data):
         imgbb_api_key = (
