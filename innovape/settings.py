@@ -162,7 +162,7 @@ LOGGING = {
         'file': {
             'level': 'ERROR',
             'class': 'logging.FileHandler',
-            'filename': '/path/to/your/django/error.log',
+            'filename': '/error.log',
         },
     },
     'loggers': {
