@@ -63,6 +63,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                             categories = Category.objects.filter(
                                 category_code__in=row["상품분류 번호"].split("|")
                             )
+                            details = []
 
                             # 썸네일 추출
                             thumbnail_src = (
@@ -94,15 +95,33 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                 print(f"Error fetching image from {thumbnail_src}: {e}")
 
                             # 상세페이지 추출
-                            try:
-                                uploaded_images = self.extract_and_upload_images(
-                                    row["상품 상세설명"],
-                                    "https://ecimg.cafe24img.com/pg1094b33231538027/innovape/",
-                                )
-                                print("Detail Image data is now ready for use.")
-                            except Exception as e:
-                                print(f"Error extracting or uploading images: {e}")
-                                uploaded_images = []  # 예외 발생 시 빈 리스트로 처리
+                            # BeautifulSoup을 사용하여 HTML에서 img 태그의 src 속성 추출
+                            soup = BeautifulSoup(row["상품 상세설명"], "html.parser")
+                            img_tags = soup.find_all("img")
+
+                            for img_tag in img_tags:
+                                src = img_tag.get("src")
+                                if not src:
+                                    continue
+                                formatted_src = src.replace("//innovape.cafe24.com/", "")
+
+                                # base_url과 결합하여 절대 URL 생성
+                                full_url = f"{"https://ecimg.cafe24img.com/pg1094b33231538027/innovape/"}{formatted_src}"
+
+                                # 이미지를 다운로드
+                                try:
+                                    headers = {
+                                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                                        "Referer": "https://ecimg.cafe24img.com/",  # 요청을 보낸 페이지의 URL로 설정
+                                    }
+                                    response = requests.get(full_url, headers=headers)
+                                    response.raise_for_status()  # 요청 실패 시 예외 발생
+
+                                    # 이미지 파일을 바이너리 형태로 변환
+                                    binary_data = ContentFile(response.content)
+                                    details.append(binary_data.read())
+                                except requests.RequestException as e:
+                                    print(f"Error fetching image from {full_url}: {e}")
                             
                             product_alternative_price = row["판매가 대체문구"] if pd.notna(row["판매가 대체문구"]) else ""
                             product_author = Member.objects.get(id=self.request.user.id)
@@ -118,6 +137,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                     "product_name": str(row["상품명"]),
                                     "product_manage_name": str(row["상품명"]),
                                     "product_description": str(row["상품 요약설명"]),
+                                    "product_detail": details,
                                     "product_option": str(row["옵션입력"]),
                                     "product_keywords": str(row["검색어설정"]),
                                     "product_consumer_price": int(row["소비자가"]),

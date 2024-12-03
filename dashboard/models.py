@@ -1,5 +1,6 @@
 from django.db import models
 from account.models import Member
+from django.contrib.postgres.fields import ArrayField
 
 # Create your models here.
 class Category(models.Model):
@@ -21,7 +22,7 @@ class Product(models.Model):
     product_manage_name = models.CharField(max_length=100, verbose_name='상품명 (관리용)')
     product_category = models.ManyToManyField(Category, related_name='product_category', verbose_name='상품 카테고리')
     product_description = models.CharField(max_length=200, verbose_name='상품 요약설명')
-    product_detail = models.CharField(max_length=2000, verbose_name='상품 상세페이지')
+    product_detail = ArrayField(models.BinaryField(), blank=True, verbose_name='상품 상세페이지')
     product_option = models.CharField(max_length=1000, blank=True, verbose_name='상품 옵션')
     product_keywords = models.CharField(max_length=500, verbose_name='상품 검색어')
     product_consumer_price = models.PositiveIntegerField(verbose_name='상품 소비자가')
@@ -44,12 +45,6 @@ class Product(models.Model):
 
     def __str__(self):
         return self.product_name
-    
-    def set_product_detail(self, product_detail_list):
-        self.product_detail = ",".join(product_detail_list)
-
-    def get_product_detail(self):
-        return self.product_detail.split(",") if self.product_detail else []
 
 
 class ProductOptions(models.Model):
