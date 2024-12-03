@@ -82,10 +82,23 @@ WSGI_APPLICATION = 'innovape.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# 디버깅용
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+# 프로덕션용
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'innovape',  # 생성한 데이터베이스 이름
+        'USER': 'innovape',  # 생성한 사용자 이름
+        'PASSWORD': 'Dlshqpdlvm00^^',  # 생성한 사용자 비밀번호
+        'HOST': 'localhost',  # 만약 외부 IP에서 접속할 경우, IP 주소로 변경
+        'PORT': '5432',  # PostgreSQL 기본 포트
     }
 }
 
