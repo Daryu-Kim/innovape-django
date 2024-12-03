@@ -5,12 +5,7 @@ from account.models import Member
 class Category(models.Model):
     category_name = models.CharField(max_length=50, verbose_name='카테고리명')
     category_code = models.CharField(max_length=50, default='0', verbose_name='카테고리 코드')
-    category_description = models.CharField(max_length=200, blank=True, verbose_name='카테고리 설명')
     category_parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, verbose_name='부모 카테고리')
-    category_seo_title = models.CharField(max_length=100, blank=True, verbose_name='검색용 사이트 제목')
-    category_seo_author = models.CharField(max_length=50, blank=True, verbose_name='검색용 게시자')
-    category_seo_description = models.CharField(max_length=200, blank=True, verbose_name='검색용 요약설명')
-    category_seo_keywords = models.CharField(max_length=500, blank=True, verbose_name='검색용 검색어')
 
     class Meta:
         verbose_name = "상품 카테고리"

@@ -7,18 +7,6 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ('category_name',)
     list_filter = ('category_name',)
 
-    # readonly_fields = ('category_seo_author',)
-
-    def get_form(self, request, obj=None, **kwargs):
-        form = super().get_form(request, obj, **kwargs)
-
-        if not obj:
-            form.base_fields['category_seo_title'].initial = " - 이노베이프 INNOVAPE"
-            form.base_fields['category_seo_author'].initial = "이노베이프 INNOVAPE"
-            form.base_fields['category_seo_keywords'].initial = "이노베이프,전자담배,전담,"
-        
-        return form
-
 admin.site.register(Category, CategoryAdmin)
     
 
