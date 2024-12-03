@@ -108,6 +108,7 @@
 			$.ajax({
 				url: '{% url "dashboard_product_home" %}',
 				type: 'POST',
+				timeout: 600000,
 				data: formData,
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}'
@@ -139,6 +140,7 @@
 			$.ajax({
 				url: '{% url "dashboard_product_home" %}',
 				type: 'POST',
+				timeout: 600000,
 				data: formData,
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}'
