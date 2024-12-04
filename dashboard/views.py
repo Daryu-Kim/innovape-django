@@ -139,7 +139,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                 formatted_src = src.replace("//innovape.cafe24.com/", "")
 
                                 # base_url과 결합하여 절대 URL 생성
-                                full_url = f"{"https://ecimg.cafe24img.com/pg1094b33231538027/innovape/"}{formatted_src}"
+                                full_url = f"https://ecimg.cafe24img.com/pg1094b33231538027/innovape/{formatted_src}"
 
                                 # 이미지를 다운로드
                                 try:
