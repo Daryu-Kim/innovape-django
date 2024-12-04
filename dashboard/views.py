@@ -3,6 +3,7 @@ import requests
 import pprint
 import json
 import re
+import os
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -20,6 +21,8 @@ from datetime import datetime, timedelta, date
 from account.models import Member
 from io import BytesIO
 import pandas as pd
+from django.core.files.storage import FileSystemStorage
+from django.conf import settings
 
 
 # Create your views here.
@@ -55,15 +58,29 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                 product_df = pd.read_csv(product_file)
                 
                 for index, row in product_df.iterrows():
-                    if (
-                        row["자체 상품코드"] is not None
-                        and str(int(row["자체 상품코드"])) != ""
-                    ):
+                    print(row["자체 상품코드"])
+                    if (pd.notna(row["자체 상품코드"])):
+                        # print(f"{int(row["자체 상품코드"])} DEBUG: {row["소비자가"]}, {row["판매가"]}, {row["공급가"]}")
                         try:
                             categories = Category.objects.filter(
                                 category_code__in=row["상품분류 번호"].split("|")
                             )
                             details = []
+                            try:
+                                consumer_price = row["소비자가"] if pd.notna(row["소비자가"]) else 0
+                                sell_price = row["판매가"] if pd.notna(row["판매가"]) else 0
+                                supply_price = row["공급가"] if pd.notna(row["공급가"]) else 0
+
+                                # NaN을 0으로 대체한 후 int로 변환
+                                consumer_price = int(consumer_price) if pd.notna(consumer_price) else 0
+                                sell_price = int(sell_price) if pd.notna(sell_price) else 0
+                                supply_price = int(supply_price) if pd.notna(supply_price) else 0
+                                
+                            except Exception as e:
+                                # NaN을 처리할 수 없을 때 해당 행의 정보를 로깅
+                                print(f"Error converting row {index}: {row}")
+                                print(f"Error details: {e}")
+                                continue
 
                             # 썸네일 추출
                             thumbnail_src = (
@@ -83,9 +100,12 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                     print("Image fetched successfully!")
                                     # 이미지 데이터를 바이너리 형식으로 가져옴
                                     image_data = response.content
+                                    # 파일 확장자 추출 (URL에서 확장자 추출)
+                                    _, extension = os.path.splitext(thumbnail_src)
+                                    image_name = f"{int(row['자체 상품코드'])}{extension}"
 
                                     # ContentFile을 사용하여 Django의 BinaryField에 맞는 형식으로 변환
-                                    thumbnail_file = ContentFile(image_data)
+                                    image_file = ContentFile(image_data)
                                     print("Image data is now ready for use.")
                                 else:
                                     print(
@@ -93,13 +113,26 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                     )
                             except requests.RequestException as e:
                                 print(f"Error fetching image from {thumbnail_src}: {e}")
+                                
+                            # 상세페이지 초기화 작업
+                            product_detail_images_path = os.path.join(settings.MEDIA_ROOT, 'product_detail_images')
+                            product_code_str = str(int(row['자체 상품코드']))
+                            
+                            if not os.path.exists(product_detail_images_path):
+                                os.makedirs(product_detail_images_path)
+                            
+                            for filename in os.listdir(product_detail_images_path):
+                                if product_code_str in filename:  # 파일 이름에 해당 상품 코드가 포함된 경우
+                                    file_path = os.path.join(product_detail_images_path, filename)
+                                    if os.path.exists(file_path):
+                                        os.remove(file_path)  # 파일 삭제
 
                             # 상세페이지 추출
                             # BeautifulSoup을 사용하여 HTML에서 img 태그의 src 속성 추출
                             soup = BeautifulSoup(row["상품 상세설명"], "html.parser")
                             img_tags = soup.find_all("img")
 
-                            for img_tag in img_tags:
+                            for index, img_tag in enumerate(img_tags):
                                 src = img_tag.get("src")
                                 if not src:
                                     continue
@@ -117,15 +150,25 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                     response = requests.get(full_url, headers=headers)
                                     response.raise_for_status()  # 요청 실패 시 예외 발생
 
-                                    # 이미지 파일을 바이너리 형태로 변환
-                                    binary_data = ContentFile(response.content)
-                                    details.append(binary_data.read())
+                                    # 이미지 데이터를 바이너리 형식으로 가져옴
+                                    detail_image_data = response.content
+                                    # 파일 확장자 추출 (URL에서 확장자 추출)
+                                    _, extension = os.path.splitext(formatted_src)
+                                    detail_image_name = f"{int(row['자체 상품코드'])}_{index}{extension}"
+
+                                    # ContentFile을 사용하여 Django의 BinaryField에 맞는 형식으로 변환
+                                    detail_image_file = ContentFile(detail_image_data)
+                                    
+                                    fs = FileSystemStorage(product_detail_images_path)
+                                    file = fs.save(detail_image_name, detail_image_file)
+                                    file_url = f"product_detail_images/{detail_image_name}"
+                                    
+                                    details.append(file_url)
                                 except requests.RequestException as e:
                                     print(f"Error fetching image from {full_url}: {e}")
                             
                             product_alternative_price = row["판매가 대체문구"] if pd.notna(row["판매가 대체문구"]) else ""
                             product_author = Member.objects.get(id=self.request.user.id)
-                            thumbnail_bytes = thumbnail_file.read()
                             
                             # 옵션 타이틀 추출
                             option_title = row["옵션입력"].split('//')[1].split('{')[0]
@@ -140,11 +183,10 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                     "product_detail": details,
                                     "product_option": str(row["옵션입력"]),
                                     "product_keywords": str(row["검색어설정"]),
-                                    "product_consumer_price": int(row["소비자가"]),
-                                    "product_sell_price": int(row["판매가"]),
-                                    "product_supply_price": int(row["공급가"]),
+                                    "product_consumer_price": consumer_price,
+                                    "product_sell_price": sell_price,
+                                    "product_supply_price": supply_price,
                                     "product_alternative_price": product_alternative_price,
-                                    "product_thumbnail_image": thumbnail_bytes,
                                     "product_seo_title": str(row["검색엔진최적화(SEO) Title"]),
                                     "product_seo_author": str(row["검색엔진최적화(SEO) Author"]),
                                     "product_seo_description": str(row["검색엔진최적화(SEO) Description"]),
@@ -154,8 +196,12 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                     "product_modified_datetime": datetime.strptime(row["최근수정일"], "%Y-%m-%d"),
                                 },
                             )
+                            
+                            if new_product.product_thumbnail_image:
+                                new_product.product_thumbnail_image.delete(save=False)
 
                             new_product.product_category.set(categories)
+                            new_product.product_thumbnail_image.save(image_name, image_file)
 
                             new_product.save()
                             print("Product updated or created successfully.")
