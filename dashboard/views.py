@@ -156,7 +156,6 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                             )
 
                             new_product.product_category.set(categories)
-                            new_product.set_product_detail(uploaded_images)
 
                             new_product.save()
                             print("Product updated or created successfully.")
