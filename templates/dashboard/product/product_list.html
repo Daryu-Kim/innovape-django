@@ -84,7 +84,7 @@
             <thead>
                 <tr>
                     {% comment %} <th><input type="checkbox" /></th> {% endcomment %}
-                    <th>No</th>
+                    <th>상품 썸네일</th>
                     <th>상품 분류코드</th>
                     <th>상품명</th>
                     <th>카테고리</th>
@@ -121,7 +121,16 @@
                 }
             },
             columns: [
-                { data: 'id' },
+                {
+                    data: 'product_thumbnail_image',
+                    render: function (data, type, row) {
+                        if (data) {
+                            return '<img src="' + data + '" alt="Product Thumbnail" style="width: 50px; height: 50px;"/>';
+                        } else {
+                            return '<span>No image</span>';
+                        }
+                    }
+                },
                 { data: 'product_code' },
                 { data: 'product_name' },
                 {
