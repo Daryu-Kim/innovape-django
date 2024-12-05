@@ -88,27 +88,25 @@
 }
 
 #product-table {
-	width: 100%;
-	/* table-layout: fixed; */
-	border-collapse: collapse;
+	table-layout: fixed !important;
 }
 
-#product-table thead th {
+#product-table thead * {
 	background-color: #f3f3f3 !important;
+	text-align: start !important;
 }
 
-#product-table th,
-#product-table td {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+#product-table tbody * {
+	word-break: keep-all !important;
+}
+
+#product-table_wrapper > div:nth-child(3) > div.d-md-flex.justify-content-between.align-items-center.dt-layout-end.col-md-auto.ms-auto > div > nav > ul > li > button {
+	padding: 4px 12px !important;
 }
 
 .table-wrapper {
-	overflow-x: auto;
-	max-width: 100%;
-	-webkit-overflow-scrolling: touch;
-	margin: 0 auto;
+	overflow-x: auto !important;
+	width: 100% !important;
 }
 
 .table th,

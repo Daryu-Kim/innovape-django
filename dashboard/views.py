@@ -172,13 +172,29 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                             
                             # 옵션 타이틀 추출
                             option_title = row["옵션입력"].split('//')[1].split('{')[0]
+                            
+                            # 기기 상품명 다듬기
+                            product_name = str(row["상품명"])
+                            if "입호흡 전자담배 기기" in product_name:
+                                product_name = product_name.replace(" 입호흡 전자담배 기기", "")
+                            elif "입호흡 폐호흡 전자담배 기기" in product_name:
+                                product_name = product_name.replace(" 입호흡 폐호흡 전자담배 기기", "")
+                                
+                            # 액상 상품명 다듬기
+                            if "52" in row["상품분류 번호"].split("|"):
+                                if "입호흡 액상" not in product_name:
+                                    product_name += " 입호흡 액상"
+
+                            if "45" in row["상품분류 번호"].split("|"):
+                                if "폐호흡 액상" not in product_name:
+                                    product_name += " 폐호흡 액상"
 
                             new_product, created = Product.objects.update_or_create(
                                 product_code=str(int(row["자체 상품코드"])),
                                 defaults={
                                     "product_cafe24_code": str(row["상품코드"]),
-                                    "product_name": str(row["상품명"]),
-                                    "product_manage_name": str(row["상품명"]),
+                                    "product_name": product_name,
+                                    "product_manage_name": product_name,
                                     "product_description": str(row["상품 요약설명"]),
                                     "product_detail": details,
                                     "product_option": str(row["옵션입력"]),
@@ -544,7 +560,7 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
         return context
 
     def get_filtered_products(
-        self, search_field, search_title, search_category, start_date, end_date
+        self, search_field, search_title, search_category, start_date, end_date, start, length
     ):
         # 기본 쿼리셋
         queryset = Product.objects.all()
@@ -560,6 +576,8 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
         # 날짜 범위 필터링
         if start_date and end_date:
             queryset = queryset.filter(created_datetime__range=[start_date, end_date])
+            
+        queryset = queryset[start:start+length]
 
         return queryset
 
@@ -571,22 +589,31 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
             search_category = self.request.GET.getlist("search_category", [])
             start_date = self.request.GET.get("start_date", "")
             end_date = self.request.GET.get("end_date", "")
+        
+            # 페이지네이션을 위한 start와 length 파라미터 추가
+            start = int(self.request.GET.get("start", 0))
+            length = int(self.request.GET.get("length", 10))
+            
+            # 전체 데이터셋 크기
+            total_records = Product.objects.count()
 
             # 필터링된 제품을 가져옵니다.
-            filtered_products = self.get_filtered_products(
-                search_field, search_title, search_category, start_date, end_date
+            filtered_queryset = self.get_filtered_products(
+                search_field, search_title, search_category, start_date, end_date, 0, total_records
             )
+            filtered_count = filtered_queryset.count()
+
+            # 페이지네이션 적용된 제품
+            paginated_queryset = filtered_queryset[start:start + length]
 
             # 각 제품에 대한 카테고리와 디스플레이 값 처리
             data = []
-            for product in filtered_products:
-                # 카테고리 이름을 쉼표로 구분된 문자열로 결합
+            for product in paginated_queryset:
                 categories = '<br>'.join([
                     (f"{category.category_parent.category_name} > {category.category_name}" 
                     if category.category_parent else category.category_name) 
                     for category in product.product_category.all()
                 ])
-                print(product.product_thumbnail_image)
                 data.append({
                     'product_thumbnail_image': product.product_thumbnail_image.url if product.product_thumbnail_image else None,
                     'product_code': product.product_code,
@@ -603,8 +630,8 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
             return JsonResponse(
                 {
                     "draw": int(self.request.GET.get("draw", 0)),
-                    "recordsTotal": Product.objects.count(),
-                    "recordsFiltered": filtered_products.count(),
+                    "recordsTotal": total_records,
+                    "recordsFiltered": filtered_count,
                     "data": data,
                 }
             )

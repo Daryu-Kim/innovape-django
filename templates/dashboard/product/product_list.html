@@ -83,7 +83,6 @@
         <table class="table table-hover" id="product-table">
             <thead>
                 <tr>
-                    {% comment %} <th><input type="checkbox" /></th> {% endcomment %}
                     <th>상품 썸네일</th>
                     <th>상품 분류코드</th>
                     <th>상품명</th>
@@ -97,7 +96,7 @@
                 </tr>
             </thead>
         </table>
-    </div>>
+    </div>
 </div>
 <script>
     $(document).ready(function () {
@@ -108,11 +107,10 @@
         $("#product-table").DataTable({
             processing: true,
             serverSide: true,
-            autoWidth: true,
+            pageLength: 10,
             ajax: {
-                url: "{% url 'dashboard_product_list' %}",  // 실제 URL을 적어주세요.
+                url: "{% url 'dashboard_product_list' %}",
                 data: function (d) {
-                    // DataTable의 필터링 값도 포함하여 요청
                     d.search_field = $("#search-field").val();
                     d.search_title = $("#search-title").val();
                     d.search_category = $("#search-category").val();
@@ -131,43 +129,53 @@
                         }
                     }
                 },
-                { data: 'product_code' },
-                { data: 'product_name' },
+                { 
+                    data: 'product_code',
+                    render: function (data, type, row) {
+                        return `<p class="text-center" style="width: 96px;">${data}</p>`;
+                    }
+                },
+                { 
+                    data: 'product_name',
+                    render: function (data, type, row) {
+                        return `<p class="text-center" style="width: 192px;">${data}</p>`;
+                    }
+                },
                 {
                     data: 'product_categories',
                     render: function (data, type, row) {
-                        return data;
+                        return `<p class="text-center" style="width: 192px;">${data}</p>`;
                     }
                 },
                 {
                     data: 'product_consumer_price',
                     render: function (data, type, row) {
-                        return data.toLocaleString() + '원';
+                        return `<p class="text-center" style="width: 72px;">${data.toLocaleString()} 원</p>`;
                     }
                 },
                 {
                     data: 'product_sell_price',
                     render: function (data, type, row) {
-                        return data.toLocaleString() + '원';
+                        return `<p class="text-center" style="width: 72px;">${data.toLocaleString()} 원</p>`;
                     }
                 },
                 {
                     data: 'product_supply_price',
                     render: function (data, type, row) {
-                        return data.toLocaleString() + '원';
+                        return `<p class="text-center" style="width: 72px;">${data.toLocaleString()} 원</p>`;
                     }
                 },
                 {
                     data: 'product_author',
                     render: function (data, type, row) {
-                        return data;
+                        return `<p class="text-center" style="width: 84px;">${data}</p>`;
                     }
                 },
                 {
                     data: 'product_created_datetime',
                     render: function (data, type, row) {
                         const date = new Date(data);
-                        return date.toISOString().slice(0, 10);
+                        return `<p class="text-center" style="width: 72px;">${date.toISOString().slice(0, 10)}</p>`;
                     }
                 },
                 {
@@ -175,10 +183,24 @@
                     render: function (data, type, row) {
                         const date = new Date(data);
                         var formattedDate = date.toISOString().slice(0, 10);
-                        return formattedDate === "1970-01-01" ? "-" : formattedDate;
+                        return `<p class="text-center" style="width: 72px;">${formattedDate === "1970-01-01" ? "-" : formattedDate}</p>`;
                     }
                 },
             ],
+            language: {
+                lengthMenu: "_MENU_ 개씩 보기",
+                zeroRecords: "일치하는 결과가 없습니다.",
+                info: "총 _TOTAL_개 중 _START_부터 _END_까지 표시",
+                infoEmpty: "데이터가 없습니다.",
+                infoFiltered: "(총 _MAX_개의 데이터에서 필터링됨)",
+                search: "검색:",
+                paginate: {
+                    first: "처음",
+                    last: "마지막",
+                    next: "다음",
+                    previous: "이전"
+                }
+            }
         }).columns.adjust();
 
         $(".date-btn").click(function (e) {
