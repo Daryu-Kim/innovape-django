@@ -58,7 +58,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                 product_df = pd.read_csv(product_file)
                 
                 for index, row in product_df.iterrows():
-                    print(row["자체 상품코드"])
+                    print(row["자체 상품코드"], row["상품코드"])
                     if (pd.notna(row["자체 상품코드"])):
                         # print(f"{int(row["자체 상품코드"])} DEBUG: {row["소비자가"]}, {row["판매가"]}, {row["공급가"]}")
                         try:
@@ -255,59 +255,6 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
             except Exception as e:
                 print(f"Error is : {e}")
                 return JsonResponse({'status': 'error', 'message': str(e)})
-
-    def upload_to_imgbb(self, binary_data):
-        imgbb_api_key = (
-            "d871f58378653057ddb74a4a23a7e629"  # 여기에 imgbb API 키를 입력하세요.
-        )
-        url = "https://api.imgbb.com/1/upload"
-        files = {"image": binary_data}
-        params = {"key": imgbb_api_key}
-
-        response = requests.post(url, params=params, files=files)
-        if response.status_code == 200:
-            return response.json()
-        return None
-
-
-    def extract_and_upload_images(self, html_content, base_url):
-        # BeautifulSoup을 사용하여 HTML에서 img 태그의 src 속성 추출
-        soup = BeautifulSoup(html_content, "html.parser")
-        img_tags = soup.find_all("img")
-
-        uploaded_images = []
-
-        for img_tag in img_tags:
-            src = img_tag.get("src")
-            if not src:
-                continue
-            formatted_src = src.replace("//innovape.cafe24.com/", "")
-
-            # base_url과 결합하여 절대 URL 생성
-            full_url = f"{base_url}{formatted_src}"
-
-            # 이미지를 다운로드
-            try:
-                headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                    "Referer": "https://ecimg.cafe24img.com/",  # 요청을 보낸 페이지의 URL로 설정
-                }
-                response = requests.get(full_url, headers=headers)
-                response.raise_for_status()  # 요청 실패 시 예외 발생
-
-                # 이미지 파일을 바이너리 형태로 변환
-                binary_data = BytesIO(response.content)
-
-                # 이미지를 imgbb에 업로드
-                upload_result = self.upload_to_imgbb(binary_data)
-
-                # 업로드 성공 시 이미지 URL을 저장
-                if upload_result:
-                    uploaded_images.append(upload_result["data"]["url"])
-            except requests.RequestException as e:
-                print(f"Error fetching image from {full_url}: {e}")
-
-        return uploaded_images
 
 
 class DashboardProductAdd(LoginRequiredMixin, TemplateView):
