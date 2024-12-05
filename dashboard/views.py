@@ -581,7 +581,11 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
             data = []
             for product in filtered_products:
                 # 카테고리 이름을 쉼표로 구분된 문자열로 결합
-                categories = '<br>'.join([category.category_name for category in product.product_category.all()])
+                categories = '<br>'.join([
+                    (f"{category.category_parent.category_name} > {category.category_name}" 
+                    if category.category_parent else category.category_name) 
+                    for category in product.product_category.all()
+                ])
                 print(product.product_thumbnail_image)
                 data.append({
                     'product_thumbnail_image': product.product_thumbnail_image.url if product.product_thumbnail_image else None,
