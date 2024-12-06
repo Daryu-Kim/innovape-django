@@ -572,7 +572,7 @@
                 "product_sell_price": $("#sell-price").val(),
                 "product_supply_price": $("#supply-price").val(),
                 "product_alternative_price": $("#alternative-price").val(),
-                "product_thumbnail_image": $("#thumbnail-img").attr('src').split(',')[1],
+                "product_thumbnail_image": $("#thumbnail-img").attr('src'),
                 "product_related_products": $("#related-product-select").val(),
                 "product_seo_title": $("#product-seo-title").val(),
                 "product_seo_author": $("#product-seo-author").val(),
@@ -646,12 +646,12 @@
             const data = $('#excel-data').val().split(',');
 
             $('#product-code').val(data[0]);
-            $('#product-name, #product-manage-name').val(`[${data[1]}] ${data[2]} ${data[3]}`)
-            $('#product-description').val(data[5]);
-            $('#product-seo-title').val(`[${data[1]}] ${data[2]} ${data[4]}`);
-            $('#product-seo-description').val(data[5]);
+            $('#product-name, #product-manage-name').val(`[${data[1]}] ${data[2]}`)
+            $('#product-description').val(data[4]);
+            $('#product-seo-title').val(`[${data[1]}] ${data[2]} ${data[3]}`);
+            $('#product-seo-description').val(data[4]);
             $('#sell-price').val(data[6]);
-            $('#customer-price').val(data[7]);
+            $('#customer-price').val(data[6]);
         })
 
         $('#input-thumbnail-img').change(function(event) {

@@ -74,11 +74,6 @@ class Consumer(models.Model):
         ('블랙 다이아몬드', '블랙 다이아몬드'),
     ]
     
-    VERIFIED_CHOICE = [
-        ('T', '인증됨'),
-        ('F', '인증안됨'),
-    ]
-    
     AREA_CHOICE = [
         ('경기', '경기'),
         ('서울', '서울'),
@@ -110,7 +105,8 @@ class Consumer(models.Model):
     consumer_name = models.CharField(max_length=50, verbose_name='고객 이름')
     consumer_phone_number = models.CharField(max_length=20, verbose_name='고객 전화번호')
     consumer_email = models.CharField(max_length=50, verbose_name='고객 이메일')
-    consumer_verified = models.CharField(max_length=10, choices=VERIFIED_CHOICE, default='F', verbose_name='고객 인증여부')
+    consumer_verify_info = models.CharField(max_length=100, blank=True, verbose_name='고객 인증정보') # 이름/주민번호앞자리/주민번호뒷자리/발급일자
+    consumer_verify_dt = models.DateField(blank=True, null=True, verbose_name='고객 인증일자')
     consumer_birth = models.DateField(verbose_name='고객 생년월일')
     consumer_area = models.CharField(max_length=10, choices=AREA_CHOICE, blank=True, verbose_name='고객 거주지역')
     consumer_base_address = models.CharField(max_length=200, verbose_name='고객 기본주소')

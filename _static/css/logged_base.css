@@ -104,6 +104,18 @@
 	padding: 4px 12px !important;
 }
 
+#dt-length-0 {
+	padding: 4px 12px !important;
+	width: 64px !important;
+	margin-right: 8px !important;
+}
+
+#dt-search-0 {
+	margin-left: 8px !important;
+	padding: 4px 12px !important;
+	width: 180px !important;
+}
+
 .table-wrapper {
 	overflow-x: auto !important;
 	width: 100% !important;

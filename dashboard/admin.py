@@ -34,8 +34,8 @@ admin.site.register(ProductOptions, ProductOptionsAdmin)
 
 
 class ConsumerAdmin(admin.ModelAdmin):
-    list_display = ('consumer_id', 'consumer_name', 'consumer_phone_number', 'consumer_birth', 'consumer_total_purchase', 'consumer_register_dt', 'consumer_verified',)
+    list_display = ('consumer_id', 'consumer_name', 'consumer_phone_number', 'consumer_birth', 'consumer_total_purchase', 'consumer_register_dt', 'consumer_verify_dt',)
     search_fields = ('consumer_id', 'consumer_name', 'consumer_phone_number',)
-    list_filter = ('consumer_verified', 'consumer_area', 'consumer_register_path',)
+    list_filter = ('consumer_area', 'consumer_register_path',)
 
 admin.site.register(Consumer, ConsumerAdmin)

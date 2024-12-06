@@ -385,14 +385,11 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
                                 response = requests.get(src, headers=headers)
                                 response.raise_for_status()  # 요청 실패 시 예외 발생
                                 binary_data = response.content
+                                base64_encoded_data = base64.b64encode(binary_data).decode("utf-8")
+                                urls.append(f"data:image/jpeg;base64,{base64_encoded_data}")
                             except requests.RequestException as e:
                                 print(f"Error fetching image from {src}: {e}")
                                 continue  # 오류가 발생한 경우 다음 이미지로 넘어감
-
-                        # imgbb에 업로드
-                        response = self.upload_to_imgbb(binary_data)
-                        if response and "data" in response:
-                            urls.append(response["data"]["url"])
 
             return JsonResponse(
                 {
@@ -417,7 +414,29 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
             related_products = Product.objects.filter(
                 product_name__in=data["product_related_products"]
             )
+            
+            # 썸네일 업로드
+            thumbnail_extension = data["product_thumbnail_image"].split(';')[0].split('/')[1]
+            thumbnail_image_name = f"{data['product_code']}{thumbnail_extension}"
+            thumbnail_image_file = ContentFile(base64.b64decode(data["product_thumbnail_image"].split(',')[1]))
+            
+            # 상세페이지 업로드
+            product_detail_images_path = os.path.join(settings.MEDIA_ROOT, 'product_detail_images')
+            details = []
 
+            if not os.path.exists(product_detail_images_path):
+                os.makedirs(product_detail_images_path)
+                
+            for index, detail_url in enumerate(data["product_detail"]):
+                detail_extension =detail_url.split(';')[0].split('/')[1]
+                detail_image_name = f"{data['product_code']}_{index}{detail_extension}"
+                detail_image_file = ContentFile(base64.b64decode(detail_url.split(',')[1]))
+
+                fs = FileSystemStorage(product_detail_images_path)
+                file = fs.save(detail_image_name, detail_image_file)
+                file_url = f"product_detail_images/{detail_image_name}"
+
+                details.append(file_url)
             # 제품 업데이트 또는 생성
             new_product, created = Product.objects.update_or_create(
                 product_code=data["product_code"],
@@ -426,14 +445,12 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
                     "product_name": data["product_name"],
                     "product_manage_name": data["product_manage_name"],
                     "product_description": data["product_description"],
+                    "product_detail": details,
                     "product_keywords": data["product_keywords"],
                     "product_consumer_price": int(data["product_customer_price"]),
                     "product_sell_price": int(data["product_sell_price"]),
                     "product_supply_price": int(data["product_supply_price"]),
                     "product_alternative_price": data["product_alternative_price"],
-                    "product_thumbnail_image": base64.b64decode(
-                        data["product_thumbnail_image"]
-                    ),
                     "product_seo_title": data["product_seo_title"],
                     "product_seo_author": data["product_seo_author"],
                     "product_seo_description": data["product_seo_description"],
@@ -450,6 +467,8 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
                 data["product_detail"]
             )
             new_product.product_related_products.set(related_products)
+            
+            new_product.product_thumbnail_image.save(thumbnail_image_name, thumbnail_image_file)
 
             # 제품 저장
             new_product.save()
@@ -670,7 +689,7 @@ class DashboardConsumerHome(LoginRequiredMixin, TemplateView):
             consumer_register_dt__gte=(date.today() - timedelta(days=7)),
             consumer_register_dt__lte=date.today()
         )
-        not_verified_consumers = Consumer.objects.filter(consumer_verified='F')
+        not_verified_consumers = Consumer.objects.filter(consumer_verify_dt=None)
         all_consumers = Consumer.objects.all()
         
         context["new_consumers"] = new_consumers.count()
@@ -702,7 +721,6 @@ class DashboardConsumerHome(LoginRequiredMixin, TemplateView):
                     "consumer_name": str(row["이름"]),
                     "consumer_phone_number": str(row["휴대폰번호"]),
                     "consumer_email": str(row["이메일"]),
-                    "consumer_verified": str(row["회원인증여부"]),
                     "consumer_birth": datetime.strptime(str(row["생년월일"]), '%Y-%m-%d'),
                     "consumer_area": str(row["지역"]),
                     "consumer_base_address": str(row["주소1"]),
