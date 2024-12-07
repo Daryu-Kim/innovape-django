@@ -154,3 +154,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'account.Member'
+
+# 데이터 업로드 크기 제한 제거
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1073741824
+
+# 파일 업로드 크기 제한도 제거
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1073741824
+
+# 데이터 업로드 제한 설정
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000000

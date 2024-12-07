@@ -18,6 +18,8 @@ class Category(models.Model):
 
 class Product(models.Model):
     product_cafe24_code = models.CharField(max_length=20, blank=True, verbose_name='카페24 상품코드')
+    product_smartstore_code = models.CharField(max_length=20, blank=True, verbose_name='스마트스토어 상품코드')
+    product_smartstore_channel_code = models.CharField(max_length=20, blank=True, verbose_name='스마트스토어 상품코드')
     product_code = models.CharField(max_length=7, unique=True, verbose_name='상품 분류코드')
     product_name = models.CharField(max_length=100, verbose_name='상품명')
     product_manage_name = models.CharField(max_length=100, verbose_name='상품명 (관리용)')
@@ -49,7 +51,9 @@ class Product(models.Model):
 
 class ProductOptions(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='상품')
-    product_option_code = models.CharField(max_length=20, blank=True, verbose_name='상품 옵션코드')
+    product_option_code = models.CharField(max_length=20, blank=True, verbose_name='상품 옵션 코드')
+    product_option_smartstore_code = models.CharField(max_length=20, blank=True, verbose_name='상품 옵션 스마트스토어 코드')
+    product_option_cafe24_code = models.CharField(max_length=20, blank=True, verbose_name='상품 옵션 카페24 코드')
     product_option_stock = models.IntegerField(default=0, verbose_name='상품 재고수량')
     product_option_title = models.CharField(max_length=50, blank=True, verbose_name='상품 옵션제목')
     product_option_name = models.CharField(max_length=50, verbose_name='상품 옵션명')

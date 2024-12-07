@@ -89,10 +89,35 @@
 				<a href="{% url 'dashboard_product_outofstock' %}" class="btn btn-primary ps-3 pe-3 pt-1 pb-1 mt-3">바로가기</a>
 			</div>
 		</div>
+		<div class="card p-3">
+			<div class="card-body">
+				<h5 class="card-title">스마트스토어 업로드 테스트</h5>
+				<p class="card-text keep-all mt-2">품절된 상품을 확인하고, 재입고 상태를 업데이트하거나 판매 중지 상태를 설정할 수 있는 기능을 제공합니다.</p>
+				<button class="btn btn-primary ps-3 pe-3 pt-1 pb-1 mt-3" id="smartstore-upload-btn">바로가기</button>
+			</div>
+		</div>
 	</div>
 </div>
 <script>
 	$(document).ready(function() {
+		$("#smartstore-upload-btn").click(function() {
+			alert("스마트스토어 업로드 테스트를 시작합니다.");
+			$.ajax({
+				url: '{% url "smartstore_product_upload" %}',
+				type: 'POST',
+				headers: {
+						'X-CSRFToken': '{{ csrf_token }}'
+				},
+				success: function(response) {
+					alert("카페24 상품 불러오기에 성공했습니다!");
+					window.location.reload();
+				},
+				error: function(xhr, status, error) {
+					alert("카페24 상품 불러오기에 실패했습니다!");
+				}
+			});
+		});
+
 		$("#import-cafe24-btn").click(function() {
 			productFile = $("#import-cafe24-file")[0].files[0];
 

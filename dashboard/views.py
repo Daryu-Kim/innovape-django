@@ -23,12 +23,30 @@ from io import BytesIO
 import pandas as pd
 from django.core.files.storage import FileSystemStorage
 from django.conf import settings
+import http.client
+from innovape.views import get_access_naver_info, get_access_cafe24_info, get_access_interpark_info, get_access_sixshop_info, get_access_coupang_info
 
 
 # Create your views here.
 class DashboardHomeView(LoginRequiredMixin, TemplateView):
     template_name = "dashboard/home.html"  # 사용할 템플릿 파일 지정
     login_url = reverse_lazy("account_login")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        shop_status = {
+            'naver': get_access_naver_info(),
+            'interpark': get_access_interpark_info(),
+            'coupang': get_access_coupang_info(),
+            'sixshop': get_access_sixshop_info(),
+            'cafe24': get_access_cafe24_info()
+        }
+        
+        context = {
+            'shop_status': shop_status
+        }
+        
+        return context
 
 
 class DashboardOrderHome(LoginRequiredMixin, TemplateView):
@@ -233,40 +251,51 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
             product_option_file = request.FILES['product_option']
             try:
                 product_option_df = pd.read_csv(product_option_file)
-                for index, row in product_option_df.iterrows():
-                    # 필터링된 상품 코드로 Product 객체 가져오기
+                product_option_counts = {}
+                
+                for _, row in product_option_df.iterrows():
                     product = Product.objects.get(product_cafe24_code=str(row["상품코드"]))
-                    option_title = product.product_option.split('//')[1].split('{')[0]
-
-                    # 재고수량 및 가격을 int로 변환할 때 오류 처리 추가
-                    try:
-                        stock_quantity = int(row["재고수량"]) if str(row["재고수량"]).isdigit() else 0
-                    except ValueError:
-                        stock_quantity = 0  # 숫자로 변환할 수 없는 경우 0으로 처리
-
-                    try:
-                        option_price = int(row["옵션 추가금액"]) if str(row["옵션 추가금액"]).isdigit() else 0
-                    except ValueError:
-                        option_price = 0  # 숫자로 변환할 수 없는 경우 0으로 처리
-
-                    # 옵션 이름, 옵션 제목, 가격 등 처리
-                    option_code = str(row["품목코드"])
-                    option_name = str(row["품목명"]).split('/')[1] if '/' in str(row["품목명"]) else str(row["품목명"])
-                    option_display_name = str(row["품목명"])
                     
-                    # Product 객체 업데이트/생성
-                    option, created = ProductOptions.objects.update_or_create(
-                        product_option_code=option_code,
+                    if product.product_code not in product_option_counts:
+                        product_option_counts[product.product_code] = 0
+                    option_index = product_option_counts[product.product_code]
+                    product_option_counts[product.product_code] += 1
+                    
+                    option_title = product.product_option.split('//')[1].split('{')[0]
+                    option_name = str(row["품목명"]).split('/')[1] if '/' in str(row["품목명"]) else str(row["품목명"])
+                    
+                    # 재고 수량 로직
+                    item_name = str(row["품목명"])
+                    if "순차 출고" in item_name or "순차출고" in item_name:
+                        stock_quantity = 9999
+                    else:
+                        try:
+                            quantity = int(str(row["재고수량"])) if str(row["재고수량"]).isdigit() else 0
+                            stock_quantity = quantity if quantity > 0 else 0
+                        except ValueError:
+                            stock_quantity = 0
+                    
+                    # 가격 로직 수정
+                    try:
+                        price_str = str(row["옵션 추가금액"]).replace(',', '')
+                        price_float = float(price_str)
+                        option_price = int(price_float)
+                    except (ValueError, TypeError):
+                        option_price = 0
+                    
+                    new_option, created = ProductOptions.objects.update_or_create(
+                        product_option_cafe24_code=str(row["품목코드"]),
                         defaults={
-                            "product": product,
-                            "product_option_stock": stock_quantity,
-                            "product_option_title": option_title,
-                            "product_option_name": option_name,
-                            "product_option_display_name": option_display_name,
-                            "product_option_price": option_price,
+                            'product': product,
+                            'product_option_code': product.product_code + str(option_index).zfill(4),
+                            'product_option_title': option_title,
+                            'product_option_name': option_name,
+                            'product_option_display_name': str(row["품목명"]),
+                            'product_option_stock': stock_quantity,
+                            'product_option_price': option_price,
                         },
                     )
-                    option.save()
+
                 return JsonResponse({'status': 'success'})
             except Exception as e:
                 print(f"Error is : {e}")
@@ -417,8 +446,11 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
             
             # 썸네일 업로드
             thumbnail_extension = data["product_thumbnail_image"].split(';')[0].split('/')[1]
-            thumbnail_image_name = f"{data['product_code']}{thumbnail_extension}"
-            thumbnail_image_file = ContentFile(base64.b64decode(data["product_thumbnail_image"].split(',')[1]))
+            thumbnail_image_name = f"{data['product_code']}.{thumbnail_extension}"
+            thumbnail_image_file = ContentFile(
+                base64.b64decode(data["product_thumbnail_image"].split(',')[1]),
+                name=thumbnail_image_name
+            )
             
             # 상세페이지 업로드
             product_detail_images_path = os.path.join(settings.MEDIA_ROOT, 'product_detail_images')
@@ -427,10 +459,19 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
             if not os.path.exists(product_detail_images_path):
                 os.makedirs(product_detail_images_path)
                 
+            for filename in os.listdir(product_detail_images_path):
+                if str(data['product_code']) in filename:  # 파일 이름에 해당 상품 코드가 포함된 경우
+                    file_path = os.path.join(product_detail_images_path, filename)
+                    if os.path.exists(file_path):
+                        os.remove(file_path)  # 파일 삭제
+                
             for index, detail_url in enumerate(data["product_detail"]):
                 detail_extension =detail_url.split(';')[0].split('/')[1]
-                detail_image_name = f"{data['product_code']}_{index}{detail_extension}"
-                detail_image_file = ContentFile(base64.b64decode(detail_url.split(',')[1]))
+                detail_image_name = f"{data['product_code']}_{index}.{detail_extension}"
+                detail_image_file = ContentFile(
+                    base64.b64decode(detail_url.split(',')[1]),
+                    name=detail_image_name
+                )
 
                 fs = FileSystemStorage(product_detail_images_path)
                 file = fs.save(detail_image_name, detail_image_file)
@@ -463,11 +504,10 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
 
             # 관계 설정 (중간 리스트 없이 바로 set() 호출)
             new_product.product_category.set(categories)
-            new_product.set_product_detail(
-                data["product_detail"]
-            )
             new_product.product_related_products.set(related_products)
             
+            if new_product.product_thumbnail_image:
+                new_product.product_thumbnail_image.delete(save=False)
             new_product.product_thumbnail_image.save(thumbnail_image_name, thumbnail_image_file)
 
             # 제품 저장
@@ -478,14 +518,17 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
             data = json.loads(request.POST.get("data"))
             product = Product.objects.get(product_code=data["product_code"])
 
-            for option in data["options_data"]:
+            for index, option in enumerate(data["options_data"]):
                 new_option, created = ProductOptions.objects.update_or_create(
-                    product=product,
-                    product_option_title=data["product_option_title"],
-                    product_option_name=option["product_option_name"],
-                    product_option_display_name=option["product_option_display_name"],
-                    product_stock=option["product_stock"],
-                    product_option_price=option["product_option_price"],
+                    product_option_code=product.product_code + str(index).zfill(4),
+                    defaults={
+                        'product': product,
+                        'product_option_title': data["product_option_title"],
+                        'product_option_name': option["product_option_name"],
+                        'product_option_display_name': option["product_option_display_name"],
+                        'product_option_stock': int(option["product_option_stock"]),
+                        'product_option_price': int(option["product_option_price"]),
+                    },
                 )
 
             return JsonResponse({"status": "success"})
