@@ -245,7 +245,7 @@ def smartstore_product_upload(product_code, product_smartstore_code):
     
     thumbnail_conn = http.client.HTTPSConnection("api.commerce.naver.com")
     thumbnail_headers = {
-        'Authorization': f'{token['access_token']}',
+        'Authorization': f"{token['access_token']}",
         'Content-Type': m.content_type
     }
     
@@ -386,7 +386,7 @@ def smartstore_product_upload(product_code, product_smartstore_code):
     conn = http.client.HTTPSConnection("api.commerce.naver.com")
     
     upload_headers = {
-        'Authorization': f'{token['access_token']}',
+        'Authorization': f"{token['access_token']}",
         'Content-Type': "application/json"
     }
     if product_smartstore_code:
@@ -406,7 +406,7 @@ def smartstore_product_upload(product_code, product_smartstore_code):
     
     option_conn = http.client.HTTPSConnection("api.commerce.naver.com")
     option_headers = {
-        'Authorization': f'{token['access_token']}',
+        'Authorization': f"{token['access_token']}",
     }
     option_conn.request("GET", f"/external/v2/products/origin-products/{response_data['originProductNo']}", headers=option_headers)
     option_res = option_conn.getresponse()
