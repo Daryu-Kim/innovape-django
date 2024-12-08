@@ -716,7 +716,7 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                 UPLOAD_CATEGORY_CODES = ['43', '51', '124', '137', '138', '125']
                 if product.product_category.filter(category_code__in=UPLOAD_CATEGORY_CODES).exists():
                     try:
-                        smartstore_product_upload(product.product_code)
+                        smartstore_product_upload(product.product_code, product.product_smartstore_code)
                     except Exception as e:
                         print(f"Error uploading product {product.product_code}: {str(e)}")
                     
