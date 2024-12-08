@@ -712,8 +712,13 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
             
             # 스마트스토어 상품 업로드
             for product in products:
-                if product.product_category.filter(category_code__in=['43', '51', '124', '137', '138', '125']):
-                    smartstore_product_upload(product.product_code)
+                # 특정 카테고리에 속한 상품만 업로드
+                UPLOAD_CATEGORY_CODES = ['43', '51', '124', '137', '138', '125']
+                if product.product_category.filter(category_code__in=UPLOAD_CATEGORY_CODES).exists():
+                    try:
+                        smartstore_product_upload(product.product_code)
+                    except Exception as e:
+                        print(f"Error uploading product {product.product_code}: {str(e)}")
                     
             return JsonResponse({"status": "success"})
 
