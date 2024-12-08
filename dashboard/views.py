@@ -25,6 +25,7 @@ from django.core.files.storage import FileSystemStorage
 from django.conf import settings
 import http.client
 from innovape.views import get_access_naver_info, get_access_cafe24_info, get_access_interpark_info, get_access_sixshop_info, get_access_coupang_info, smartstore_product_upload
+import time
 
 
 # Create your views here.
@@ -111,6 +112,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
                                     "Referer": "https://ecimg.cafe24img.com/",  # 요청을 보낸 페이지의 URL로 설정
                                 }
+                                time.sleep(2)  # 2초로 증가
                                 response = requests.get(thumbnail_src, headers=headers)
                                 response.raise_for_status()  # 요청 실패 시 예외 발생
 
@@ -154,7 +156,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                 src = img_tag.get("src")
                                 if not src:
                                     continue
-                                formatted_src = src.replace("//ecimg.cafe24img.com/", "")
+                                formatted_src = src.replace("//innovape.cafe24.com/", "")
 
                                 # base_url과 결합하여 절대 URL 생성
                                 full_url = f"https://ecimg.cafe24img.com/pg1094b33231538027/innovape/{formatted_src}"
@@ -165,6 +167,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
                                         "Referer": "https://ecimg.cafe24img.com/",  # 요청을 보낸 페이지의 URL로 설정
                                     }
+                                    time.sleep(3)  # 3초로 증가
                                     response = requests.get(full_url, headers=headers)
                                     response.raise_for_status()  # 요청 실패 시 예외 발생
 
@@ -184,6 +187,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                     details.append(file_url)
                                 except requests.RequestException as e:
                                     print(f"Error fetching image from {full_url}: {e}")
+                                    time.sleep(5)  # 5초로 증가
                             
                             product_alternative_price = row["판매가 대체문구"] if pd.notna(row["판매가 대체문구"]) else ""
                             product_author = Member.objects.get(id=self.request.user.id)
