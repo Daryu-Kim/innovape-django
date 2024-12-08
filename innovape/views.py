@@ -158,6 +158,9 @@ def smartstore_product_upload(product_code, product_smartstore_code):
     increased_price = int(product.product_consumer_price * price_increase_rate)
     consumer_price = math.ceil(increased_price / 100) * 100
     
+    # 이미지 업로드 전 기본 대기
+    time.sleep(1)
+    
     # 상품 상세페이지 제작
     detail_html_parts = []
     for image_path in product.product_detail:
@@ -165,6 +168,9 @@ def smartstore_product_upload(product_code, product_smartstore_code):
         full_path = os.path.join(settings.MEDIA_ROOT, image_path)
         
         try:
+            # 이미지 업로드 전 대기
+            time.sleep(1)
+            
             # 이미지 파일 정보 준비
             file_name = os.path.basename(image_path)
             mime_type, _ = mimetypes.guess_type(file_name)
@@ -200,11 +206,11 @@ def smartstore_product_upload(product_code, product_smartstore_code):
             # 응답 데이터 디버깅
             print(f"Image upload response: {detail_data}")
             
-            # rate limit 체크
+            # rate limit 체크 및 대기 시간 증가
             if detail_data.get('code') == 'GW.RATE_LIMIT':
-                print("Rate limit reached, waiting for 1 second...")
-                time.sleep(1)  # 1초 대기
-                continue  # 현재 이미지 다시 시도
+                print("Rate limit reached, waiting for 2 seconds...")
+                time.sleep(2)  # 2초로 증가
+                continue
             
             # 이미지 URL 안전하게 추출
             images = detail_data.get('images', [])
@@ -223,7 +229,7 @@ def smartstore_product_upload(product_code, product_smartstore_code):
             
         except Exception as e:
             print(f"Error processing image {image_path}: {str(e)}")
-            time.sleep(0.5)  # 에러 발생 시에도 대기
+            time.sleep(2)  # 에러 시 2초 대기
             continue
     
     # 카테고리 정보
@@ -231,6 +237,9 @@ def smartstore_product_upload(product_code, product_smartstore_code):
         category_id = "50006130"
     else:
         category_id = "50006131"
+    
+    # 썸네일 업로드 전 대기
+    time.sleep(1)
     
     # 썸네일 정보
     multipart_data = []
@@ -382,39 +391,48 @@ def smartstore_product_upload(product_code, product_smartstore_code):
             "channelProductDisplayStatusType": "ON"
         }
     }
-    
+    # 상품 등록/수정 요청 전 대기
+    time.sleep(1)
     conn = http.client.HTTPSConnection("api.commerce.naver.com")
     
     upload_headers = {
         'Authorization': f"{token['access_token']}",
         'Content-Type': "application/json"
     }
-    if product_smartstore_code:
+
+    # product_smartstore_code가 있으면 수정, 없으면 신규 등록
+    if not product_smartstore_code:  # 조건문 수정
         conn.request("POST", "/external/v2/products", json.dumps(product_data), headers=upload_headers)
     else:
         conn.request("PUT", f"/external/v2/products/origin-products/{product_smartstore_code}", json.dumps(product_data), headers=upload_headers)
+    
     response = conn.getresponse()
     response_data = json.loads(response.read().decode("utf-8"))
-    print(response_data)
+    print(f"Product upload response: {response_data}")  # 디버깅을 위한 로그 추가
     
     if 'originProductNo' in response_data:
         product.product_smartstore_code = str(response_data['originProductNo'])
         product.product_smartstore_channel_code = str(response_data['smartstoreChannelProductNo'])
         product.save()
+        
+        # 옵션 정보 요청 전 대기
+        time.sleep(1)
+        option_conn = http.client.HTTPSConnection("api.commerce.naver.com")
+        option_headers = {
+            'Authorization': f"{token['access_token']}",
+        }
+        option_conn.request("GET", f"/external/v2/products/origin-products/{response_data['originProductNo']}", headers=option_headers)
+        option_res = option_conn.getresponse()
+        option_data = json.loads(option_res.read().decode("utf-8"))
+        
+        for get_option in option_data['originProduct']['detailAttribute']['optionInfo']['optionCombinations']:
+            product_option = ProductOptions.objects.filter(product=product, product_option_display_name=f"{get_option['optionName1']}/{get_option['optionName2']}").first()
+            if product_option:  # None 체크 추가
+                product_option.product_option_smartstore_code = get_option['id']
+                product_option.save()
+        
+        return "SUCCESS"
     else:
-        print(f"Error in product upload: {response_data}")
-    
-    option_conn = http.client.HTTPSConnection("api.commerce.naver.com")
-    option_headers = {
-        'Authorization': f"{token['access_token']}",
-    }
-    option_conn.request("GET", f"/external/v2/products/origin-products/{response_data['originProductNo']}", headers=option_headers)
-    option_res = option_conn.getresponse()
-    option_data = json.loads(option_res.read().decode("utf-8"))
-    
-    for get_option in option_data['originProduct']['detailAttribute']['optionInfo']['optionCombinations']:
-        product_option = ProductOptions.objects.filter(product=product, product_option_display_name=f"{get_option['optionName1']}/{get_option['optionName2']}").first()
-        product_option.product_option_smartstore_code = get_option['id']
-        product_option.save()
-    # 성공 응답
-    return "SUCCESS"
+        error_message = f"Error in product upload: {response_data}"
+        print(error_message)
+        return error_message  # 에러 메시지 반환으로 변경
