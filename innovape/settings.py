@@ -12,10 +12,11 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import os
 from pathlib import Path
-from decouple import config
+from decouple import Config, RepositoryEnv
 
-# .env 파일의 절대 경로 지정
-config.search_path = Path(__file__).parent.parent / '.env'
+# .env 파일의 절대 경로 설정
+ENV_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+config = Config(RepositoryEnv(ENV_PATH))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
