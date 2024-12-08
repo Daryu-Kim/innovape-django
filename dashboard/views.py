@@ -75,11 +75,11 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
             
             try:
                 product_df = pd.read_csv(product_file)
+                total_rows = len(product_df)
                 
                 for index, row in product_df.iterrows():
-                    print(row["자체 상품코드"], row["상품코드"])
+                    print(f"처리 중: {index + 1}/{total_rows} ({((index + 1)/total_rows * 100):.1f}%)")
                     if (pd.notna(row["자체 상품코드"])):
-                        # print(f"{int(row["자체 상품코드"])} DEBUG: {row["소비자가"]}, {row["판매가"]}, {row["공급가"]}")
                         try:
                             categories = Category.objects.filter(
                                 category_code__in=row["상품분류 번호"].split("|")
@@ -242,13 +242,15 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                             new_product.product_thumbnail_image.save(image_name, image_file)
 
                             new_product.save()
-                            print("Product updated or created successfully.")
-
+                            print(f"상품 {row['자체 상품코드']} 처리 완료")
                         except Exception as e:
-                            print(f"Error occurred: {e}")
+                            print(f"상품 {row['자체 상품코드']} 처리 중 오류 발생: {e}")
+                            continue
+                        
                 return JsonResponse({'status': 'success'})
             except Exception as e:
-                print(e)
+                print(f"전체 처리 중 오류 발생: {e}")
+                return JsonResponse({'status': 'error', 'message': str(e)})
                 
         elif request.FILES.get('product_option'):
             print("상품 옵션 업로드 시작")
