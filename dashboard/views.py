@@ -112,7 +112,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
                                     "Referer": "https://ecimg.cafe24img.com/",  # 요청을 보낸 페이지의 URL로 설정
                                 }
-                                time.sleep(2)  # 2초로 증가
+                                time.sleep(1)  # 2초로 증가
                                 response = requests.get(thumbnail_src, headers=headers)
                                 response.raise_for_status()  # 요청 실패 시 예외 발생
 
@@ -167,7 +167,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
                                         "Referer": "https://ecimg.cafe24img.com/",  # 요청을 보낸 페이지의 URL로 설정
                                     }
-                                    time.sleep(3)  # 3초로 증가
+                                    time.sleep(2)  # 3초로 증가
                                     response = requests.get(full_url, headers=headers)
                                     response.raise_for_status()  # 요청 실패 시 예외 발생
 
@@ -187,7 +187,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                     details.append(file_url)
                                 except requests.RequestException as e:
                                     print(f"Error fetching image from {full_url}: {e}")
-                                    time.sleep(5)  # 5초로 증가
+                                    time.sleep(1)  # 5초로 증가
                             
                             product_alternative_price = row["판매가 대체문구"] if pd.notna(row["판매가 대체문구"]) else ""
                             product_author = Member.objects.get(id=self.request.user.id)
