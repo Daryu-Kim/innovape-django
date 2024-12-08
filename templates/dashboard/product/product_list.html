@@ -16,10 +16,13 @@
                     </td>
                     <td>
                         <div class="d-flex align-items-center gap-2">
-                            <select id="search-title" class="form-select p-2 w-auto" style="min-width: 160px;">
+                            <select id="search-title" class="form-select p-2 w-auto" style="min-width: 216px;">
                                 <option value="name">상품명</option>
                                 <option value="manage_name">상품명 (관리용)</option>
                                 <option value="cafe24_code">카페24 상품코드</option>
+                                <option value="smartstore_code">스마트스토어 상품코드</option>
+                                <option value="smartstore_channel_code">스마트스토어 채널 상품코드</option>
+                                <option value="coupang_code">쿠팡 상품코드</option>
                                 <option value="code">상품 분류코드</option>
                                 <option value="author">상품 게시자</option>
                             </select>
@@ -79,10 +82,24 @@
             <button id="search-reset-btn" class="btn btn-outline-secondary p-2" style="width: 80px;">초기화</button>
         </div>
     </form>
+    <div id="upload-progress-bar" class="progress mb-3" style="display: none;">
+        <div id="upload-progress" class="progress-bar progress-bar-striped progress-bar-animated" 
+            role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" 
+            style="width: 0%">
+            0%
+        </div>
+    </div>
+    <div class="d-flex justify-content-start">
+        <button id="product-upload-btn" class="btn btn-primary pt-2 pb-2 ps-3 pe-3">전체 상품 업로드 / 업데이트</button>
+    </div>
     <div class="table-wrapper">
         <table class="table table-hover" id="product-table">
             <thead>
                 <tr>
+                    <th style="width: 64px;">
+                        <input type="checkbox" id="select-all-checkbox" class="form-check-input">
+                        <span>선택</span>
+                    </th>
                     <th>상품 썸네일</th>
                     <th>상품 분류코드</th>
                     <th>상품명</th>
@@ -108,17 +125,30 @@
             processing: true,
             serverSide: true,
             pageLength: 10,
+            order: [[2, "desc"]],
             ajax: {
                 url: "{% url 'dashboard_product_list' %}",
                 data: function (d) {
-                    d.search_field = $("#search-field").val();
-                    d.search_title = $("#search-title").val();
-                    d.search_category = $("#search-category").val();
-                    d.start_date = $("#search-start-datepicker").val();
-                    d.end_date = $("#search-end-datepicker").val();
+                    return {
+                        draw: d.draw,
+                        start: d.start,
+                        length: d.length,
+                        search_field: $("#search-field").val(),
+                        search_title: $("#search-title").val(),
+                        search_category: $("#search-category").val() || [],
+                        search_date_title: $("#search-date-title").val(),
+                        start_date: $("#search-start-datepicker").val(),
+                        end_date: $("#search-end-datepicker").val(),
+                        order: d.order
+                    };
                 }
             },
             columns: [
+                {
+                    render: function (data, type, row) {
+                        return `<div class="d-flex justify-content-center" style="width: 64px;"><input type="checkbox" class="select-checkbox form-check-input"></div>`;
+                    }
+                },
                 {
                     data: 'product_thumbnail_image',
                     render: function (data, type, row) {
@@ -254,6 +284,81 @@
             $("#search-date-title").val('created');
             $("#search-start-datepicker").val('');
             $("#search-end-datepicker").val('');
+        });
+    });
+
+    $("#select-all-checkbox").click(function (e) {
+        e.stopPropagation();
+        $(".select-checkbox").prop("checked", $(this).prop("checked"));
+    });
+
+    // 검색 버튼 클릭 시 테이블 새로고침
+    $("form").on("submit", function(e) {
+        e.preventDefault();
+        $("#product-table").DataTable().ajax.reload();
+    });
+
+    $("#product-upload-btn").click(function (e) {
+        e.preventDefault();
+        
+        // 프로그레스 바 초기화 및 표시
+        $("#upload-progress").width('0%').text('0%');
+        $("#upload-progress-bar").show();
+        
+        $.ajax({
+            url: "{% url 'dashboard_product_list' %}",
+            method: "POST",
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            data: {
+                code: "product_upload"
+            },
+            xhr: function() {
+                var xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener('progress', function(evt) {
+                    if (evt.lengthComputable) {
+                        var percentComplete = evt.loaded / evt.total;
+                        var percentValue = Math.round(percentComplete * 100) + '%';
+                        $("#upload-progress")
+                            .width(percentValue)
+                            .text(percentValue);
+                    }
+                }, false);
+                return xhr;
+            },
+            success: function (response) {
+                console.log(response);
+                // 성공 시 처리
+                $("#upload-progress")
+                    .removeClass('progress-bar-animated')
+                    .addClass('bg-success')
+                    .text('업로드 완료!');
+                
+                // 3초 후 프로그레스 바 숨김
+                setTimeout(function() {
+                    $("#upload-progress-bar").hide();
+                    $("#upload-progress")
+                        .removeClass('bg-success')
+                        .addClass('progress-bar-animated');
+                }, 3000);
+            },
+            error: function(xhr, status, error) {
+                // 에러 시 처리
+                $("#upload-progress")
+                    .removeClass('progress-bar-animated')
+                    .addClass('bg-danger')
+                    .width('100%')
+                    .text('업로드 실패');
+                
+                // 3초 후 프로그레스 바 숨김
+                setTimeout(function() {
+                    $("#upload-progress-bar").hide();
+                    $("#upload-progress")
+                        .removeClass('bg-danger')
+                        .addClass('progress-bar-animated');
+                }, 3000);
+            }
         });
     });
 </script>

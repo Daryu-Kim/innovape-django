@@ -24,7 +24,7 @@ import pandas as pd
 from django.core.files.storage import FileSystemStorage
 from django.conf import settings
 import http.client
-from innovape.views import get_access_naver_info, get_access_cafe24_info, get_access_interpark_info, get_access_sixshop_info, get_access_coupang_info
+from innovape.views import get_access_naver_info, get_access_cafe24_info, get_access_interpark_info, get_access_sixshop_info, get_access_coupang_info, smartstore_product_upload
 
 
 # Create your views here.
@@ -541,20 +541,6 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
         except Exception:
             return False  # 예외가 발생하면 유효하지 않음
 
-    def upload_to_imgbb(self, binary_data):
-        imgbb_api_key = (
-            "d871f58378653057ddb74a4a23a7e629"  # 여기에 imgbb API 키를 입력하세요.
-        )
-        url = "https://api.imgbb.com/1/upload"
-        files = {"image": binary_data}
-        params = {"key": imgbb_api_key}
-
-        response = requests.post(url, params=params, files=files)
-        pprint.pprint(response)
-        if response.status_code == 200:
-            return response.json()
-        return None
-
     def generate_product_code(self):
         prefix = "P"  # 상품 코드 앞부분 (P)
         num_digits = 6  # 숫자 부분의 자리수 (6자리)
@@ -621,27 +607,47 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
 
         return context
 
-    def get_filtered_products(
-        self, search_field, search_title, search_category, start_date, end_date, start, length
-    ):
+    def get_filtered_products(self, search_field, search_title, search_category, start_date, end_date, start, length):
         # 기본 쿼리셋
-        queryset = Product.objects.all()
+        queryset = Product.objects.all().order_by('-product_code')
 
         # 검색 필드 및 제목에 따른 필터링
         if search_field:
-            queryset = queryset.filter(**{f"{search_title}__icontains": search_field})
+            if search_title == 'name':
+                queryset = queryset.filter(product_name__icontains=search_field)
+            elif search_title == 'manage_name':
+                queryset = queryset.filter(product_manage_name__icontains=search_field)
+            elif search_title == 'cafe24_code':
+                queryset = queryset.filter(product_cafe24_code__icontains=search_field)
+            elif search_title == 'smartstore_code':
+                queryset = queryset.filter(product_smartstore_code__icontains=search_field)
+            elif search_title == 'smartstore_channel_code':
+                queryset = queryset.filter(product_smartstore_channel_code__icontains=search_field)
+            elif search_title == 'coupang_code':
+                queryset = queryset.filter(product_coupang_code__icontains=search_field)
+            elif search_title == 'code':
+                queryset = queryset.filter(product_code__icontains=search_field)
+            elif search_title == 'author':
+                queryset = queryset.filter(product_author__username__icontains=search_field)
 
         # 카테고리 필터링
         if search_category:
-            queryset = queryset.filter(category__in=search_category)
+            queryset = queryset.filter(product_category__id__in=search_category)
 
         # 날짜 범위 필터링
         if start_date and end_date:
-            queryset = queryset.filter(created_datetime__range=[start_date, end_date])
+            date_field = 'product_created_datetime'  # 기본값은 생성일
+            if self.request.GET.get('search_date_title') == 'modified':
+                date_field = 'product_modified_datetime'
             
-        queryset = queryset[start:start+length]
+            # 날짜 범위에 end_date도 포함되도록 하루를 더함
+            end_date = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
+            date_filter = {
+                f'{date_field}__range': [start_date, end_date]
+            }
+            queryset = queryset.filter(**date_filter)
 
-        return queryset
+        return queryset[start:start+length]
 
     def render_to_response(self, context, **response_kwargs):
         if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
@@ -699,6 +705,17 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
             )
 
         return super().render_to_response(context, **response_kwargs)
+    
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("code") == "product_upload":
+            products = Product.objects.all()
+            
+            # 스마트스토어 상품 업로드
+            for product in products:
+                if product.product_category.filter(category_code__in=['43', '51', '124', '137', '138', '125']):
+                    smartstore_product_upload(product.product_code)
+                    
+            return JsonResponse({"status": "success"})
 
 
 class DashboardProductCategory(LoginRequiredMixin, TemplateView):

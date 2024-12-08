@@ -96,6 +96,10 @@
 	text-align: start !important;
 }
 
+#product-table #select-all-checkbox:checked {
+	background-color: #007bff !important;
+}
+
 #product-table tbody * {
 	word-break: keep-all !important;
 }
@@ -221,4 +225,15 @@
 	.custom-grid {
 		grid-template-columns: repeat(4, 1fr);
 	}
+}
+
+#upload-progress-bar {
+    height: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+#upload-progress {
+    transition: width 0.3s ease-in-out;
+    min-width: 2em;
 }

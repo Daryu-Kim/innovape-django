@@ -19,7 +19,8 @@ class Category(models.Model):
 class Product(models.Model):
     product_cafe24_code = models.CharField(max_length=20, blank=True, verbose_name='카페24 상품코드')
     product_smartstore_code = models.CharField(max_length=20, blank=True, verbose_name='스마트스토어 상품코드')
-    product_smartstore_channel_code = models.CharField(max_length=20, blank=True, verbose_name='스마트스토어 상품코드')
+    product_smartstore_channel_code = models.CharField(max_length=20, blank=True, verbose_name='스마트스토어 상품채널코드')
+    product_coupang_code = models.CharField(max_length=20, blank=True, verbose_name='쿠팡 상품코드')
     product_code = models.CharField(max_length=7, unique=True, verbose_name='상품 분류코드')
     product_name = models.CharField(max_length=100, verbose_name='상품명')
     product_manage_name = models.CharField(max_length=100, verbose_name='상품명 (관리용)')
@@ -28,6 +29,8 @@ class Product(models.Model):
     product_detail = ArrayField(models.CharField(max_length=2000), blank=True, verbose_name='상품 상세페이지')
     product_option = models.CharField(max_length=1000, blank=True, verbose_name='상품 옵션')
     product_keywords = models.CharField(max_length=1000, blank=True, verbose_name='상품 검색어')
+    product_smartstore_keywords = models.CharField(max_length=1000, blank=True, verbose_name='스마트스토어 검색어')
+    product_coupang_keywords = models.CharField(max_length=1000, blank=True, verbose_name='쿠팡 검색어')
     product_consumer_price = models.PositiveIntegerField(default=0, verbose_name='상품 소비자가')
     product_sell_price = models.PositiveIntegerField(default=0, verbose_name='상품 판매가')
     product_supply_price = models.PositiveIntegerField(default=0, verbose_name='상품 공급가')

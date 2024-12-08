@@ -15,6 +15,8 @@ import mimetypes
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 import http.client
 import json
+import random
+import math
 
 
 def login_check_view(request):
@@ -147,10 +149,15 @@ def get_access_token(code):
         # 오류 처리 추가
         return {"error": response.text, "status_code": response.status_code}
     
-def smartstore_product_upload(request):
+def smartstore_product_upload(product_code, product_smartstore_code):
     token = get_access_naver_info()
-    # product = Product.objects.get(product_code=request.POST.get("product_code"))
-    product = Product.objects.get(product_code="1000002")
+    product = Product.objects.get(product_code=product_code)
+    
+    # 무작위 가격 인상률 계산 (15 ~ 40%)
+    price_increase_rate = random.uniform(1.15, 1.40)
+    increased_price = int(product.product_consumer_price * price_increase_rate)
+    consumer_price = math.ceil(increased_price / 100) * 100
+    
     # 상품 상세페이지 제작
     detail_html_parts = []
     for image_path in product.product_detail:
@@ -251,26 +258,31 @@ def smartstore_product_upload(request):
     product_options = ProductOptions.objects.filter(product=product)
     product_options_data = []
     for index, option in enumerate(product_options):
+        option_price = option.product_option_price
+        if option_price < 0:
+            option_price = 0
+        
         product_options_data.append({
             "id": option.product_option_smartstore_code,
             "optionName1": option.product_option_display_name.split("/")[0],
             "optionName2": option.product_option_display_name.split("/")[1],
             "stockQuantity": option.product_option_stock,
             "sellerManagerCode": option.product_option_code,
+            "price": option_price,
         })
         
     product_data = {
         "originProduct": {
             "statusType": "SALE",
             "leafCategoryId": category_id,
-            "name": product.product_seo_title,
+            "name": product.product_seo_title.replace("[", "").replace("]", ""),
             "detailContent": f'<div class="product-detail-images">{"".join(detail_html_parts)}</div>',
             "images": {
                 "representativeImage": {
                     "url": thumbnail_url,
                 }
             },
-            "salePrice": product.product_sell_price,
+            "salePrice": consumer_price,
             "stockQuantity": 99999999,
             "deliveryInfo": {
                 "deliveryType": "DELIVERY",
@@ -337,15 +349,20 @@ def smartstore_product_upload(request):
                 "seoInfo": {
                     "pageTitle": product.product_seo_title,
                     "metaDescription": product.product_seo_description,
-                    "sellerTags": []
-                    #"sellerTags": [
-                    #    {"text": keyword.strip()} 
-                    #    for keyword in filter_prohibited_keywords(product.product_keywords.split(","))
-                    #    if keyword.strip()
-                    #]
+                    "sellerTags": [
+                        {"text": keyword.strip()} 
+                        for keyword in product.product_smartstore_keywords.split(",")
+                        if keyword.strip()
+                    ]
                 },
             },
             "customerBenefit": {
+                "immediateDiscountPolicy": {
+                    "discountMethod": {
+                        "value": consumer_price - product.product_sell_price,
+                        "unitType": "WON",
+                    }
+                },
                 "purchasePointPolicy": {
                     "value": 3,
                     "unitType": "PERCENT",
@@ -355,12 +372,12 @@ def smartstore_product_upload(request):
                     "photoVideoReviewPoint": round(product.product_sell_price * 0.01 / 10) * 10,
                     "afterUseTextReviewPoint": round(product.product_sell_price * 0.01 / 10) * 10,
                     "afterUsePhotoVideoReviewPoint": round(product.product_sell_price * 0.02 / 10) * 10,
-                    "storeMemberReviewPoint": round(product.product_sell_price * 0.005 / 10) * 10  # 10원 단위로 반올림
+                    "storeMemberReviewPoint": round(product.product_sell_price * 0.0025 / 10) * 10  # 10원 단위로 반올림
                 }
             }
         },
         "smartstoreChannelProduct": {
-            "channelProductName": product.product_name,
+            "channelProductName": product.product_seo_title.replace("[", "").replace("]", ""),
             "naverShoppingRegistration": True,
             "channelProductDisplayStatusType": "ON"
         }
@@ -372,7 +389,10 @@ def smartstore_product_upload(request):
         'Authorization': f'{token['access_token']}',
         'Content-Type': "application/json"
     }
-    conn.request("POST", "/external/v2/products", json.dumps(product_data), headers=upload_headers)
+    if product_smartstore_code:
+        conn.request("POST", "/external/v2/products", json.dumps(product_data), headers=upload_headers)
+    else:
+        conn.request("PUT", f"/external/v2/products/origin-products/{product_smartstore_code}", json.dumps(product_data), headers=upload_headers)
     response = conn.getresponse()
     response_data = json.loads(response.read().decode("utf-8"))
     print(response_data)
@@ -383,20 +403,18 @@ def smartstore_product_upload(request):
         product.save()
     else:
         print(f"Error in product upload: {response_data}")
-        
-    # 올린 상품 조회 후 원상품 코드를 이용해 옵션을 불러와서 productOptions에 옵션 id 매칭해야함.
-    # 키워드 부분도 카테고리 코드에 따라서 네이버 전용 키워드로 설정해줘야함.
+    
+    option_conn = http.client.HTTPSConnection("api.commerce.naver.com")
+    option_headers = {
+        'Authorization': f'{token['access_token']}',
+    }
+    option_conn.request("GET", f"/external/v2/products/origin-products/{response_data['originProductNo']}", headers=option_headers)
+    option_res = option_conn.getresponse()
+    option_data = json.loads(option_res.read().decode("utf-8"))
+    
+    for get_option in option_data['originProduct']['detailAttribute']['optionInfo']['optionCombinations']:
+        product_option = ProductOptions.objects.filter(product=product, product_option_display_name=f"{get_option['optionName1']}/{get_option['optionName2']}").first()
+        product_option.product_option_smartstore_code = get_option['id']
+        product_option.save()
     # 성공 응답
-    return JsonResponse({"status": "success"})
-
-
-def filter_prohibited_keywords(keywords):
-    """금지된 키워드 필터링"""
-    prohibited = ['전자담배', '전담', '담배', '니코틴']
-    filtered_keywords = []
-    
-    for keyword in keywords:
-        if not any(prohibited_word in keyword for prohibited_word in prohibited):
-            filtered_keywords.append(keyword)
-    
-    return filtered_keywords
+    return "SUCCESS"
