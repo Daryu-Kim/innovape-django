@@ -154,7 +154,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                 src = img_tag.get("src")
                                 if not src:
                                     continue
-                                formatted_src = src.replace("//innovape.cafe24.com/", "")
+                                formatted_src = src.replace("//ecimg.cafe24img.com/", "")
 
                                 # base_url과 결합하여 절대 URL 생성
                                 full_url = f"https://ecimg.cafe24img.com/pg1094b33231538027/innovape/{formatted_src}"
