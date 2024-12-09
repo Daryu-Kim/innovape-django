@@ -533,7 +533,6 @@
                 $("#category-select").val() === "" ||
                 $("#display-select").val() === "" ||
                 $("#product-description").val() === "" ||
-                !$("#detail-modal img").length > 0 ||
                 $("#product-keywords").val() === "" ||
                 $("#customer-price").val() === "" ||
                 $("#sell-price").val() === "" ||
@@ -552,12 +551,14 @@
 
             var productDetailSrcArray = [];
 
-            $("#detail-modal img").each(function() {
-                var imgSrc = $(this).attr('src');
-                if (imgSrc) {
-                    productDetailSrcArray.push(imgSrc);
-                }
-            });
+            if ($("#detail-modal img").length > 0) {
+                $("#detail-modal img").each(function() {
+                    var imgSrc = $(this).attr('src');
+                    if (imgSrc) {
+                        productDetailSrcArray.push(imgSrc);
+                    }
+                });
+            }
 
             const productData = {
                 "product_code": $("#product-code").val(),
