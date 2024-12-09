@@ -719,19 +719,19 @@
                 const optionTitle = $('#product-option-title').val();
                 const optionName = $('#product-option-name').val().split(',');
                 const categoryValues = $("#category-select").val();
+                alert(categoryValues)
                 var addPrice = 0;
 
                 if (
-                    categoryValues.includes('4') ||
-                    categoryValues.includes('5')
+                    categoryValues.includes('3') ||
+                    categoryValues.includes('4')
                 ) {
                     addPrice = -3000;
                 } else if (
+                    categoryValues.includes("5") ||
                     categoryValues.includes("6") ||
                     categoryValues.includes("7") ||
-                    categoryValues.includes("8") ||
-                    categoryValues.includes("9") ||
-                    categoryValues.includes("10")
+                    categoryValues.includes("8")
                 ) {
                     addPrice = -1000;
                 } else {

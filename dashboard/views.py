@@ -30,7 +30,7 @@ import time
 
 # Create your views here.
 class DashboardHomeView(LoginRequiredMixin, TemplateView):
-    template_name = "dashboard/home.html"  # ���용할 템플릿 파일 지정
+    template_name = "dashboard/home.html"  # 사용할 템플릿 파일 지정
     login_url = reverse_lazy("account_login")
     
     def get_context_data(self, **kwargs):
@@ -114,7 +114,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                 }
                                 time.sleep(1)  # 2초로 증가
                                 response = requests.get(thumbnail_src, headers=headers)
-                                response.raise_for_status()  # 요청 실패 �� 예외 발생
+                                response.raise_for_status()  # 요청 실패 시 예외 발생
 
                                 if response.status_code == 200:
                                     print("Image fetched successfully!")
@@ -578,7 +578,7 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
                 next_letter_part = "A" * new_letter_length
 
             else:
-                # 알파벳 부분에서 끝이 'Z'일 경우, 끝부터 차례대로 변경
+                # 알파벳 부분에서 ���이 'Z'일 경우, 끝부터 차례대로 변경
                 next_letter_part = list(letter_part)  # 알파벳을 리스트로 다룬다
                 for i in range(len(next_letter_part) - 1, -1, -1):
                     if next_letter_part[i] == "Z":
@@ -607,14 +607,14 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # 카테고리 데이터를 가져옵니다.
+        # 카테고리 데이터를 ��져옵니다.
         categories = Category.objects.all()
         context["categories"] = categories
 
         return context
 
     def get_filtered_products(self, search_field, search_title, search_category, start_date, end_date, start, length):
-        # 기�� 쿼리셋
+        # 기본 쿼리셋
         queryset = Product.objects.all().order_by('-product_code')
 
         # 검색 필드 및 제목에 따른 필터링
@@ -720,7 +720,8 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
             for product in products:
                 # 특정 카테고리에 속한 상품만 업로드
                 UPLOAD_CATEGORY_CODES = ['43', '51', '124', '137', '138', '125']
-                if product.product_category.filter(category_code__in=UPLOAD_CATEGORY_CODES).exists():
+                if (product.product_category.filter(category_code__in=UPLOAD_CATEGORY_CODES).exists() and 
+                    not product.product_smartstore_is_prohibitted):
                     try:
                         smartstore_product_upload(product.product_code, product.product_smartstore_code)
                     except Exception as e:

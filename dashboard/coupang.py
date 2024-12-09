@@ -12,6 +12,7 @@ import pandas as pd
 from django.conf import settings
 import openpyxl as op
 
+
 def coupang_product_upload(product_codes):
   try:
     # 기기 정보 조회
@@ -37,7 +38,7 @@ def coupang_product_upload(product_codes):
     result_excel = os.path.join(result_dir, f'coupang_upload_result_{timestamp}.xlsm')
     
     # openpyxl로 파일 열기
-    wb = openpyxl.load_workbook(template_path, keep_vba=True)  # keep_vba=True로 매크로 보존
+    wb = op.load_workbook(template_path, keep_vba=True)  # keep_vba=True로 매크로 보존
     ws = wb.active  # 활성 시트 선택
     
     # 데이터 처리 및 결과 기록
