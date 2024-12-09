@@ -30,7 +30,7 @@ import time
 
 # Create your views here.
 class DashboardHomeView(LoginRequiredMixin, TemplateView):
-    template_name = "dashboard/home.html"  # 사용할 템플릿 파일 지정
+    template_name = "dashboard/home.html"  # ���용할 템플릿 파일 지정
     login_url = reverse_lazy("account_login")
     
     def get_context_data(self, **kwargs):
@@ -114,7 +114,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                 }
                                 time.sleep(1)  # 2초로 증가
                                 response = requests.get(thumbnail_src, headers=headers)
-                                response.raise_for_status()  # 요청 실패 시 예외 발생
+                                response.raise_for_status()  # 요청 실패 �� 예외 발생
 
                                 if response.status_code == 200:
                                     print("Image fetched successfully!")
@@ -614,7 +614,7 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
         return context
 
     def get_filtered_products(self, search_field, search_title, search_category, start_date, end_date, start, length):
-        # 기본 쿼리셋
+        # 기�� 쿼리셋
         queryset = Product.objects.all().order_by('-product_code')
 
         # 검색 필드 및 제목에 따른 필터링

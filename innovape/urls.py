@@ -3,7 +3,7 @@ from django.urls import path
 from django.urls import include
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import login_check_view, get_access_naver_info, get_access_coupang_info, get_access_interpark_info, get_access_sixshop_info, get_access_cafe24_info, get_cafe24_auth_code, smartstore_product_upload
+from .views import login_check_view, get_access_naver_info, get_access_coupang_info, get_access_interpark_info, get_access_sixshop_info, get_access_cafe24_info, get_cafe24_auth_code
 
 urlpatterns = [
   path('', login_check_view, name='login_check'),
@@ -16,7 +16,6 @@ urlpatterns = [
   path('get-access-sixshop-info', get_access_sixshop_info, name='get_access_sixshop_info'),
   path('get-access-cafe24-info', get_access_cafe24_info, name='get_access_cafe24_info'),
   path('get-cafe24-auth-code', get_cafe24_auth_code, name='get_cafe24_auth_code'),
-  path('smartstore-product-upload', smartstore_product_upload, name='smartstore_product_upload'),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

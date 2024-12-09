@@ -2,4 +2,5 @@ __pycache__/
 venv/
 db.sqlite3
 static/
-media/
+media/product_thumbnail_images/
+media/product_detail_images/

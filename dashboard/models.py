@@ -44,6 +44,8 @@ class Product(models.Model):
     product_author = models.ForeignKey(Member, on_delete=models.SET_NULL, null=True, verbose_name='상품 게시자')
     product_created_datetime = models.DateTimeField(null=True, blank=True, verbose_name='상품 게시일자')
     product_modified_datetime = models.DateTimeField(null=True, blank=True, verbose_name='상품 수정일자')
+    product_smartstore_is_prohibitted = models.BooleanField(default=False, verbose_name='스마트스토어 제한 여부')
+    product_coupang_is_prohibitted = models.BooleanField(default=False, verbose_name='쿠팡 제한 여부')
 
     class Meta:
         verbose_name = "상품"
