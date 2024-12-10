@@ -335,19 +335,23 @@
                 return xhr;
             },
             success: function (response) {
-                console.log(response);
                 // 성공 시 처리
                 $("#upload-progress")
                     .removeClass('progress-bar-animated')
                     .addClass('bg-success')
                     .text('업로드 완료!');
+    
+                // Content-Disposition 헤더에서 파일명 추출
+                const filename = xhr.getResponseHeader('Content-Disposition')
+                    .split('filename=')[1]
+                    .replace(/"/g, '');
 
                 // 파일 다운로드
                 // ZIP 파일 다운로드
-                const url = window.URL.createObjectURL(blob);
+                const url = window.URL.createObjectURL(response);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `coupang_upload_package_${new Date().getTime()}.zip`;
+                a.download = filename;
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
