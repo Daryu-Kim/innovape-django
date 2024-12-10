@@ -170,7 +170,7 @@ def cafe24_product_upload(product_codes):
                 increased_price = int(product.product_consumer_price * price_increase_rate)
                 consumer_price = math.ceil(increased_price / 100) * 100
                 
-                row = template_df.iloc[0].copy()  # 템플릿의 첫 번째 행을 복사
+                row = {}
                 category_codes = '|'.join(product.product_category.values_list('category_code', flat=True))
                 
                 # 데이터 업데이트
@@ -308,7 +308,7 @@ def cafe24_option_upload(product_codes):
                 total_stock = sum(opt.product_option_stock for opt in product_options)
 
                 for product_option in product_options:
-                    row = option_template_df.iloc[0].copy()  # 템플릿의 첫 번째 행을 복사
+                    row = {}
 
                     row['상품코드'] = product.product_cafe24_code
                     row['자체 상품코드'] = product.product_code
@@ -328,7 +328,7 @@ def cafe24_option_upload(product_codes):
                     row['품절표시 사용'] = 'T' if product_option.product_option_stock <= 0 else 'F'
                     row['옵션 추가금액'] = product_option.product_option_price
 
-                    new_rows.append(row)
+                    option_new_rows.append(row)
                     
             except Exception as e:
                 print(f"Error processing product {product_code}: {e}")
@@ -337,10 +337,11 @@ def cafe24_option_upload(product_codes):
         option_result_df = pd.DataFrame(option_new_rows)
 
         # 결과 파일 저장
-        result_csv = os.path.join(result_dir, f'cafe24_option_upload_result_{timestamp}.csv')
-        option_result_df.to_csv(result_csv, index=False, encoding='utf-8-sig')
+        result_filename = f'cafe24_option_upload_result_{timestamp}.csv'
+        result_path = os.path.join(result_dir, result_filename)
+        option_result_df.to_csv(result_path, index=False, encoding='utf-8-sig')
         
-        return f'cafe24_option_upload_result_{timestamp}.csv'
+        return result_filename
         
     except Exception as e:
         print(f"Error in cafe24_option_upload: {e}")
