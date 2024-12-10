@@ -392,7 +392,7 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
                 # 옵션 크롤링
                 if option_tags:
                     for option in option_tags:
-                        opt = option.get_text(strip=True)
+                        opt = option.get_text(strip=True).replace(" [품절]", "")
                         if opt:
                             options.append(opt)
 
