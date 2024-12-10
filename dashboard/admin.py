@@ -12,7 +12,7 @@ admin.site.register(Category, CategoryAdmin)
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('product_code', 'product_name', 'get_product_categories', 'product_consumer_price', 'product_sell_price', 'product_supply_price', 'product_author',)
-    search_fields = ('product_name', 'product_code',)
+    search_fields = ('product_name', 'product_code', 'product_alternative_price',)
     list_filter = ('product_name',)
     filter_horizontal = ('product_category', 'product_related_products',)
 
