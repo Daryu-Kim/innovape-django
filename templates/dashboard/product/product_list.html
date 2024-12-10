@@ -339,18 +339,20 @@
                     .addClass('bg-success')
                     .text('업로드 완료!');
 
-                // JSON 응답에서 파일 경로 배열 추출
-                const files = response.files;
-                
-                // 각 파일에 대해 다운로드 링크 생성
-                files.forEach(function(filePath) {
-                    const a = document.createElement('a');
-                    a.href = filePath;
-                    a.download = filePath.split('/').pop(); // 파일명 추출
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                });
+                // response.files가 존재하는지 확인
+                if (response && response.files) {
+                    // 각 파일에 대해 다운로드 링크 생성
+                    $.each(response.files, function(index, filePath) {
+                        const a = document.createElement('a');
+                        a.href = filePath;
+                        a.download = filePath.split('/').pop(); // 파일명 추출
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    });
+                } else {
+                    console.error('Invalid response format:', response);
+                }
                 
                 // 3초 후 프로그레스 바 숨김
                 setTimeout(function() {
