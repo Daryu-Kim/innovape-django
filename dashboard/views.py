@@ -27,7 +27,7 @@ import http.client
 from innovape.views import get_access_naver_info, get_access_cafe24_info, get_access_interpark_info, get_access_sixshop_info, get_access_coupang_info, smartstore_product_upload
 import time
 from .coupang import coupang_product_upload
-from .esm_plus import esm_plus_product_upload, esm_plus_product_upload_excel
+from .esm_plus import esm_plus_product_upload_excel
 import zipfile
 import io
 from django.http import HttpResponse
