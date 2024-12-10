@@ -92,10 +92,11 @@ def esm_plus_product_upload_excel(product_codes):
                     ws.cell(row=current_row, column=22, value=total_stock)  # V열
 
                     # 옵션
+                    first_option = product_options.first()
                     ## 옵션 타입
                     ws.cell(row=current_row, column=23, value="2개조합형")  # W열
                     ## 옵션명
-                    ws.cell(row=current_row, column=24, value=f"출고방식 선택,{product_options.first().product_option_title}")  # X열
+                    ws.cell(row=current_row, column=24, value=f"출고방식 선택,{first_option.product_option_title}")  # X열
                     ## 옵션 입력값
                     option_values = []
                     for product_option in product_options:
