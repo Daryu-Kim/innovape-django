@@ -304,11 +304,31 @@ def cafe24_option_upload(product_codes):
                 product = Product.objects.get(product_code=product_code)
                 product_options = ProductOptions.objects.filter(product=product).order_by('product_option_code')
 
-                row = option_template_df.iloc[0].copy()  # 템플릿의 첫 번째 행을 복사
+                # 총재고량 계산
+                total_stock = sum(opt.product_option_stock for opt in product_options)
 
-                row['']
+                for product_option in product_options:
+                    row = option_template_df.iloc[0].copy()  # 템플릿의 첫 번째 행을 복사
 
-                new_rows.append(row)
+                    row['상품코드'] = product.product_cafe24_code
+                    row['자체 상품코드'] = product.product_code
+                    row['상품명'] = product.product_name
+                    row['판매가'] = product.product_sell_price
+                    row['총 재고량'] = total_stock
+                    row['품목코드'] = product_option.product_option_cafe24_code
+                    row['품목명'] = product_option.product_option_display_name
+                    row['자체 품목코드'] = product_option.product_option_code
+                    row['재고관리 사용'] = 'T'
+                    row['재고수량'] = product_option.product_option_stock
+                    row['안전재고'] = '0'
+                    row['재고관리 등급'] = 'A'
+                    row['수량체크 기준'] = 'B'
+                    row['품목 진열상태'] = 'T'
+                    row['품목 판매상태'] = 'T'
+                    row['품절표시 사용'] = 'T' if product_option.product_option_stock <= 0 else 'F'
+                    row['옵션 추가금액'] = product_option.product_option_price
+
+                    new_rows.append(row)
                     
             except Exception as e:
                 print(f"Error processing product {product_code}: {e}")

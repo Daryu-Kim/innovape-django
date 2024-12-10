@@ -470,9 +470,6 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
         elif request.POST.get("code") == "product_add":
             data = json.loads(request.POST.get("data"))
 
-            # 제품 코드 생성
-            product_cafe24_code = self.generate_product_code()
-
             # 카테고리, 디스플레이, 옵션 제품, 관련 제품을 한 번에 조회
             categories = Category.objects.filter(id__in=data["product_category"])
             related_products = Product.objects.filter(
@@ -574,58 +571,6 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
             return bool(soup.find())  # 유효한 HTML이면 True 반환
         except Exception:
             return False  # 예외가 발생하면 유효하지 않음
-
-    def generate_product_code(self):
-        prefix = "P"  # 상품 코드 앞부분 (P)
-        num_digits = 6  # 숫자 부분의 자리수 (6자리)
-        letter_max = 26  # 알파벳 A-Z (26글자)
-
-        # 마지막 상품 코드 가져오기
-        last_product = Product.objects.all().order_by("-product_cafe24_code").first()
-
-        if last_product:
-            last_code = last_product.product_cafe24_code
-
-            # 'P'로 시작하는지 확인
-            if not last_code.startswith("P"):
-                raise ValueError("코드는 'P'로 시작해야 합니다.")
-
-            # 숫자 부분과 알파벳 부분 분리
-            num_part = re.search(r"\d+", last_code[1:]).group()  # 숫자 부분
-            letter_part = re.sub(r"\d", "", last_code[1:])  # 알파벳 부분
-
-            # 알파벳 부분이 전부 'Z'인 경우 처리
-            if letter_part == "Z" * len(letter_part):
-                # 알파벳 부분이 모두 'Z'일 경우
-                new_num_length = len(num_part) - 1  # 숫자 자릿수는 1자리 줄어듬
-                new_letter_length = len(letter_part) + 1  # 알파벳 자리는 1자리 늘어남
-
-                # 숫자는 자릿수를 줄여서 0으로 채운다
-                next_num_part = "0" * new_num_length
-                # 알파벳 부분은 길이를 늘려서 'A'로 채운다
-                next_letter_part = "A" * new_letter_length
-
-            else:
-                # 알파벳 부분에서 끝이 'Z'일 경우, 끝부터 차례대로 변경
-                next_letter_part = list(letter_part)  # 알파벳을 리스트로 다룬다
-                for i in range(len(next_letter_part) - 1, -1, -1):
-                    if next_letter_part[i] == "Z":
-                        next_letter_part[i] = "A"  # Z는 A로 변경
-                    else:
-                        next_letter_part[i] = chr(
-                            ord(next_letter_part[i]) + 1
-                        )  # Z가 아니면 1 증가
-                        break
-                next_letter_part = "".join(next_letter_part)  # 다시 문자열로 합침
-
-                # 숫자 부분 1 증가
-                next_num_part = str(int(num_part)).zfill(
-                    len(num_part)
-                )  # 자리수 맞추기 위해 zfill 사용
-
-            # 최종적으로 'P' + 숫자 부분 + 알파벳 부분을 반환
-            print(next_num_part, next_letter_part)
-            return "P" + next_num_part + next_letter_part
 
 
 class DashboardProductList(LoginRequiredMixin, TemplateView):
