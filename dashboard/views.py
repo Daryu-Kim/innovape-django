@@ -28,6 +28,7 @@ from innovape.views import get_access_naver_info, get_access_cafe24_info, get_ac
 import time
 from .coupang import coupang_product_upload
 from .esm_plus import esm_plus_product_upload_excel
+from .cafe24 import cafe24_product_upload, cafe24_option_upload
 import zipfile
 import io
 from django.http import HttpResponse
@@ -516,7 +517,6 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
             new_product, created = Product.objects.update_or_create(
                 product_code=data["product_code"],
                 defaults={
-                    'product_cafe24_code': product_cafe24_code,
                     "product_name": data["product_name"],
                     "product_manage_name": data["product_manage_name"],
                     "product_description": data["product_description"],
@@ -831,6 +831,63 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
             except Exception as e:
                 return JsonResponse({'status': 'error', 'message': str(e)})
 
+        elif request.POST.get("code") == "product_cafe24_first_upload":
+            try:
+                products = Product.objects.filter(
+                    Q(product_cafe24_code__isnull=True) | Q(product_cafe24_code='')
+                ).values_list('product_code', flat=True)
+                
+                # 엑셀 파일 생성
+                excel_filename = cafe24_product_upload(products)
+                
+                if excel_filename:
+                    # ZIP 파일 생성을 위한 메모리 버퍼
+                    zip_buffer = io.BytesIO()
+                    
+                    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                        # 엑셀 파일 추가
+                        excel_path = os.path.join(settings.MEDIA_ROOT, 'upload_forms', excel_filename)
+                        zip_file.write(excel_path, excel_filename)
+                        
+                        # 선택된 상품들의 이미지 파일 추가
+                        for product_code in products:
+                            product = Product.objects.get(product_code=product_code)
+                            
+                            # 썸네일 이미지 추가
+                            if product.product_thumbnail_image:
+                                thumb_path = os.path.join(settings.MEDIA_ROOT, str(product.product_thumbnail_image))
+                                if os.path.exists(thumb_path):
+                                    # 임시 파일로 복사하면서 원본 속성 유지
+                                    temp_thumb = os.path.join(settings.MEDIA_ROOT, 'temp', os.path.basename(thumb_path))
+                                    os.makedirs(os.path.dirname(temp_thumb), exist_ok=True)
+                                    shutil.copy2(thumb_path, temp_thumb)  # copy2는 메타데이터를 포함한 복사
+                                    zip_file.write(temp_thumb, f'images/thumbnails/{os.path.basename(thumb_path)}')
+                                    os.remove(temp_thumb)  # 임시 파일 삭제
+                                
+                            # 상세 이미지들 추가
+                            for detail_image in product.product_detail:
+                                detail_path = os.path.join(settings.MEDIA_ROOT, detail_image)
+                                if os.path.exists(detail_path):
+                                    # 임시 파일로 복사하면서 원본 속성 유지
+                                    temp_detail = os.path.join(settings.MEDIA_ROOT, 'temp', os.path.basename(detail_path))
+                                    os.makedirs(os.path.dirname(temp_detail), exist_ok=True)
+                                    shutil.copy2(detail_path, temp_detail)
+                                    zip_file.write(temp_detail, f'images/details/{os.path.basename(detail_path)}')
+                                    os.remove(temp_detail)  # 임시 파일 삭제
+                    
+                    # ZIP 파일 응답 생성
+                    zip_buffer.seek(0)
+                    timestamp = time.strftime('%Y%m%d_%H%M%S')
+                    response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+                    response['Content-Disposition'] = f'attachment; filename="cafe24_upload_package_{timestamp}.zip"'
+                    
+                    return response
+                else:
+                    return JsonResponse({'status': 'error', 'message': '파일 생성 실패'})
+                    
+            except Exception as e:
+                return JsonResponse({'status': 'error', 'message': str(e)})
+
         elif request.POST.get("code") == "product_esm_plus_first_upload":
             try:
                 products = Product.objects.filter(
@@ -857,6 +914,32 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
             except Exception as e:
                 return JsonResponse({
                     'status': 'error', 
+                    'message': str(e)
+                })
+
+        elif request.POST.get("code") == "product_cafe24_option_first_upload":
+            try:
+                products = Product.objects.filter(
+                    Q(product_cafe24_code__isnull=True) | Q(product_cafe24_code='')
+                ).values_list('product_code', flat=True)
+                
+                # CSV 파일 생성 및 파일명 반환
+                result_filename = cafe24_option_upload(products)
+                
+                if result_filename:
+                    return JsonResponse({
+                        'status': 'success',
+                        'filename': result_filename
+                    })
+                else:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': '파일 생성 실패'
+                    })
+                    
+            except Exception as e:
+                return JsonResponse({
+                    'status': 'error',
                     'message': str(e)
                 })
 
