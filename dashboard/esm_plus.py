@@ -1,3 +1,11 @@
+import os
+import time
+import math
+import random
+from django.conf import settings
+from dashboard.models import Product, ProductOptions
+import openpyxl as op
+
 def esm_plus_product_upload_excel(product_codes):
     try:
         # 500개씩 나누기
