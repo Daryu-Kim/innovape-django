@@ -27,6 +27,9 @@ import http.client
 from innovape.views import get_access_naver_info, get_access_cafe24_info, get_access_interpark_info, get_access_sixshop_info, get_access_coupang_info, smartstore_product_upload
 import time
 from .coupang import coupang_product_upload
+import zipfile
+import io
+from django.http import HttpResponse
 
 
 # Create your views here.
@@ -747,20 +750,51 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                     
             return JsonResponse({"status": "success"})
         elif request.POST.get("code") == "product_coupang_first_upload":
-            products = Product.objects.filter(
-                Q(product_coupang_code__isnull=True) | Q(product_coupang_code=''),
-                product_coupang_is_prohibitted=False
-            ).values_list('product_code', flat=True)
-            
             try:
-                file_name = coupang_product_upload(products)
-                file_path = f'/media/upload_forms/{file_name}'
-                return JsonResponse({
-                    'status': 'success',
-                    'file_url': file_path
-                })
+                products = Product.objects.filter(
+                    Q(product_coupang_code__isnull=True) | Q(product_coupang_code=''),
+                    product_coupang_is_prohibitted=False
+                ).values_list('product_code', flat=True)
+                
+                # 엑셀 파일 생성
+                excel_filename = coupang_product_upload(products)
+                
+                if excel_filename:
+                    # ZIP 파일 생성을 위한 메모리 버퍼
+                    zip_buffer = io.BytesIO()
+                    
+                    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                        # 엑셀 파일 추가
+                        excel_path = os.path.join(settings.MEDIA_ROOT, 'upload_forms', excel_filename)
+                        zip_file.write(excel_path, excel_filename)
+                        
+                        # 선택된 상품들의 이미지 파일 추가
+                        for product_code in products:
+                            product = Product.objects.get(product_code=product_code)
+                            
+                            # 썸네일 이미지 추가
+                            if product.product_thumbnail_image:
+                                thumb_path = os.path.join(settings.MEDIA_ROOT, str(product.product_thumbnail_image))
+                                if os.path.exists(thumb_path):
+                                    zip_file.write(thumb_path, f'images/thumbnails/{os.path.basename(thumb_path)}')
+                            
+                            # 상세 이미지들 추가
+                            for detail_image in product.product_detail:
+                                detail_path = os.path.join(settings.MEDIA_ROOT, detail_image)
+                                if os.path.exists(detail_path):
+                                    zip_file.write(detail_path, f'images/details/{os.path.basename(detail_path)}')
+                    
+                    # ZIP 파일 응답 생성
+                    zip_buffer.seek(0)
+                    timestamp = time.strftime('%Y%m%d_%H%M%S')
+                    response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+                    response['Content-Disposition'] = f'attachment; filename="coupang_upload_package_{timestamp}.zip"'
+                    
+                    return response
+                else:
+                    return JsonResponse({'status': 'error', 'message': '파일 생성 실패'})
+                    
             except Exception as e:
-                print(f"Error uploading product {product.product_code}: {str(e)}")
                 return JsonResponse({'status': 'error', 'message': str(e)})
 
 

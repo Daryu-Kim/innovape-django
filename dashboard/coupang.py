@@ -93,17 +93,17 @@ def coupang_product_upload(product_codes):
           ws.cell(row=current_row, column=13, value=product_option.product_option_name)  # M열
           
           # 판매가격 입력
-          sell_price = product.product_price + product_option.product_option_price if product_option.product_option_price > 0 else product.product_price
-          ws.cell(row=current_row, column=78, value=sell_price)  # BJ열
+          sell_price = product.product_sell_price + product_option.product_option_price if product_option.product_option_price > 0 else product.product_sell_price
+          ws.cell(row=current_row, column=62, value=sell_price)  # BJ열
           
           # 할인율기준가 입력
-          ws.cell(row=current_row, column=79, value=consumer_price)  # BK열
+          ws.cell(row=current_row, column=63, value=consumer_price)  # BK열
           
           # 재고수량 입력
-          ws.cell(row=current_row, column=80, value=product_option.product_option_stock)  # BL열
+          ws.cell(row=current_row, column=64, value=product_option.product_option_stock)  # BL열
           
           # 출고리드타임 입력
-          ws.cell(row=current_row, column=81, value=4)  # BM열
+          ws.cell(row=current_row, column=65, value=4)  # BM열
           
           # 성인상품 입력
           ws.cell(row=current_row, column=69, value="Y")  # BQ열
@@ -130,12 +130,12 @@ def coupang_product_upload(product_codes):
           ws.cell(row=current_row, column=94, value="상품 상세페이지 참조")  # CP열
           
           # 상품 대표이미지 파일명 입력
-          ws.cell(row=current_row, column=103, value=product.product_thumbnail_image.url.split("/")[-1])  # CZ열
+          ws.cell(row=current_row, column=104, value=product.product_thumbnail_image.url.split("/")[-1])  # CZ열
           
           # 상품 상세 설명 파일명 입력
           detail_images = [image.replace('product_detail_images/', '') for image in product.product_detail]
           detail_images_string = ','.join(detail_images)
-          ws.cell(row=current_row, column=109, value=detail_images_string)  # DF열
+          ws.cell(row=current_row, column=110, value=detail_images_string)  # DF열
           
           current_row += 1
         

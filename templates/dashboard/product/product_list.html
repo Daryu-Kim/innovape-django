@@ -318,6 +318,9 @@
             data: {
                 code: "product_coupang_first_upload"
             },
+            xhrFields: {
+                responseType: 'blob'
+            },
             xhr: function() {
                 var xhr = new window.XMLHttpRequest();
                 xhr.upload.addEventListener('progress', function(evt) {
@@ -340,12 +343,15 @@
                     .text('업로드 완료!');
 
                 // 파일 다운로드
-                var link = document.createElement('a');
-                link.href = response.file_url;
-                link.download = response.file_url.split('/').pop();
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                // ZIP 파일 다운로드
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `coupang_upload_package_${new Date().getTime()}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
                 
                 // 3초 후 프로그레스 바 숨김
                 setTimeout(function() {
