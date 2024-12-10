@@ -300,6 +300,79 @@
         $("#product-table").DataTable().ajax.reload();
     });
 
+    $("#product-coupang-first-upload-btn").click(function (e) {
+        e.preventDefault();
+        
+        // 프로그레스 바 초기화 및 표시
+        $("#upload-progress").width('0%').text('0%');
+        $("#upload-progress-bar").show();
+        alert("쿠팡 미업로드 상품 업로드를 시작합니다.");
+        
+        $.ajax({
+            url: "{% url 'dashboard_product_list' %}",
+            method: "POST",
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            data: {
+                code: "product_coupang_first_upload"
+            },
+            xhr: function() {
+                var xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener('progress', function(evt) {
+                    if (evt.lengthComputable) {
+                        var percentComplete = evt.loaded / evt.total;
+                        var percentValue = Math.round(percentComplete * 100) + '%';
+                        $("#upload-progress")
+                            .width(percentValue)
+                            .text(percentValue);
+                    }
+                }, false);
+                return xhr;
+            },
+            success: function (response) {
+                console.log(response);
+                // 성공 시 처리
+                $("#upload-progress")
+                    .removeClass('progress-bar-animated')
+                    .addClass('bg-success')
+                    .text('업로드 완료!');
+
+                // 파일 다운로드
+                var link = document.createElement('a');
+                link.href = response.file_url;
+                link.download = response.file_url.split('/').pop();
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // 3초 후 프로그레스 바 숨김
+                setTimeout(function() {
+                    $("#upload-progress-bar").hide();
+                    $("#upload-progress")
+                        .removeClass('bg-success')
+                        .addClass('progress-bar-animated');
+                }, 3000);
+            },
+            error: function(xhr, status, error) {
+                // 에러 시 처리
+                $("#upload-progress")
+                    .removeClass('progress-bar-animated')
+                    .addClass('bg-danger')
+                    .width('100%')
+                    .text('업로드 실패');
+                
+                // 3초 후 프로그레스 바 숨김
+                setTimeout(function() {
+                    $("#upload-progress-bar").hide();
+                    $("#upload-progress")
+                        .removeClass('bg-danger')
+                        .addClass('progress-bar-animated');
+                }, 3000);
+            }
+        });
+    });
+
     $("#product-smartstore-first-upload-btn").click(function (e) {
         e.preventDefault();
         

@@ -26,6 +26,7 @@ from django.conf import settings
 import http.client
 from innovape.views import get_access_naver_info, get_access_cafe24_info, get_access_interpark_info, get_access_sixshop_info, get_access_coupang_info, smartstore_product_upload
 import time
+from .coupang import coupang_product_upload
 
 
 # Create your views here.
@@ -745,6 +746,22 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                         print(f"Error uploading product {product.product_code}: {str(e)}")
                     
             return JsonResponse({"status": "success"})
+        elif request.POST.get("code") == "product_coupang_first_upload":
+            products = Product.objects.filter(
+                Q(product_coupang_code__isnull=True) | Q(product_coupang_code=''),
+                product_coupang_is_prohibitted=False
+            ).values_list('product_code', flat=True)
+            
+            try:
+                file_name = coupang_product_upload(products)
+                file_path = f'/media/upload_forms/{file_name}'
+                return JsonResponse({
+                    'status': 'success',
+                    'file_url': file_path
+                })
+            except Exception as e:
+                print(f"Error uploading product {product.product_code}: {str(e)}")
+                return JsonResponse({'status': 'error', 'message': str(e)})
 
 
 class DashboardProductCategory(LoginRequiredMixin, TemplateView):
