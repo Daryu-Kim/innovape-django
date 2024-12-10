@@ -30,6 +30,7 @@ from .coupang import coupang_product_upload
 import zipfile
 import io
 from django.http import HttpResponse
+import shutil
 
 
 # Create your views here.
@@ -776,13 +777,23 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                             if product.product_thumbnail_image:
                                 thumb_path = os.path.join(settings.MEDIA_ROOT, str(product.product_thumbnail_image))
                                 if os.path.exists(thumb_path):
-                                    zip_file.write(thumb_path, f'images/thumbnails/{os.path.basename(thumb_path)}')
-                            
+                                    # 임시 파일로 복사하면서 원본 속성 유지
+                                    temp_thumb = os.path.join(settings.MEDIA_ROOT, 'temp', os.path.basename(thumb_path))
+                                    os.makedirs(os.path.dirname(temp_thumb), exist_ok=True)
+                                    shutil.copy2(thumb_path, temp_thumb)  # copy2는 메타데이터를 포함한 복사
+                                    zip_file.write(temp_thumb, f'images/thumbnails/{os.path.basename(thumb_path)}')
+                                    os.remove(temp_thumb)  # 임시 파일 삭제
+                                
                             # 상세 이미지들 추가
                             for detail_image in product.product_detail:
                                 detail_path = os.path.join(settings.MEDIA_ROOT, detail_image)
                                 if os.path.exists(detail_path):
-                                    zip_file.write(detail_path, f'images/details/{os.path.basename(detail_path)}')
+                                    # 임시 파일로 복사하면서 원본 속성 유지
+                                    temp_detail = os.path.join(settings.MEDIA_ROOT, 'temp', os.path.basename(detail_path))
+                                    os.makedirs(os.path.dirname(temp_detail), exist_ok=True)
+                                    shutil.copy2(detail_path, temp_detail)
+                                    zip_file.write(temp_detail, f'images/details/{os.path.basename(detail_path)}')
+                                    os.remove(temp_detail)  # 임시 파일 삭제
                     
                     # ZIP 파일 응답 생성
                     zip_buffer.seek(0)
