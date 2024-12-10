@@ -334,7 +334,7 @@
                 }, false);
                 return xhr;
             },
-            success: function (response) {
+            success: function (response, status, xhr) {
                 // 성공 시 처리
                 $("#upload-progress")
                     .removeClass('progress-bar-animated')
