@@ -153,7 +153,57 @@ def get_access_token(code):
     else:
         # 오류 처리 추가
         return {"error": response.text, "status_code": response.status_code}
+
+
+def get_esm_plus_header():
+    data = {
+        "alg": "HS256",
+        "typ": "JWT",
+        "kid": "innobite02"
+    }
+    # JSON을 문자열로 변환 후 base64url로 인코딩
+    json_data = json.dumps(data)
+    base64_header = base64.urlsafe_b64encode(json_data.encode()).rstrip(b'=').decode('utf-8')
+    return base64_header
+
+def get_esm_plus_payload():
+    data = {
+        "iss": "admin.innovape.shop",
+        "sub": "sell",
+        "aud": "sa.esmplus.com",
+        "ssi": "G:innobite02,A:innobite02"  # G는 지마켓을 의미
+    }
     
+    # JSON을 문자열로 변환 후 base64url로 인코딩
+    json_data = json.dumps(data)
+    base64_payload = base64.urlsafe_b64encode(json_data.encode()).rstrip(b'=').decode('utf-8')
+    return base64_payload
+
+def get_esm_plus_signature(header, payload, secret_key):
+    # header와 payload를 점(.)으로 연결
+    message = f"{header}.{payload}"
+    
+    # HMAC-SHA256으로 서명 생성
+    signature = hmac.new(
+        secret_key.encode('utf-8'),
+        message.encode('utf-8'),
+        hashlib.sha256
+    ).digest()
+    
+    # Base64Url 인코딩 수행
+    base64_signature = base64.urlsafe_b64encode(signature).rstrip(b'=').decode('utf-8')
+    return base64_signature
+
+def create_jwt_token():
+    secret_key = config("ESM_PLUS_SECRET_KEY")
+    header = get_esm_plus_header()
+    payload = get_esm_plus_payload()
+    signature = get_esm_plus_signature(header, payload, secret_key)
+    
+    # JWT 토큰 생성 (header.payload.signature 형식)
+    jwt_token = f"{header}.{payload}.{signature}"
+    return jwt_token
+
 def smartstore_product_upload(product_code, product_smartstore_code):
     token = get_access_naver_info()
     product = Product.objects.get(product_code=product_code)

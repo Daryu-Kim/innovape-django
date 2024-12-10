@@ -27,6 +27,7 @@ import http.client
 from innovape.views import get_access_naver_info, get_access_cafe24_info, get_access_interpark_info, get_access_sixshop_info, get_access_coupang_info, smartstore_product_upload
 import time
 from .coupang import coupang_product_upload
+from .esm_plus import esm_plus_product_upload, esm_plus_product_upload_excel
 import zipfile
 import io
 from django.http import HttpResponse
@@ -68,6 +69,21 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         
         products = Product.objects.all()
+
+        # API 엔드포인트
+        url = f"https://sa2.esmplus.com/item/v1/categories/sd-cats/0"
+        
+        # API 호출에 필요한 헤더
+        # headers = {
+        #     "Authorization": f"Bearer {settings.GMARKET_API_TOKEN}",
+        #     "Accept": "application/json",
+        #     "Content-Type": "application/json"
+        # }
+        
+        # API 요청
+        response = requests.get(url)
+        pprint.pprint(response.json())
+
         
         context["uploaded_products"] = products.count()
         
@@ -90,6 +106,8 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                 category_code__in=row["상품분류 번호"].split("|")
                             )
                             details = []
+                            origin_details = []
+                            origin_thumbnail = ""
                             try:
                                 consumer_price = row["소비자가"] if pd.notna(row["소비자가"]) else 0
                                 sell_price = row["판매가"] if pd.notna(row["판매가"]) else 0
@@ -111,6 +129,8 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                 "https://ecimg.cafe24img.com/pg1094b33231538027/innovape/web/product/big/"
                                 + row["이미지등록(상세)"]
                             )
+
+                            origin_thumbnail = thumbnail_src
 
                             try:
                                 headers = {
@@ -165,6 +185,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
 
                                 # base_url과 결합하여 절대 URL 생성
                                 full_url = f"https://ecimg.cafe24img.com/pg1094b33231538027/innovape/{formatted_src}"
+                                origin_details.append(full_url)
 
                                 # 이미지를 다운로드
                                 try:
@@ -224,6 +245,8 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                     "product_manage_name": product_name,
                                     "product_description": str(row["상품 요약설명"]),
                                     "product_detail": details,
+                                    "product_origin_detail": origin_details,
+                                    "product_origin_thumbnail_image": origin_thumbnail,
                                     "product_option": str(row["옵션입력"]),
                                     "product_keywords": str(row["검색어설정"]),
                                     "product_consumer_price": consumer_price,
@@ -807,6 +830,35 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                     
             except Exception as e:
                 return JsonResponse({'status': 'error', 'message': str(e)})
+
+        elif request.POST.get("code") == "product_esm_plus_first_upload":
+            try:
+                products = Product.objects.filter(
+                    Q(product_esm_plus_code__isnull=True) | Q(product_esm_plus_code=''),
+                    product_esm_plus_is_prohibitted=False
+                ).values_list('product_code', flat=True)
+                
+                # 엑셀 파일 생성
+                result_files = esm_plus_product_upload_excel(products)
+                
+                # 생성된 파일들의 URL 목록 반환
+                file_urls = []
+                for file_path in result_files:
+                    # MEDIA_ROOT 경로를 MEDIA_URL로 변환
+                    relative_path = os.path.relpath(file_path, settings.MEDIA_ROOT)
+                    file_url = os.path.join(settings.MEDIA_URL, relative_path)
+                    file_urls.append(file_url)
+
+                return JsonResponse({
+                    'status': 'success',
+                    'files': file_urls
+                })
+                
+            except Exception as e:
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': str(e)
+                })
 
 
 class DashboardProductCategory(LoginRequiredMixin, TemplateView):
