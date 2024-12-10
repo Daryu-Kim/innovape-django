@@ -578,7 +578,7 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
                 next_letter_part = "A" * new_letter_length
 
             else:
-                # 알파벳 부분에서 ���이 'Z'일 경우, 끝부터 차례대로 변경
+                # 알파벳 부분에서 끝이 'Z'일 경우, 끝부터 차례대로 변경
                 next_letter_part = list(letter_part)  # 알파벳을 리스트로 다룬다
                 for i in range(len(next_letter_part) - 1, -1, -1):
                     if next_letter_part[i] == "Z":
@@ -607,7 +607,7 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # 카테고리 데이터를 ��져옵니다.
+        # 카테고리 데이터를 가져옵니다.
         categories = Category.objects.all()
         context["categories"] = categories
 
@@ -722,6 +722,23 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                 UPLOAD_CATEGORY_CODES = ['43', '51', '124', '137', '138', '125']
                 if (product.product_category.filter(category_code__in=UPLOAD_CATEGORY_CODES).exists() and 
                     not product.product_smartstore_is_prohibitted):
+                    try:
+                        smartstore_product_upload(product.product_code, product.product_smartstore_code)
+                    except Exception as e:
+                        print(f"Error uploading product {product.product_code}: {str(e)}")
+                    
+            return JsonResponse({"status": "success"})
+        elif request.POST.get("code") == "product_smartstore_first_upload":
+            products = Product.objects.filter(
+                Q(product_smartstore_code__isnull=True) | Q(product_smartstore_code=''),
+                product_smartstore_is_prohibitted=False
+            )
+            
+            # 스마트스토어 상품 업로드
+            for product in products:
+                # 특정 카테고리에 속한 상품만 업로드
+                UPLOAD_CATEGORY_CODES = ['43', '51', '124', '137', '138', '125']
+                if product.product_category.filter(category_code__in=UPLOAD_CATEGORY_CODES).exists():
                     try:
                         smartstore_product_upload(product.product_code, product.product_smartstore_code)
                     except Exception as e:
