@@ -389,7 +389,7 @@
         // 프로그레스 바 초기화 및 표시
         $("#upload-progress").width('0%').text('0%');
         $("#upload-progress-bar").show();
-        alert("카페24 미업로드 상품 업로드를 시작합니다.");
+        alert("카페24 상품 옵션 업로드를 시작합니다.");
         
         $.ajax({
             url: "{% url 'dashboard_product_list' %}",
@@ -398,7 +398,7 @@
                 'X-CSRFToken': '{{ csrf_token }}'
             },
             data: {
-                code: "product_cafe24_first_upload"
+                code: "product_cafe24_option_first_upload"
             },
             xhr: function() {
                 var xhr = new window.XMLHttpRequest();

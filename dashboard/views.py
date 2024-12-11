@@ -33,6 +33,7 @@ import zipfile
 import io
 from django.http import HttpResponse
 import shutil
+import traceback
 
 
 # Create your views here.
@@ -104,7 +105,7 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                     if (pd.notna(row["자체 상품코드"])):
                         try:
                             categories = Category.objects.filter(
-                                category_code__in=row["상품분류 번호"].split("|")
+                                category_code__in=str(row["상품분류 번호"]).split("|")
                             )
                             details = []
                             origin_details = []
@@ -126,8 +127,18 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                 continue
 
                             # 썸네일 추출
-                            thumbnail_src = (
-                                "https://ecimg.cafe24img.com/pg1094b33231538027/innovape/web/product/big/"
+                            # The code snippet is checking if a specific URL
+                            # ("https://ecimg.cafe24img.com/pg1094b33231538027/innovape/") is present
+                            # in the value of the "이미지등록(상세)" key in the `row` dictionary. If the URL
+                            # is found in the value, the `thumbnail_src` variable is assigned the
+                            # value of the "이미지등록(상세)" key. If the URL is not found in the value, the
+                            # `thumbnail_src` variable is assigned a different URL constructed by
+                            # appending the value of the
+                            if "https://ecimg.cafe24img.com/pg1094b33231538027/innovape/" in row["이미지등록(상세)"]:
+                                thumbnail_src = row["이미지등록(상세)"]
+                            else:
+                                thumbnail_src = (
+                                    "https://ecimg.cafe24img.com/pg1094b33231538027/innovape/web/product/big/"
                                 + row["이미지등록(상세)"]
                             )
 
@@ -182,7 +193,11 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                 src = img_tag.get("src")
                                 if not src:
                                     continue
-                                formatted_src = src.replace("//innovape.cafe24.com/", "")
+                                
+                                if "https://ecimg.cafe24img.com/pg1094b33231538027/innovape/" in src:
+                                    formatted_src = src.replace("https://ecimg.cafe24img.com/pg1094b33231538027/innovape/", "")
+                                else:
+                                    formatted_src = src.replace("//innovape.cafe24.com/", "")
 
                                 # base_url과 결합하여 절대 URL 생성
                                 full_url = f"https://ecimg.cafe24img.com/pg1094b33231538027/innovape/{formatted_src}"
@@ -230,11 +245,11 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                                 product_name = product_name.replace(" 입호흡 폐호흡 전자담배 기기", "")
                                 
                             # 액상 상품명 다듬기
-                            if "52" in row["상품분류 번호"].split("|"):
+                            if "52" in str(row["상품분류 번호"]).split("|"):
                                 if "입호흡 액상" not in product_name:
                                     product_name += " 입호흡 액상"
 
-                            if "45" in row["상품분류 번호"].split("|"):
+                            if "45" in str(row["상품분류 번호"]).split("|"):
                                 if "폐호흡 액상" not in product_name:
                                     product_name += " 폐호흡 액상"
 
@@ -272,6 +287,41 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
 
                             new_product.save()
                             print(f"상품 {row['자체 상품코드']} 처리 완료")
+                            
+                            # 상품 옵션 업로드
+                            product_options = ProductOptions.objects.filter(product=new_product)
+                            base_code = row['상품코드']
+                            option_code_suffix = '000A'
+                            
+                            # 옵션명 파싱
+                            option_parts = row['옵션입력'].split('//')
+                            first_options = option_parts[0].split('{')[1].split('}')[0].split('|')
+                            second_options = option_parts[1].split('{')[1].split('}')[0].split('|')
+                            
+                            # 모든 조합 생성
+                            option_combinations = []
+                            for first in first_options:
+                                for second in second_options:
+                                    option_combinations.append(f"{first}/{second}")
+                            
+                            for product_option in product_options:
+                                if product_option.product_option_display_name in option_combinations:
+                                    product_option.product_option_cafe24_code = base_code + option_code_suffix
+                                    product_option.save()
+                                    
+                                    print(f"상품 옵션 {product_option.product_option_cafe24_code}[{base_code + option_code_suffix}] 처리 완료")
+                                    
+                                    # 다음 코드 생성
+                                    if option_code_suffix[-1] == 'Z':
+                                        # 000Z 다음은 00BA가 되어야 함
+                                        if option_code_suffix == '000Z':
+                                            option_code_suffix = '00BA'
+                                        else:
+                                            # 00BZ 다음은 00CA가 되어야 함
+                                            current_letter = option_code_suffix[2]
+                                            option_code_suffix = f"00{chr(ord(current_letter) + 1)}A"
+                                    else:
+                                        option_code_suffix = option_code_suffix[:-1] + chr(ord(option_code_suffix[-1]) + 1)
                         except Exception as e:
                             print(f"상품 {row['자체 상품코드']} 처리 중 오류 발생: {e}")
                             continue
@@ -374,7 +424,7 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
                 # CSS 선택자를 사용하여 img 태그 선택
                 base_url = "https://medusamall.com"
                 img_tags = soup.select("#prdDetail > div.cont img")
-                thumbnail_img_tag = soup.select_one("#big_img_box > div > img")
+                thumbnail_img_tag = soup.select("#big_img_box > div > img")[0]
                 supply_price_tag = soup.select_one("#span_product_price_text")
                 option_tags = soup.select("#product_option_id1 > optgroup > option")
 
@@ -782,43 +832,21 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                     Q(product_cafe24_code__isnull=True) | Q(product_cafe24_code='')
                 ).values_list('product_code', flat=True)
                 
-                # 엑셀 파일 생성
-                excel_filename = cafe24_product_upload(products)
+                print(f"Found {len(products)} products to process")
+                today = datetime.now().strftime('%Y%m%d')
                 
-                if excel_filename:
-                    # ZIP 파일 생성을 위한 메모리 버퍼
+                # CSV 파일 생성 (이제 final_zip_buffer를 반환)
+                final_zip_buffer = cafe24_product_upload(products)
+                
+                if final_zip_buffer:
+                    # 이미지 파일들과 함께 ZIP 파일 생성
                     zip_buffer = io.BytesIO()
                     
                     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                        # 엑셀 파일 추가
-                        excel_path = os.path.join(settings.MEDIA_ROOT, 'upload_forms', excel_filename)
-                        zip_file.write(excel_path, excel_filename)
-                        
-                        # 선택된 상품들의 이미지 파일 추가
-                        for product_code in products:
-                            product = Product.objects.get(product_code=product_code)
-                            
-                            # 썸네일 이미지 추가
-                            if product.product_thumbnail_image:
-                                thumb_path = os.path.join(settings.MEDIA_ROOT, str(product.product_thumbnail_image))
-                                if os.path.exists(thumb_path):
-                                    # 임시 파일로 복사하면서 원본 속성 유지
-                                    temp_thumb = os.path.join(settings.MEDIA_ROOT, 'temp', os.path.basename(thumb_path))
-                                    os.makedirs(os.path.dirname(temp_thumb), exist_ok=True)
-                                    shutil.copy2(thumb_path, temp_thumb)  # copy2는 메타데이터를 포함한 복사
-                                    zip_file.write(temp_thumb, f'images/thumbnails/{os.path.basename(thumb_path)}')
-                                    os.remove(temp_thumb)  # 임시 파일 삭제
-                                
-                            # 상세 이미지들 추가
-                            for detail_image in product.product_detail:
-                                detail_path = os.path.join(settings.MEDIA_ROOT, detail_image)
-                                if os.path.exists(detail_path):
-                                    # 임시 파일로 복사하면서 원본 속성 유지
-                                    temp_detail = os.path.join(settings.MEDIA_ROOT, 'temp', os.path.basename(detail_path))
-                                    os.makedirs(os.path.dirname(temp_detail), exist_ok=True)
-                                    shutil.copy2(detail_path, temp_detail)
-                                    zip_file.write(temp_detail, f'images/details/{os.path.basename(detail_path)}')
-                                    os.remove(temp_detail)  # 임시 파일 삭제
+                        # 기존 ZIP 파일의 내용을 새 ZIP 파일에 추가
+                        with zipfile.ZipFile(final_zip_buffer) as existing_zip:
+                            for file_info in existing_zip.filelist:
+                                zip_file.writestr(file_info.filename, existing_zip.read(file_info.filename))
                     
                     # ZIP 파일 응답 생성
                     zip_buffer.seek(0)
@@ -831,6 +859,8 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                     return JsonResponse({'status': 'error', 'message': '파일 생성 실패'})
                     
             except Exception as e:
+                print(f"Error in cafe24 upload: {str(e)}")
+                print(traceback.format_exc())
                 return JsonResponse({'status': 'error', 'message': str(e)})
 
         elif request.POST.get("code") == "product_esm_plus_first_upload":
@@ -864,9 +894,8 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
 
         elif request.POST.get("code") == "product_cafe24_option_first_upload":
             try:
-                products = Product.objects.filter(
-                    Q(product_cafe24_code__isnull=True) | Q(product_cafe24_code='')
-                ).values_list('product_code', flat=True)
+                products = Product.objects.all().values_list('product_code', flat=True)
+                print(products)
                 
                 # CSV 파일 생성 및 파일명 반환
                 result_filename = cafe24_option_upload(products)
