@@ -26,7 +26,7 @@ admin.site.register(Product, ProductAdmin)
     
 
 class ProductOptionsAdmin(admin.ModelAdmin):
-    list_display = ('product', 'product_option_cafe24_code', 'product_option_display_name', 'product_option_price', 'product_option_stock',)
+    list_display = ('product', 'product_option_code', 'product_option_cafe24_code', 'product_option_display_name', 'product_option_price', 'product_option_stock',)
     search_fields = ('product',)
     list_filter = ('product',)
 
