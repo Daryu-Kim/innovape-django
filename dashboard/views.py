@@ -287,41 +287,6 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
 
                             new_product.save()
                             print(f"상품 {row['자체 상품코드']} 처리 완료")
-                            
-                            # 상품 옵션 업로드
-                            product_options = ProductOptions.objects.filter(product=new_product)
-                            base_code = row['상품코드']
-                            option_code_suffix = '000A'
-                            
-                            # 옵션명 파싱
-                            option_parts = row['옵션입력'].split('//')
-                            first_options = option_parts[0].split('{')[1].split('}')[0].split('|')
-                            second_options = option_parts[1].split('{')[1].split('}')[0].split('|')
-                            
-                            # 모든 조합 생성
-                            option_combinations = []
-                            for first in first_options:
-                                for second in second_options:
-                                    option_combinations.append(f"{first}/{second}")
-                            
-                            for product_option in product_options:
-                                if product_option.product_option_display_name in option_combinations:
-                                    product_option.product_option_cafe24_code = base_code + option_code_suffix
-                                    product_option.save()
-                                    
-                                    print(f"상품 옵션 {product_option.product_option_cafe24_code}[{base_code + option_code_suffix}] 처리 완료")
-                                    
-                                    # 다음 코드 생성
-                                    if option_code_suffix[-1] == 'Z':
-                                        # 000Z 다음은 00BA가 되어야 함
-                                        if option_code_suffix == '000Z':
-                                            option_code_suffix = '00BA'
-                                        else:
-                                            # 00BZ 다음은 00CA가 되어야 함
-                                            current_letter = option_code_suffix[2]
-                                            option_code_suffix = f"00{chr(ord(current_letter) + 1)}A"
-                                    else:
-                                        option_code_suffix = option_code_suffix[:-1] + chr(ord(option_code_suffix[-1]) + 1)
                         except Exception as e:
                             print(f"상품 {row['자체 상품코드']} 처리 중 오류 발생: {e}")
                             continue
@@ -369,15 +334,15 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                         option_price = 0
                     
                     new_option, created = ProductOptions.objects.update_or_create(
-                        product_option_cafe24_code=str(row["품목코드"]),
+                        product_option_display_name=str(row["품목명"]),
                         defaults={
                             'product': product,
                             'product_option_code': product.product_code + str(option_index).zfill(4),
                             'product_option_title': option_title,
                             'product_option_name': option_name,
-                            'product_option_display_name': str(row["품목명"]),
                             'product_option_stock': stock_quantity,
                             'product_option_price': option_price,
+                            'product_option_cafe24_code': str(row["품목코드"]),
                         },
                     )
 
