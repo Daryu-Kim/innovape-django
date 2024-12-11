@@ -61,6 +61,16 @@ class DashboardHomeView(LoginRequiredMixin, TemplateView):
 class DashboardOrderHome(LoginRequiredMixin, TemplateView):
     template_name = "dashboard/order/order_home.html"
     login_url = reverse_lazy("account_login")
+    
+    
+class DashboardShopHome(LoginRequiredMixin, TemplateView):
+    template_name = "dashboard/shop/shop_home.html"
+    login_url = reverse_lazy("account_login")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        return context
 
 
 class DashboardProductHome(LoginRequiredMixin, TemplateView):
