@@ -177,6 +177,7 @@ def cafe24_product_upload(product_codes):
                 row = {}
                 category_codes = '|'.join(product.product_category.values_list('category_code', flat=True))
                 category_n = '|'.join(['N'] * product.product_category.count())
+                truncated_name = truncate_to_bytes(product.product_name, 47) if len(product.product_name.encode('utf-8')) > 50 else product.product_name
                 
                 # 데이터 업데이트
                 row['자체 상품코드'] = product.product_code
@@ -186,7 +187,7 @@ def cafe24_product_upload(product_codes):
                 row['상품분류 신상품영역'] = category_n
                 row['상품분류 추천상품영역'] = category_n
                 row['상품명'] = product.product_name
-                row['상품명(관리용)'] = truncate_to_bytes(product.product_name, 47) if get_byte_length(product.product_name) > 50 else product.product_name
+                row['상품명(관리용)'] = truncated_name
                 row['상품 요약설명'] = product.product_description
                 row['상품 간략설명'] = product.product_description
                 row['상품 상세설명'] = detail_html
