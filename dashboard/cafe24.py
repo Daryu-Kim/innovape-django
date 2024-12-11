@@ -177,7 +177,6 @@ def cafe24_product_upload(product_codes):
                 row = {}
                 category_codes = '|'.join(product.product_category.values_list('category_code', flat=True))
                 category_n = '|'.join(['N'] * product.product_category.count())
-                truncated_name = truncate_to_bytes(product.product_name, 47) if len(product.product_name.encode('utf-8')) > 50 else product.product_name
                 
                 # 데이터 업데이트
                 row['자체 상품코드'] = product.product_code
@@ -187,7 +186,7 @@ def cafe24_product_upload(product_codes):
                 row['상품분류 신상품영역'] = category_n
                 row['상품분류 추천상품영역'] = category_n
                 row['상품명'] = product.product_name
-                row['상품명(관리용)'] = truncated_name
+                row['상품명(관리용)'] = product.product_name
                 row['상품 요약설명'] = product.product_description
                 row['상품 간략설명'] = product.product_description
                 row['상품 상세설명'] = detail_html
@@ -332,19 +331,3 @@ def cafe24_option_upload(product_codes):
     except Exception as e:
         print(f"Error in cafe24_option_upload: {e}")
         return None
-    
-def get_byte_length(s):
-    return len(s.encode('utf-8'))
-
-def truncate_to_bytes(text, max_bytes):
-    encoded = text.encode('utf-8')
-    if len(encoded) <= max_bytes:
-        return text
-        
-    # 바이트 단위로 자르기
-    truncated = encoded[:max_bytes]
-    # 잘린 부분이 완전한 문자가 되도록 조정
-    while truncated and (truncated[-1] & 0xC0) == 0x80:
-        truncated = truncated[:-1]
-    
-    return truncated.decode('utf-8') + '...'
