@@ -39,6 +39,7 @@ class Product(models.Model):
     product_sell_price = models.PositiveIntegerField(default=0, verbose_name='상품 판매가')
     product_supply_price = models.PositiveIntegerField(default=0, verbose_name='상품 공급가')
     product_alternative_price = models.CharField(max_length=50, blank=True, verbose_name='상품 판매가 대체 텍스트')
+    product_manager_price = models.PositiveIntegerField(default=0, verbose_name='상품 관리자가')
     product_thumbnail_image = models.ImageField(upload_to='product_thumbnail_images/', verbose_name='상품 이미지')
     product_origin_thumbnail_image = models.CharField(max_length=1000, blank=True, verbose_name='상품 원본 이미지')
     product_related_products = models.ManyToManyField('self', blank=True, verbose_name='관련 상품 (추천 상품)')
@@ -144,3 +145,24 @@ class Consumer(models.Model):
 
     def __str__(self):
         return self.consumer_id
+    
+class CartItem(models.Model):
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, verbose_name='회원')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='상품')
+    product_option = models.ForeignKey(ProductOptions, on_delete=models.CASCADE, verbose_name='상품 옵션')
+    quantity = models.PositiveIntegerField(default=1, verbose_name='수량')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='생성일시')
+    modified_at = models.DateTimeField(auto_now=True, verbose_name='수정일시')
+
+    class Meta:
+        verbose_name = "장바구니 아이템"
+        verbose_name_plural = "장바구니 아이템"
+        unique_together = ('member', 'product', 'product_option')  # 동일한 회원의 동일 상품&옵션은 하나의 항목으로 관리
+
+    def __str__(self):
+        return f"{self.member.username} - {self.product.product_name} ({self.product_option.product_option_name})"
+    
+    @property
+    def subtotal(self):
+        """상품 소계 금액 (상품가격 + 옵션가격) * 수량"""
+        return (self.product.product_sell_price + self.product_option.product_option_price) * self.quantity

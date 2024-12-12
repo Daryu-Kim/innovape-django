@@ -70,7 +70,38 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
+        parent_categories = Category.objects.filter(category_parent__isnull=True)
+        context["categories"] = parent_categories
+        
+        # recommended_products = Product.objects.filter(product_category__category_name__in=["입호흡 기기", "폐호흡 기기", "일회용 기기", "입호흡 액상", "폐호흡 액상"])
+        recommended_products = Product.objects.all().order_by("?")[:10]
+        recommended_products_options = ProductOptions.objects.filter(product__in=recommended_products)
+        context["recommended_products"] = recommended_products
+        context["recommended_products_options"] = recommended_products_options
+
         return context
+    
+    def add_to_cart(request):
+        try:
+            data = json.loads(request.body)
+            cart_items = data.get('items', [])
+            
+            for item in cart_items:
+                product = Product.objects.get(product_code=item['product_code'])
+                product_option = ProductOptions.objects.get(product_option_code=item['option_code'])
+                
+                cart_item, created = CartItem.objects.update_or_create(
+                    member=request.user,
+                    product=product,
+                    product_option=product_option,
+                    defaults={
+                        'quantity': item['quantity']
+                    }
+                )
+                
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
 
 
 class DashboardProductHome(LoginRequiredMixin, TemplateView):
