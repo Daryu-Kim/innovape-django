@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Product, ProductOptions, Consumer
+from .models import Category, Product, ProductOptions, Consumer, CartItem
 
 # Register your models here.
 class CategoryAdmin(admin.ModelAdmin):
@@ -39,3 +39,11 @@ class ConsumerAdmin(admin.ModelAdmin):
     list_filter = ('consumer_area', 'consumer_register_path',)
 
 admin.site.register(Consumer, ConsumerAdmin)
+
+
+class CartItemAdmin(admin.ModelAdmin):
+    list_display = ('member', 'product', 'product_option', 'quantity',)
+    search_fields = ('member', 'product', 'product_option',)
+    list_filter = ('member', 'product', 'product_option',)
+
+admin.site.register(CartItem, CartItemAdmin)

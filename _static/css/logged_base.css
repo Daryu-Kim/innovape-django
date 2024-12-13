@@ -175,6 +175,19 @@
 	display: grid !important;
 }
 
+.modal {
+	position: relative;
+}
+
+.modal-dialog {
+	position: fixed !important; /* 고정 위치 */
+	top: 50% !important; /* 화면의 50% 위치 */
+	left: 50% !important; /* 화면의 50% 위치 */
+	transform: translate(-50%, -50%) !important; /* 중앙 정렬 */
+	max-width: 800px !important; /* 최대 너비 설정 */
+	width: 90% !important; /* 너비를 90%로 설정 */
+}
+
 @media (max-width: 767px) {
 	.sidebar {
 		min-width: 56px !important;
@@ -203,19 +216,19 @@
 	}
 }
 
-@media (max-width: 991px) {
+@media (min-width: 768px) and (max-width: 991px) {
 	.custom-grid {
 		grid-template-columns: repeat(2, 1fr);
 	}
 }
 
-@media (max-width: 1199px) {
+@media (min-width: 992px) and (max-width: 1199px) {
 	.sidebar {
 		min-width: 220px;
 	}
 }
 
-@media (max-width: 1399px) {
+@media (min-width: 1200px) and (max-width: 1399px) {
 	.custom-grid {
 		grid-template-columns: repeat(3, 1fr);
 	}

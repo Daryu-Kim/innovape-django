@@ -56,6 +56,8 @@ class Product(models.Model):
     product_esm_plus_is_prohibitted = models.BooleanField(default=False, verbose_name='ESM+ 제한 여부')
     product_esm_plus_gmarket_is_prohibitted = models.BooleanField(default=False, verbose_name='ESM+ 지마켓 제한 여부')
     product_esm_plus_auction_is_prohibitted = models.BooleanField(default=False, verbose_name='ESM+ 옥션 제한 여부')
+    product_is_recommend = models.BooleanField(default=False, verbose_name='상품 추천 여부')
+    product_is_new = models.BooleanField(default=False, verbose_name='상품 신상품 여부')
 
     class Meta:
         verbose_name = "상품"

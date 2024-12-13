@@ -6,10 +6,10 @@
 {% endblock %}
 {% block extrahead %}
   <link rel="stylesheet" href="{% static 'css/logged_base.css' %}" />
-  <link rel="stylesheet" href="{% static 'css/dashboard/home.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/dashboard/shop/home.css' %}" />
 {% endblock %}
 {% block main_content %}
-  <div class="container mt-4">
+  <div class="mt-4">
     <!-- 검색 바 -->
     <div class="search-bar">
         <form class="d-flex" method="get" action="{% url 'dashboard_shop_home' %}">
@@ -19,80 +19,153 @@
     </div>
     <!-- 탭 메뉴 -->
     <ul class="nav nav-tabs mt-3" id="categoryTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link pt-2 pb-2 ps-3 pe-3 active"
+          id="tab-recommend"
+          data-bs-toggle="tab"
+          data-bs-target="#content-recommend"
+          type="button"
+          role="tab"
+          aria-controls="content-recommend"
+          aria-selected="true">
+          추천 상품
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link pt-2 pb-2 ps-3 pe-3"
+          id="tab-new"
+          data-bs-toggle="tab"
+          data-bs-target="#content-new"
+          type="button"
+          role="tab"
+          aria-controls="content-new"
+          aria-selected="false">
+          신상품
+        </button>
+      </li>
       {% for category in categories %}
         <li class="nav-item" role="presentation">
-          <button class="nav-link pt-2 pb-2 ps-3 pe-3 {% if forloop.first %}active{% endif %}"
+          <button class="nav-link pt-2 pb-2 ps-3 pe-3"
             id="tab-{{ category.id }}"
             data-bs-toggle="tab"
             data-bs-target="#content-{{ category.id }}"
             type="button"
             role="tab"
             aria-controls="content-{{ category.id }}"
-            aria-selected="{% if forloop.first %}
-              true
-            {% else %}
-              false
-            {% endif %}">
+            aria-selected="false">
             {{ category.category_name }}
           </button>
         </li>
       {% endfor %}
     </ul>
 
-    <div class="row">
-      <div class=" mb-3">
-        <div class="card">
-          <div class="card-body p-3">
-            <h5 class="card-title text-center fw-bold fs-4">추천 상품</h5>
-            <div class="row custom-grid mt-3">
-              {% for product in recommended_products %}
-                <div class="card">
-                  <div class="card-body">
-                    <div class="d-flex justify-content-center">
-                      <img src="{{ product.product_thumbnail_image.url }}" alt="{{ product.product_name }}" class="img-fluid" style="width: 35%; aspect-ratio: 1/1 !important; object-fit: cover;">
-                      <div class="p-2 w-100">
-                        <p class="card-title fw-bold">{{ product.product_name }}</p>
-                        <p class="card-text mt-2 fs-6">{{ product.product_description }}</p>
-                        <p class="card-text mt-2">판매가: <span class="text-decoration-line-through text-secondary">{{ product.product_sell_price|intcomma }}원</span></p>
-                        <p class="card-text">직원가: <span class="fw-bold text-primary fs-5">{{ product.product_manager_price|intcomma }}원</span></p>
-                        <button class="btn btn-outline-primary w-100 p-2 fw-semibold mt-2">상품 상세보기</button>
-                      </div>
-                    </div>
-                    <select class="form-select mt-3 pt-2 pb-2 ps-3 pe-3">
-                      <option value="">옵션 선택</option>
-                      {% for option in recommended_products_options %}
-                        {% if option.product == product %}
-                          {% if "빠른출고" not in option.product_option_display_name and "빠른 출고" not in option.product_option_display_name %}
-                          <option value="{{ option.product_option_code }}" 
-                                  data-option-name="{{ option.product_option_name }}"
-                                  data-option-price="{{ option.product_option_price }}">
-                            {{ option.product_option_name }}
-                          </option>
-                          {% endif %}
-                        {% endif %}
-                      {% endfor %}
-                    </select>
-                    <div class="selected-options"></div>
-                    <button class="btn btn-primary w-100 p-2 mt-2 fw-semibold add-to-cart" 
-                            data-product-id="{{ product.product_code }}">
-                      장바구니 담기
-                    </button>
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- 탭 컨텐츠 -->
     <div class="tab-content" id="categoryTabsContent">
+      <div class="tab-pane fade show active" id="content-recommend" role="tabpanel" aria-labelledby="tab-recommend">
+        <div class="custom-grid mt-3 gap-3">
+          {% for product in recommended_products %}
+            <div>
+              <div class="d-flex justify-content-center">
+                <img src="{{ product.product_thumbnail_image.url }}" alt="{{ product.product_name }}" class="img-fluid" style="width: 35%; aspect-ratio: 1/1 !important; object-fit: cover;">
+                <div class="p-2">
+                  <p class="card-title fw-bold">{{ product.product_name }}</p>
+                  <p class="card-text mt-2 fs-6">{{ product.product_description }}</p>
+                  <p class="card-text mt-2">판매가: <span class="text-decoration-line-through text-secondary">{{ product.product_sell_price|intcomma }}원</span></p>
+                  <p class="card-text">직원가: <span class="fw-bold text-primary fs-5">{{ product.product_manager_price|intcomma }}원</span></p>
+                  <button class="btn btn-outline-primary w-100 p-2 fw-semibold mt-2 view-details" 
+                          data-product-details="{{ product.product_detail }}"
+                          data-product-name="{{ product.product_name }}">
+                      상품 상세보기
+                  </button>
+                </div>
+              </div>
+              <select
+                class="form-select mt-3 pt-2 pb-2 ps-3 pe-3 option-select"
+                data-product-id="{{ product.product_code }}"
+                data-product-name="{{ product.product_name }}"
+                data-product-price="{{ product.product_manager_price }}"
+              >
+                <option class="option-select" value="">옵션 선택</option>
+                {% for option in recommended_products_options %}
+                  {% if option.product == product %}
+                    {% if "빠른출고" not in option.product_option_display_name and "빠른 출고" not in option.product_option_display_name %}
+                    <option value="{{ option.product_option_code }}" 
+                            data-option-name="{{ option.product_option_name }}"
+                            data-option-price="{{ option.product_option_price }}">
+                      {% if option.product_option_price > 0 %}
+                        {{ option.product_option_name }} ({{ option.product_option_price|intcomma }}원)
+                      {% else %}
+                        {{ option.product_option_name }}
+                      {% endif %}
+                    </option>
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+              </select>
+              <div class="selected-options p-2 d-flex flex-column gap-2"></div>
+              <button class="btn btn-primary w-100 p-2 mt-2 fw-semibold add-to-cart" 
+                      data-product-id="{{ product.product_code }}">
+                장바구니 담기
+              </button>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="tab-pane fade" id="content-new" role="tabpanel" aria-labelledby="tab-new">
+        <div class="custom-grid mt-3 gap-3">
+          {% for product in new_products %}
+            <div>
+              <div class="d-flex justify-content-center">
+                <img src="{{ product.product_thumbnail_image.url }}" alt="{{ product.product_name }}" class="img-fluid" style="width: 35%; aspect-ratio: 1/1 !important; object-fit: cover;">
+                <div class="p-2">
+                  <p class="card-title fw-bold">{{ product.product_name }}</p>
+                  <p class="card-text mt-2 fs-6">{{ product.product_description }}</p>
+                  <p class="card-text mt-2">판매가: <span class="text-decoration-line-through text-secondary">{{ product.product_sell_price|intcomma }}원</span></p>
+                  <p class="card-text">직원가: <span class="fw-bold text-primary fs-5">{{ product.product_manager_price|intcomma }}원</span></p>
+                  <button class="btn btn-outline-primary w-100 p-2 fw-semibold mt-2 view-details" 
+                          data-product-details="{{ product.product_detail }}"
+                          data-product-name="{{ product.product_name }}">
+                      상품 상세보기
+                  </button>
+                </div>
+              </div>
+              <select
+                class="form-select mt-3 pt-2 pb-2 ps-3 pe-3 option-select"
+                data-product-id="{{ product.product_code }}"
+                data-product-name="{{ product.product_name }}"
+                data-product-price="{{ product.product_manager_price }}"
+              >
+                <option class="option-select" value="">옵션 선택</option>
+                {% for option in recommended_products_options %}
+                  {% if option.product == product %}
+                    {% if "빠른출고" not in option.product_option_display_name and "빠른 출고" not in option.product_option_display_name %}
+                    <option value="{{ option.product_option_code }}" 
+                            data-option-name="{{ option.product_option_name }}"
+                            data-option-price="{{ option.product_option_price }}">
+                      {% if option.product_option_price > 0 %}
+                        {{ option.product_option_name }} ({{ option.product_option_price|intcomma }}원)
+                      {% else %}
+                        {{ option.product_option_name }}
+                      {% endif %}
+                    </option>
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+              </select>
+              <div class="selected-options p-2 d-flex flex-column gap-2"></div>
+              <button class="btn btn-primary w-100 p-2 mt-2 fw-semibold add-to-cart" 
+                      data-product-id="{{ product.product_code }}">
+                장바구니 담기
+              </button>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
       {% for category in categories %}
-        <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="content-{{ category.id }}" role="tabpanel" aria-labelledby="tab-{{ category.id }}">
-          <div class="row">
+        <div class="tab-pane fade" id="content-{{ category.id }}" role="tabpanel" aria-labelledby="tab-{{ category.id }}">
+          <div class="custom-grid">
             {% for subcategory in category.category_set.all %}
-              <div class="col-md-4 mb-3">
+              <div class="mb-3">
                 <div class="card">
                   <div class="card-body">
                     <h5 class="card-title">{{ subcategory.category_name }}</h5>
@@ -106,6 +179,45 @@
       {% endfor %}
     </div>
   </div>
+
+ <!-- 플로팅 버튼 -->
+<div class="floating-button" id="floatingButton">
+  <i class="bi bi-cart" style="font-size: 24px;"></i> <!-- Font Awesome 아이콘 사용 -->
+</div>
+
+<!-- 장바구니 드롭다운 -->
+<div class="cart-dropdown p-3" id="cartDropdown" style="display: none;">
+  <div class="cart-header">
+      <h5 class="fw-bold">장바구니</h5>
+      <button class="btn-close" id="closeCartDropdown"></button>
+  </div>
+  <hr class="mt-3 mb-3">
+  <div class="cart-body d-flex flex-column gap-2" id="cartBody">
+      <p>장바구니가 비어 있습니다.</p>
+  </div>
+  <hr class="mt-3 mb-3">
+  <div class="cart-footer d-flex justify-content-between align-items-center">
+    <div id="totalPrice" class="total-price fw-bold">총 결제금액: 0원</div>
+    <button class="btn btn-primary pt-1 pb-1 ps-2 pe-2 fw-medium" id="checkoutButton">결제하기</button>
+  </div>
+</div>
+
+<!-- 상품 상세 모달 -->
+<div class="modal fade" id="productDetailModal" tabindex="-1" aria-labelledby="productDetailModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header d-flex justify-content-between align-items-center p-3">
+        <h5 class="modal-title fw-bold" id="productDetailModalLabel">상품 상세보기</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="productDetailImages" class="d-flex flex-column">
+          <!-- 이미지들이 여기에 동적으로 추가됨 -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
   <script>
     $(document).ready(function() {
         // 옵션 선택 이벤트
@@ -117,9 +229,9 @@
             const productId = $select.data('product-id');
             const optionCode = $select.val();
             const optionName = $selectedOption.data('option-name');
-            const optionPrice = parseInt($selectedOption.data('option-price'));
+            const optionPrice = parseInt($selectedOption.data('option-price')) > 0 ? parseInt($selectedOption.data('option-price')) : 0;
             const productPrice = parseInt($select.data('product-price'));
-            const totalPrice = productPrice + optionPrice;
+            const basePrice = productPrice + optionPrice;  // 기본 가격 (1개 기준)
             
             // 이미 선택된 옵션인지 확인
             const $selectedOptionsDiv = $select.siblings('.selected-options');
@@ -131,18 +243,20 @@
             
             // 옵션 아이템 HTML 생성
             const optionHtml = `
-                <div class="option-item" data-option-code="${optionCode}">
+                <div class="option-item" data-option-code="${optionCode}" data-base-price="${basePrice}">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <div class="fw-bold">${optionName}</div>
-                            <div class="text-primary">${totalPrice.toLocaleString()}원</div>
+                            <div class="quantity-control mt-2 d-flex align-items-center gap-2" style="width: fit-content !important;">
+                                <button class="btn btn-outline-secondary decrease-quantity" style="width: 24px; height: 24px; font-size: 12px;">-</button>
+                                <input type="number" class="form-control form-control-sm quantity ps-2 pe-2" value="1" min="1" style="width: 48px; font-size: 12px;">
+                                <button class="btn btn-outline-secondary increase-quantity" style="width: 24px; height: 24px; font-size: 12px;">+</button>
+                            </div>
                         </div>
-                        <button type="button" class="btn-close remove-option"></button>
-                    </div>
-                    <div class="quantity-control mt-2">
-                        <button class="btn btn-outline-secondary btn-sm decrease-quantity">-</button>
-                        <input type="number" class="form-control form-control-sm quantity" value="1" min="1">
-                        <button class="btn btn-outline-secondary btn-sm increase-quantity">+</button>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="text-primary text-align-end option-total-price">${basePrice.toLocaleString()}원</div>
+                            <button type="button" class="btn-close remove-option"></button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -150,11 +264,20 @@
             $selectedOptionsDiv.append(optionHtml);
             $select.val('');
         });
+
+
+        function updatePrice($optionItem) {
+          const basePrice = parseInt($optionItem.data('base-price'));
+          const quantity = parseInt($optionItem.find('.quantity').val());
+          const totalPrice = basePrice * quantity;
+          $optionItem.find('.option-total-price').text(totalPrice.toLocaleString() + '원');
+        }
         
         // 수량 증가 버튼 클릭
         $(document).on('click', '.increase-quantity', function() {
             const $input = $(this).siblings('.quantity');
             $input.val(parseInt($input.val()) + 1);
+            updatePrice($(this).closest('.option-item'));
         });
         
         // 수량 감소 버튼 클릭
@@ -163,12 +286,27 @@
             const currentValue = parseInt($input.val());
             if (currentValue > 1) {
                 $input.val(currentValue - 1);
+                updatePrice($(this).closest('.option-item'));
             }
         });
         
         // 옵션 제거 버튼 클릭
         $(document).on('click', '.remove-option', function() {
             $(this).closest('.option-item').remove();
+        });
+    
+        // 수량 직접 입력 시
+        $(document).on('change', '.quantity', function() {
+            const $input = $(this);
+            let value = parseInt($input.val());
+            
+            // 최소값 보장
+            if (isNaN(value) || value < 1) {
+                value = 1;
+            }
+            
+            $input.val(value);
+            updatePrice($(this).closest('.option-item'));
         });
         
         // 장바구니 담기 버튼 클릭
@@ -192,9 +330,9 @@
             }).get();
             
             $.ajax({
-                url: '{% url "add_to_cart" %}',
+                url: '{% url "dashboard_shop_home" %}',
                 type: 'POST',
-                data: JSON.stringify({ items: cartItems }),
+                data: JSON.stringify({ code: "add_to_cart", items: cartItems }),
                 contentType: 'application/json',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}'
@@ -226,6 +364,101 @@
             
             $input.val(value);
         });
+
+        // 상품 상세보기 버튼 클릭 이벤트
+        $('.view-details').on('click', function() {
+          const $button = $(this);
+          let productDetails = [];
+          const rawData = $button.attr('data-product-details');
+          console.log('Raw data:', rawData);  // 디버깅용
+          
+          try {
+              if (rawData) {
+                  productDetails = JSON.parse(rawData.replace(/'/g, '"'));
+              }
+              console.log('Parsed details:', productDetails);  // 디버깅용
+          } catch (e) {
+              console.error('Error parsing product details:', e);
+              productDetails = [];
+          }
+          
+          const productName = $button.data('product-name');
+          
+          // 모달 제목 설정
+          $('#productDetailModalLabel').text(productName);
+          
+          // 상세 이미지 컨테이너 초기화
+          const $detailContainer = $('#productDetailImages').empty();
+          
+          if (!productDetails || productDetails.length === 0) {
+              $detailContainer.append('<p class="text-center">상세 이미지가 없습니다.</p>');
+          } else {
+              // 상세 이미지 추가
+              productDetails.forEach(imageUrl => {
+                console.log("/media/"+imageUrl);
+                  const $img = $('<img>', {
+                      src: "/media/"+imageUrl,
+                      class: 'img-fluid',
+                      alt: productName
+                  });
+                  $detailContainer.append($img);
+              });
+          }
+          
+          // 모달 표시
+          $('#productDetailModal').modal('show');
+      });
+
+      // 플로팅 버튼 클릭 시 드롭다운 토글
+      $('#floatingButton').on('click', function() {
+          $('#cartDropdown').toggle();
+      });
+
+      // 드롭다운 닫기 버튼 클릭 시 드롭다운 숨기기
+      $('#closeCartDropdown').on('click', function() {
+          $('#cartDropdown').hide();
+      });
+
+      // 장바구니 내용 로드
+      function loadCartItems() {
+        $.ajax({
+            url: '{% url "dashboard_shop_home" %}', // 장바구니 아이템을 가져오는 URL
+            type: 'POST',
+            data: JSON.stringify({ code: "get_cart_items" }),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                const $cartBody = $('#cartBody');
+                $cartBody.empty(); // 기존 내용 초기화
+                let totalAmount = 0;
+
+                if (response.items.length === 0) {
+                    $cartBody.append('<p>장바구니가 비어 있습니다.</p>');
+                } else {
+                    response.items.forEach(item => {
+                        $cartBody.append(`
+                            <div class="cart-item">
+                                <p class="fw-bold">${item.product_name}</p>
+                                ${item.options.map(option => `
+                                    <p class="ms-3">옵션: ${option.option_name} ${option.quantity.toLocaleString()}개 - ${option.total_price.toLocaleString()}원</p>
+                                `).join('')}
+                            </div>
+                        `);
+                        totalAmount += item.total_price;
+                    });
+                }
+                $('#totalPrice').text(`총 결제금액: ${totalAmount.toLocaleString()}원`);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading cart items:', error);
+            }
+        });
+    }
+
+      // 페이지 로드 시 장바구니 아이템 로드
+      loadCartItems();
     });
   </script>
 {% endblock %}

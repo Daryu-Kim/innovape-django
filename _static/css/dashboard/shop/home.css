@@ -1,0 +1,55 @@
+.keep-all {
+  word-break: keep-all;
+}
+
+.floating-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  z-index: 1000;
+}
+
+.floating-button:hover {
+  background-color: #0056b3;
+}
+
+.cart-dropdown {
+  position: fixed;
+  bottom: 96px; /* 플로팅 버튼 위에 위치 */
+  right: 20px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  width: 300px;
+  z-index: 1000;
+}
+
+.cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+}
+
+.cart-body {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.cart-footer {
+  padding: 10px;
+  text-align: right;
+}

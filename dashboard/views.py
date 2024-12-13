@@ -4,11 +4,12 @@ import pprint
 import json
 import re
 import os
+from collections import defaultdict
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from .models import Category, Product, ProductOptions, Consumer
+from .models import Category, Product, ProductOptions, Consumer, CartItem
 from django.http import JsonResponse
 from bs4 import BeautifulSoup
 from django.utils import timezone
@@ -69,39 +70,72 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        CATEGORY_LIST = ["입호흡 기기", "폐호흡 기기", "일회용 기기", "입호흡 액상", "폐호흡 액상"]
         
         parent_categories = Category.objects.filter(category_parent__isnull=True)
         context["categories"] = parent_categories
         
-        # recommended_products = Product.objects.filter(product_category__category_name__in=["입호흡 기기", "폐호흡 기기", "일회용 기기", "입호흡 액상", "폐호흡 액상"])
-        recommended_products = Product.objects.all().order_by("?")[:10]
+        recommended_products = Product.objects.filter(product_category__category_name__in=CATEGORY_LIST, product_is_recommend=True)
         recommended_products_options = ProductOptions.objects.filter(product__in=recommended_products)
+        new_products = Product.objects.filter(product_category__category_name__in=CATEGORY_LIST, product_is_new=True)
+        new_products_options = ProductOptions.objects.filter(product__in=new_products)
+                
         context["recommended_products"] = recommended_products
         context["recommended_products_options"] = recommended_products_options
+        context["new_products"] = new_products
+        context["new_products_options"] = new_products_options
 
         return context
     
-    def add_to_cart(request):
-        try:
-            data = json.loads(request.body)
-            cart_items = data.get('items', [])
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        if data.get('code') == "add_to_cart":
+            try:
+                cart_items = data.get('items', [])
+                
+                for item in cart_items:
+                    product = Product.objects.get(product_code=item['product_code'])
+                    product_option = ProductOptions.objects.get(product_option_code=item['option_code'])
+                    
+                    cart_item, created = CartItem.objects.update_or_create(
+                        member=request.user,
+                        product=product,
+                        product_option=product_option,
+                        defaults={
+                            'quantity': item['quantity']
+                        }
+                    )
+                    
+                return JsonResponse({'status': 'success'})
+            except Exception as e:
+                return JsonResponse({'status': 'error', 'message': str(e)})
             
-            for item in cart_items:
-                product = Product.objects.get(product_code=item['product_code'])
-                product_option = ProductOptions.objects.get(product_option_code=item['option_code'])
-                
-                cart_item, created = CartItem.objects.update_or_create(
-                    member=request.user,
-                    product=product,
-                    product_option=product_option,
-                    defaults={
-                        'quantity': item['quantity']
-                    }
-                )
-                
-            return JsonResponse({'status': 'success'})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)})
+        elif data.get('code') == "get_cart_items":
+            if request.user.is_authenticated:
+                cart_items = CartItem.objects.filter(member=request.user).select_related('product', 'product_option')
+                grouped_items = defaultdict(list)
+
+                # 상품을 옵션별로 그룹화
+                for item in cart_items:
+                    grouped_items[item.product].append({
+                        'option_name': item.product_option.product_option_name,
+                        'quantity': item.quantity,
+                        'total_price': item.subtotal
+                    })
+
+                items = []
+                for product, options in grouped_items.items():
+                    total_quantity = sum(option['quantity'] for option in options)
+                    total_price = sum(option['total_price'] for option in options)
+                    items.append({
+                        'product_name': product.product_name,
+                        'options': options,
+                        'total_quantity': total_quantity,
+                        'total_price': total_price
+                    })
+
+                return JsonResponse({'items': items})
+            return JsonResponse({'items': []})
 
 
 class DashboardProductHome(LoginRequiredMixin, TemplateView):
