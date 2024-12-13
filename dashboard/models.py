@@ -68,7 +68,7 @@ class Product(models.Model):
 
 class ProductOptions(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='상품')
-    product_option_code = models.CharField(max_length=20, blank=True, verbose_name='상품 옵션 코드')
+    product_option_code = models.CharField(max_length=20, blank=True, verbose_name='상품 옵션 코드', unique=True)
     product_option_smartstore_code = models.CharField(max_length=20, blank=True, verbose_name='상품 옵션 스마트스토어 코드')
     product_option_cafe24_code = models.CharField(max_length=20, blank=True, verbose_name='상품 옵션 카페24 코드')
     product_option_stock = models.IntegerField(default=0, verbose_name='상품 재고수량')
