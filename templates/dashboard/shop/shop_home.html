@@ -67,7 +67,7 @@
             <div>
               <div class="d-flex justify-content-center">
                 <img src="{{ product.product_thumbnail_image.url }}" alt="{{ product.product_name }}" class="img-fluid" style="width: 35%; aspect-ratio: 1/1 !important; object-fit: cover;">
-                <div class="p-2">
+                <div class="ms-3">
                   <p class="card-title fw-bold">{{ product.product_name }}</p>
                   <p class="card-text mt-2 fs-6">{{ product.product_description }}</p>
                   <p class="card-text mt-2">판매가: <span class="text-decoration-line-through text-secondary">{{ product.product_sell_price|intcomma }}원</span></p>
@@ -117,7 +117,7 @@
             <div>
               <div class="d-flex justify-content-center">
                 <img src="{{ product.product_thumbnail_image.url }}" alt="{{ product.product_name }}" class="img-fluid" style="width: 35%; aspect-ratio: 1/1 !important; object-fit: cover;">
-                <div class="p-2">
+                <div class="ms-3">
                   <p class="card-title fw-bold">{{ product.product_name }}</p>
                   <p class="card-text mt-2 fs-6">{{ product.product_description }}</p>
                   <p class="card-text mt-2">판매가: <span class="text-decoration-line-through text-secondary">{{ product.product_sell_price|intcomma }}원</span></p>
@@ -412,6 +412,7 @@
       // 플로팅 버튼 클릭 시 드롭다운 토글
       $('#floatingButton').on('click', function() {
           $('#cartDropdown').toggle();
+          loadCartItems();
       });
 
       // 드롭다운 닫기 버튼 클릭 시 드롭다운 숨기기
@@ -439,11 +440,16 @@
                 } else {
                     response.items.forEach(item => {
                         $cartBody.append(`
-                            <div class="cart-item">
+                            <div class="cart-item" data-product-name="${item.product_name}">
                                 <p class="fw-bold">${item.product_name}</p>
+                                <div class="d-flex flex-column gap-1">
                                 ${item.options.map(option => `
-                                    <p class="ms-3">옵션: ${option.option_name} ${option.quantity.toLocaleString()}개 - ${option.total_price.toLocaleString()}원</p>
+                                  <div class="d-flex justify-content-between align-items-center">
+                                    <p class="ms-3">${option.option_name} ${option.quantity.toLocaleString()}개 - ${option.total_price.toLocaleString()}원</p>
+                                    <button class="btn btn-danger btn-sm remove-option" style="width: 24px; height: 24px; font-size: 12px;" data-option-name="${option.option_name}">X</button>
+                                  </div>
                                 `).join('')}
+                                </div>
                             </div>
                         `);
                         totalAmount += item.total_price;
@@ -457,8 +463,39 @@
         });
     }
 
-      // 페이지 로드 시 장바구니 아이템 로드
-      loadCartItems();
+    $(document).on('click', '.remove-option', function() {
+      const optionName = $(this).data('option-name'); // 클릭한 버튼의 옵션 ID 가져오기
+      const $optionItem = $(this).closest('.cart-item'); // 해당 옵션이 포함된 항목 찾기
+  
+      // 필요한 정보 가져오기
+      const productName = $optionItem.data('product-name'); // product ID
+      const productOptionName = optionName; // product option ID
+  
+      // AJAX 요청을 통해 서버에 옵션 제거 요청을 보냄
+      $.ajax({
+          url: '{% url "dashboard_shop_home" %}', // 옵션 제거를 처리하는 URL
+          type: 'POST',
+          data: JSON.stringify({
+              code: "remove_cart_item",
+              product_name: productName,
+              product_option_name: productOptionName
+          }),
+          contentType: 'application/json',
+          headers: {
+              'X-CSRFToken': '{{ csrf_token }}'
+          },
+          success: function(response) {
+              // 성공적으로 제거된 경우 UI 업데이트
+              loadCartItems(); // 장바구니 아이템을 다시 로드하여 업데이트
+          },
+          error: function(xhr, status, error) {
+              console.error('Error removing option:', error);
+          }
+        });
     });
+
+    // 페이지 로드 시 장바구니 아이템 로드
+    loadCartItems();
+  });
   </script>
 {% endblock %}

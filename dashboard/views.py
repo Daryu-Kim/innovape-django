@@ -76,6 +76,7 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
         context["categories"] = parent_categories
         
         recommended_products = Product.objects.filter(product_category__category_name__in=CATEGORY_LIST, product_is_recommend=True)
+        recommended_products = Product.objects.filter(product_is_recommend=True)
         recommended_products_options = ProductOptions.objects.filter(product__in=recommended_products)
         new_products = Product.objects.filter(product_category__category_name__in=CATEGORY_LIST, product_is_new=True)
         new_products_options = ProductOptions.objects.filter(product__in=new_products)
@@ -136,6 +137,28 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
 
                 return JsonResponse({'items': items})
             return JsonResponse({'items': []})
+        
+        elif data.get('code') == "remove_cart_item":
+            member = request.user
+            product_name = data.get('product_name')
+            product_option_name = data.get('product_option_name')
+            
+            print(member)
+            print(product_name)
+            print(product_option_name)
+
+            # 장바구니에서 해당 아이템 제거 로직 구현
+            try:
+                # CartItem을 필터링하여 삭제
+                CartItem.objects.filter(
+                    member=member,
+                    product__product_name=product_name,
+                    product_option__product_option_name=product_option_name
+                ).delete()
+
+                return JsonResponse({'status': 'success'})
+            except Exception as e:
+                return JsonResponse({'status': 'error', 'message': str(e)})
 
 
 class DashboardProductHome(LoginRequiredMixin, TemplateView):
