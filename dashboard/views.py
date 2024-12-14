@@ -113,7 +113,7 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
             
         elif data.get('code') == "get_cart_items":
             if request.user.is_authenticated:
-                cart_items = CartItem.objects.filter(member_id=request.user.username).select_related('product', 'product_option')
+                cart_items = CartItem.objects.filter(member_id=request.user.username)
                 grouped_items = defaultdict(list)
 
                 # 상품을 옵션별로 그룹화
@@ -126,8 +126,8 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
                     })
 
                 items = []
-                for product, options in grouped_items.items():
-                    product = Product.objects.get(product_code=product)
+                for product_code, options in grouped_items.items():
+                    product = Product.objects.get(product_code=product_code)
                     total_quantity = sum(option['quantity'] for option in options)
                     total_price = sum(option['total_price'] for option in options)
                     items.append({
