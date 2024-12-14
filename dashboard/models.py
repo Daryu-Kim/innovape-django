@@ -170,4 +170,4 @@ class CartItem(models.Model):
         product = Product.objects.get(product_code=self.product_code)
         product_option = ProductOptions.objects.get(product_option_code=self.product_option_code)
 
-        return (product.product_sell_price + product_option.product_option_price) * self.quantity
+        return (product.product_manager_price + product_option.product_option_price) * self.quantity
