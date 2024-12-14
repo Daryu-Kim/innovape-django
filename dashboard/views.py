@@ -99,9 +99,9 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
                     product_option = ProductOptions.objects.get(product_option_code=item['option_code'])
                     
                     cart_item, created = CartItem.objects.update_or_create(
-                        member=request.user,
-                        product=product,
-                        product_option=product_option,
+                        member_id=request.user.username,
+                        product_code=product.product_code,
+                        product_option_code=product_option.product_option_code,
                         defaults={
                             'quantity': item['quantity']
                         }
@@ -113,19 +113,21 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
             
         elif data.get('code') == "get_cart_items":
             if request.user.is_authenticated:
-                cart_items = CartItem.objects.filter(member=request.user).select_related('product', 'product_option')
+                cart_items = CartItem.objects.filter(member_id=request.user.username).select_related('product', 'product_option')
                 grouped_items = defaultdict(list)
 
                 # 상품을 옵션별로 그룹화
                 for item in cart_items:
-                    grouped_items[item.product].append({
-                        'option_name': item.product_option.product_option_name,
+                    product_option = ProductOptions.objects.get(product_option_code=item.product_option_code)
+                    grouped_items[item.product_code].append({
+                        'option_name': product_option.product_option_name,
                         'quantity': item.quantity,
                         'total_price': item.subtotal
                     })
 
                 items = []
                 for product, options in grouped_items.items():
+                    product = Product.objects.get(product_code=product)
                     total_quantity = sum(option['quantity'] for option in options)
                     total_price = sum(option['total_price'] for option in options)
                     items.append({
@@ -139,17 +141,17 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
             return JsonResponse({'items': []})
         
         elif data.get('code') == "remove_cart_item":
-            member = request.user
-            product_name = data.get('product_name')
-            product_option_name = data.get('product_option_name')
+            member_id = request.user.username
+            product_code = data.get('product_code')
+            product_option_code = data.get('product_option_code')
             
             # 장바구니에서 해당 아이템 제거 로직 구현
             try:
                 # CartItem을 필터링하여 삭제
                 CartItem.objects.filter(
-                    member=member,
-                    product__product_name=product_name,
-                    product_option__product_option_name=product_option_name
+                    member_id=member_id,
+                    product_code=product_code,
+                    product_option_code=product_option_code
                 ).delete()
 
                 return JsonResponse({'status': 'success'})
