@@ -440,13 +440,13 @@
                 } else {
                     response.items.forEach(item => {
                         $cartBody.append(`
-                            <div class="cart-item" data-product-name="${item.product_name}">
+                            <div class="cart-item" data-product-code="${item.product_code}">
                                 <p class="fw-bold">${item.product_name}</p>
                                 <div class="d-flex flex-column gap-1">
                                 ${item.options.map(option => `
                                   <div class="d-flex justify-content-between align-items-center">
                                     <p class="ms-3">${option.option_name} ${option.quantity.toLocaleString()}개 - ${option.total_price.toLocaleString()}원</p>
-                                    <button class="btn btn-danger btn-sm remove-option" style="width: 24px; height: 24px; font-size: 12px;" data-option-name="${option.option_name}">X</button>
+                                    <button class="btn btn-danger btn-sm remove-option" style="width: 24px; height: 24px; font-size: 12px;" data-option-code="${option.option_code}">X</button>
                                   </div>
                                 `).join('')}
                                 </div>
@@ -464,12 +464,12 @@
     }
 
     $(document).on('click', '.remove-option', function() {
-      const optionName = $(this).data('option-name'); // 클릭한 버튼의 옵션 ID 가져오기
+      const optionCode = $(this).data('option-code'); // 클릭한 버튼의 옵션 ID 가져오기
       const $optionItem = $(this).closest('.cart-item'); // 해당 옵션이 포함된 항목 찾기
   
       // 필요한 정보 가져오기
-      const productName = $optionItem.data('product-name'); // product ID
-      const productOptionName = optionName; // product option ID
+      const productCode = $optionItem.data('product-code'); // product ID
+      const productOptionCode = optionCode; // product option ID
   
       // AJAX 요청을 통해 서버에 옵션 제거 요청을 보냄
       $.ajax({
@@ -477,8 +477,8 @@
           type: 'POST',
           data: JSON.stringify({
               code: "remove_cart_item",
-              product_name: productName,
-              product_option_name: productOptionName
+              product_code: productCode,
+              product_option_code: productOptionCode
           }),
           contentType: 'application/json',
           headers: {

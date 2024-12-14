@@ -121,6 +121,7 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
                     product_option = ProductOptions.objects.get(product_option_code=item.product_option_code)
                     grouped_items[item.product_code].append({
                         'option_name': product_option.product_option_name,
+                        'option_code': product_option.product_option_code,
                         'quantity': item.quantity,
                         'total_price': item.subtotal
                     })
@@ -132,6 +133,7 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
                     total_price = sum(option['total_price'] for option in options)
                     items.append({
                         'product_name': product.product_name,
+                        'product_code': product.product_code,
                         'options': options,
                         'total_quantity': total_quantity,
                         'total_price': total_price
