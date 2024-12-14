@@ -162,20 +162,58 @@
         </div>
       </div>
       {% for category in categories %}
-        <div class="tab-pane fade" id="content-{{ category.id }}" role="tabpanel" aria-labelledby="tab-{{ category.id }}">
-          <div class="custom-grid">
-            {% for subcategory in category.category_set.all %}
-              <div class="mb-3">
-                <div class="card">
-                  <div class="card-body">
-                    <h5 class="card-title">{{ subcategory.category_name }}</h5>
-                    <p class="card-text">카테고리 코드: {{ subcategory.category_code }}</p>
-                  </div>
+      <div class="tab-pane fade" id="content-{{ category.id }}" role="tabpanel" aria-labelledby="tab-{{ category.id }}">
+        <div class="custom-grid mt-3 gap-3">
+          {% for product in products %}
+          {% if category in product.product_category.all %}
+            <div>
+              <div class="d-flex justify-content-center">
+                <img src="{{ product.product_thumbnail_image.url }}" alt="{{ product.product_name }}" class="img-fluid" style="width: 35%; aspect-ratio: 1/1 !important; object-fit: cover;">
+                <div class="ms-3">
+                  <p class="card-title fw-bold">{{ product.product_name }}</p>
+                  <p class="card-text mt-2 fs-6">{{ product.product_description }}</p>
+                  <p class="card-text mt-2">판매가: <span class="text-decoration-line-through text-secondary">{{ product.product_sell_price|intcomma }}원</span></p>
+                  <p class="card-text">직원가: <span class="fw-bold text-primary fs-5">{{ product.product_manager_price|intcomma }}원</span></p>
+                  <button class="btn btn-outline-primary w-100 p-2 fw-semibold mt-2 view-details" 
+                          data-product-details="{{ product.product_detail }}"
+                          data-product-name="{{ product.product_name }}">
+                      상품 상세보기
+                  </button>
                 </div>
               </div>
-            {% endfor %}
-          </div>
+              <select
+                class="form-select mt-3 pt-2 pb-2 ps-3 pe-3 option-select"
+                data-product-id="{{ product.product_code }}"
+                data-product-name="{{ product.product_name }}"
+                data-product-price="{{ product.product_manager_price }}"
+              >
+                <option class="option-select" value="">옵션 선택</option>
+                {% for option in recommended_products_options %}
+                  {% if option.product == product %}
+                    {% if "빠른출고" not in option.product_option_display_name and "빠른 출고" not in option.product_option_display_name %}
+                    <option value="{{ option.product_option_code }}" 
+                            data-option-name="{{ option.product_option_name }}"
+                            data-option-price="{{ option.product_option_price }}">
+                      {% if option.product_option_price > 0 %}
+                        {{ option.product_option_name }} ({{ option.product_option_price|intcomma }}원)
+                      {% else %}
+                        {{ option.product_option_name }}
+                      {% endif %}
+                    </option>
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+              </select>
+              <div class="selected-options p-2 d-flex flex-column gap-2"></div>
+              <button class="btn btn-primary w-100 p-2 mt-2 fw-semibold add-to-cart" 
+                      data-product-id="{{ product.product_code }}">
+                장바구니 담기
+              </button>
+            </div>
+          {% endif %}
+          {% endfor %}
         </div>
+      </div>
       {% endfor %}
     </div>
   </div>
