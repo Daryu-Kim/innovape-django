@@ -42,8 +42,8 @@ admin.site.register(Consumer, ConsumerAdmin)
 
 
 class CartItemAdmin(admin.ModelAdmin):
-    list_display = ('member', 'product', 'product_option', 'quantity',)
-    search_fields = ('member', 'product', 'product_option',)
-    list_filter = ('member', 'product', 'product_option',)
+    list_display = ('member_id', 'product', 'product_option', 'quantity',)
+    search_fields = ('member_id', 'product', 'product_option',)
+    list_filter = ('member_id', 'product', 'product_option',)
 
 admin.site.register(CartItem, CartItemAdmin)
