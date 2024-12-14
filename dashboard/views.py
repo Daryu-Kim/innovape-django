@@ -99,7 +99,7 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
                     product_option = ProductOptions.objects.get(product_option_code=item['option_code'])
                     
                     cart_item, created = CartItem.objects.update_or_create(
-                        member_id=request.user.username,
+                        member=request.user,
                         product=product,
                         product_option=product_option,
                         defaults={
@@ -113,7 +113,7 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
             
         elif data.get('code') == "get_cart_items":
             if request.user.is_authenticated:
-                cart_items = CartItem.objects.filter(member_id=request.user.username).select_related('product', 'product_option')
+                cart_items = CartItem.objects.filter(member=request.user).select_related('product', 'product_option')
                 grouped_items = defaultdict(list)
 
                 # 상품을 옵션별로 그룹화
@@ -139,7 +139,7 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
             return JsonResponse({'items': []})
         
         elif data.get('code') == "remove_cart_item":
-            member = request.user.username
+            member = request.user
             product_name = data.get('product_name')
             product_option_name = data.get('product_option_name')
             
@@ -147,7 +147,7 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
             try:
                 # CartItem을 필터링하여 삭제
                 CartItem.objects.filter(
-                    member_id=member,
+                    member=member,
                     product__product_name=product_name,
                     product_option__product_option_name=product_option_name
                 ).delete()

@@ -149,7 +149,7 @@ class Consumer(models.Model):
         return self.consumer_id
     
 class CartItem(models.Model):
-    member_id = models.CharField(max_length=100, verbose_name='회원 아이디')
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, verbose_name='회원')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='상품')
     product_option = models.ForeignKey(ProductOptions, on_delete=models.CASCADE, verbose_name='상품 옵션')
     quantity = models.PositiveIntegerField(default=1, verbose_name='수량')
@@ -159,10 +159,9 @@ class CartItem(models.Model):
     class Meta:
         verbose_name = "장바구니 아이템"
         verbose_name_plural = "장바구니 아이템"
-        unique_together = ('member_id', 'product', 'product_option')  # 동일한 회원의 동일 상품&옵션은 하나의 항목으로 관리
 
     def __str__(self):
-        return f"{self.member_id} - {self.product.product_name} ({self.product_option.product_option_name})"
+        return f"{self.member.username} - {self.product.product_name} ({self.product_option.product_option_name})"
     
     @property
     def subtotal(self):
