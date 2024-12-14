@@ -149,9 +149,9 @@ class Consumer(models.Model):
         return self.consumer_id
     
 class CartItem(models.Model):
-    member = models.ForeignKey(Member, on_delete=models.CASCADE, verbose_name='회원')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='상품')
-    product_option = models.ForeignKey(ProductOptions, on_delete=models.CASCADE, verbose_name='상품 옵션')
+    member_id = models.CharField(max_length=30, verbose_name='회원 아이디')
+    product_code = models.CharField(max_length=30, verbose_name='상품 코드')
+    product_option_code = models.CharField(max_length=30, verbose_name='상품 옵션 코드')
     quantity = models.PositiveIntegerField(default=1, verbose_name='수량')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='생성일시')
     modified_at = models.DateTimeField(auto_now=True, verbose_name='수정일시')
@@ -161,9 +161,13 @@ class CartItem(models.Model):
         verbose_name_plural = "장바구니 아이템"
 
     def __str__(self):
-        return f"{self.member.username} - {self.product.product_name} ({self.product_option.product_option_name})"
+        return f"{self.member_id} - {self.product_code} ({self.product_option_code})"
     
     @property
     def subtotal(self):
         """상품 소계 금액 (상품가격 + 옵션가격) * 수량"""
-        return (self.product.product_sell_price + self.product_option.product_option_price) * self.quantity
+        # 상품과 옵션의 가격을 가져오기 위해 Product와 ProductOptions 모델을 쿼리해야 합니다.
+        product = Product.objects.get(product_code=self.product_code)
+        product_option = ProductOptions.objects.get(product_option_code=self.product_option_code)
+
+        return (product.product_sell_price + product_option.product_option_price) * self.quantity
