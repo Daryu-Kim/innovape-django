@@ -121,6 +121,8 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
             product_list = []
             options_list = []
             
+            is_last_page = len(products) < page_size
+            
             for product in products:
                 options = product_options.filter(product=product).filter(query)
                 
@@ -139,9 +141,7 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
                     'product_description': product.product_description,
                     'product_detail': product.product_detail,
                     'options': options_list
-                })
-                
-                is_last_page = len(products) < page_size
+                })   
             
             return JsonResponse({'status': 'success', 'products': product_list, 'is_last_page': is_last_page})
         elif data.get('code') == "add_to_cart":
