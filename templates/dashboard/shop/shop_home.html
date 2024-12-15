@@ -19,7 +19,7 @@
     </div>
     <!-- 탭 메뉴 -->
     <ul class="nav nav-tabs mt-3" id="categoryTabs" role="tablist">
-      <li class="nav-item" role="presentation">
+      <li class="nav-item" role="presentation" data-category-id="recommend">
         <button class="nav-link pt-2 pb-2 ps-3 pe-3 active"
           id="tab-recommend"
           data-bs-toggle="tab"
@@ -31,7 +31,7 @@
           추천 상품
         </button>
       </li>
-      <li class="nav-item" role="presentation">
+      <li class="nav-item" role="presentation" data-category-id="new">
         <button class="nav-link pt-2 pb-2 ps-3 pe-3"
           id="tab-new"
           data-bs-toggle="tab"
@@ -44,7 +44,7 @@
         </button>
       </li>
       {% for category in categories %}
-        <li class="nav-item" role="presentation">
+        <li class="nav-item" role="presentation" data-category-id="{{ category.id }}">
           <button class="nav-link pt-2 pb-2 ps-3 pe-3"
             id="tab-{{ category.id }}"
             data-bs-toggle="tab"
@@ -61,152 +61,15 @@
 
     <!-- 탭 컨텐츠 -->
     <div class="tab-content" id="categoryTabsContent">
-      <div class="tab-pane fade show active" id="content-recommend" role="tabpanel" aria-labelledby="tab-recommend">
-        <div class="custom-grid mt-3 gap-3">
-          {% for product in recommended_products %}
-            <div>
-              <div class="d-flex justify-content-center">
-                <img src="{{ product.product_thumbnail_image.url }}" alt="{{ product.product_name }}" class="img-fluid" style="width: 35%; aspect-ratio: 1/1 !important; object-fit: cover;">
-                <div class="ms-3">
-                  <p class="card-title fw-bold">{{ product.product_name }}</p>
-                  <p class="card-text mt-2 fs-6">{{ product.product_description }}</p>
-                  <p class="card-text mt-2">판매가: <span class="text-decoration-line-through text-secondary">{{ product.product_sell_price|intcomma }}원</span></p>
-                  <p class="card-text">직원가: <span class="fw-bold text-primary fs-5">{{ product.product_manager_price|intcomma }}원</span></p>
-                  <button class="btn btn-outline-primary w-100 p-2 fw-semibold mt-2 view-details" 
-                          data-product-details="{{ product.product_detail }}"
-                          data-product-name="{{ product.product_name }}">
-                      상품 상세보기
-                  </button>
-                </div>
-              </div>
-              <select
-                class="form-select mt-3 pt-2 pb-2 ps-3 pe-3 option-select"
-                data-product-id="{{ product.product_code }}"
-                data-product-name="{{ product.product_name }}"
-                data-product-price="{{ product.product_manager_price }}"
-              >
-                <option class="option-select" value="">옵션 선택</option>
-                {% for option in recommended_products_options %}
-                  {% if option.product == product %}
-                    <option value="{{ option.product_option_code }}" 
-                            data-option-name="{{ option.product_option_name }}"
-                            data-option-price="{{ option.product_option_price }}">
-                      {% if option.product_option_price > 0 %}
-                        {{ option.product_option_name }} ({{ option.product_option_price|intcomma }}원)
-                      {% else %}
-                        {{ option.product_option_name }}
-                      {% endif %}
-                    </option>
-                  {% endif %}
-                {% endfor %}
-              </select>
-              <div class="selected-options p-2 d-flex flex-column gap-2"></div>
-              <button class="btn btn-primary w-100 p-2 mt-2 fw-semibold add-to-cart" 
-                      data-product-id="{{ product.product_code }}">
-                장바구니 담기
-              </button>
-            </div>
-          {% endfor %}
-        </div>
+      <div class="tab-pane fade show active" id="content-recommend" role="tabpanel" aria-labelledby="tab-recommend" data-category-id="recommend">
+        <div class="custom-grid mt-3 gap-3"></div>
       </div>
-      <div class="tab-pane fade" id="content-new" role="tabpanel" aria-labelledby="tab-new">
-        <div class="custom-grid mt-3 gap-3">
-          {% for product in new_products %}
-            <div>
-              <div class="d-flex justify-content-center">
-                <img src="{{ product.product_thumbnail_image.url }}" alt="{{ product.product_name }}" class="img-fluid" style="width: 35%; aspect-ratio: 1/1 !important; object-fit: cover;">
-                <div class="ms-3">
-                  <p class="card-title fw-bold">{{ product.product_name }}</p>
-                  <p class="card-text mt-2 fs-6">{{ product.product_description }}</p>
-                  <p class="card-text mt-2">판매가: <span class="text-decoration-line-through text-secondary">{{ product.product_sell_price|intcomma }}원</span></p>
-                  <p class="card-text">직원가: <span class="fw-bold text-primary fs-5">{{ product.product_manager_price|intcomma }}원</span></p>
-                  <button class="btn btn-outline-primary w-100 p-2 fw-semibold mt-2 view-details" 
-                          data-product-details="{{ product.product_detail }}"
-                          data-product-name="{{ product.product_name }}">
-                      상품 상세보기
-                  </button>
-                </div>
-              </div>
-              <select
-                class="form-select mt-3 pt-2 pb-2 ps-3 pe-3 option-select"
-                data-product-id="{{ product.product_code }}"
-                data-product-name="{{ product.product_name }}"
-                data-product-price="{{ product.product_manager_price }}"
-              >
-                <option class="option-select" value="">옵션 선택</option>
-                {% for option in new_products_options %}
-                  {% if option.product == product %}
-                    <option value="{{ option.product_option_code }}" 
-                            data-option-name="{{ option.product_option_name }}"
-                            data-option-price="{{ option.product_option_price }}">
-                      {% if option.product_option_price > 0 %}
-                        {{ option.product_option_name }} ({{ option.product_option_price|intcomma }}원)
-                      {% else %}
-                        {{ option.product_option_name }}
-                      {% endif %}
-                    </option>
-                  {% endif %}
-                {% endfor %}
-              </select>
-              <div class="selected-options p-2 d-flex flex-column gap-2"></div>
-              <button class="btn btn-primary w-100 p-2 mt-2 fw-semibold add-to-cart" 
-                      data-product-id="{{ product.product_code }}">
-                장바구니 담기
-              </button>
-            </div>
-          {% endfor %}
-        </div>
+      <div class="tab-pane fade" id="content-new" role="tabpanel" aria-labelledby="tab-new" data-category-id="new">
+        <div class="custom-grid mt-3 gap-3"></div>
       </div>
       {% for category in categories %}
-      <div class="tab-pane fade" id="content-{{ category.id }}" role="tabpanel" aria-labelledby="tab-{{ category.id }}">
-        <div class="custom-grid mt-3 gap-3">
-          {% for product in products %}
-          {% if category in product.product_category.all %}
-            <div>
-              <div class="d-flex justify-content-center">
-                <img src="{{ product.product_thumbnail_image.url }}" alt="{{ product.product_name }}" class="img-fluid" style="width: 35%; aspect-ratio: 1/1 !important; object-fit: cover;">
-                <div class="ms-3">
-                  <p class="card-title fw-bold">{{ product.product_name }}</p>
-                  <p class="card-text mt-2 fs-6">{{ product.product_description }}</p>
-                  <p class="card-text mt-2">판매가: <span class="text-decoration-line-through text-secondary">{{ product.product_sell_price|intcomma }}원</span></p>
-                  <p class="card-text">직원가: <span class="fw-bold text-primary fs-5">{{ product.product_manager_price|intcomma }}원</span></p>
-                  <button class="btn btn-outline-primary w-100 p-2 fw-semibold mt-2 view-details" 
-                          data-product-details="{{ product.product_detail }}"
-                          data-product-name="{{ product.product_name }}">
-                      상품 상세보기
-                  </button>
-                </div>
-              </div>
-              <select
-                class="form-select mt-3 pt-2 pb-2 ps-3 pe-3 option-select"
-                data-product-id="{{ product.product_code }}"
-                data-product-name="{{ product.product_name }}"
-                data-product-price="{{ product.product_manager_price }}"
-              >
-                <option class="option-select" value="">옵션 선택</option>
-                {% for option in product_options %}
-                  {% if option.product == product %}
-                    <option value="{{ option.product_option_code }}" 
-                            data-option-name="{{ option.product_option_name }}"
-                            data-option-price="{{ option.product_option_price }}">
-                      {% if option.product_option_price > 0 %}
-                        {{ option.product_option_name }} ({{ option.product_option_price|intcomma }}원)
-                      {% else %}
-                        {{ option.product_option_name }}
-                      {% endif %}
-                    </option>
-                  {% endif %}
-                {% endfor %}
-              </select>
-              <div class="selected-options p-2 d-flex flex-column gap-2"></div>
-              <button class="btn btn-primary w-100 p-2 mt-2 fw-semibold add-to-cart" 
-                      data-product-id="{{ product.product_code }}">
-                장바구니 담기
-              </button>
-            </div>
-          {% endif %}
-          {% endfor %}
-        </div>
+      <div class="tab-pane fade" id="content-{{ category.id }}" role="tabpanel" aria-labelledby="tab-{{ category.id }}" data-category-id="{{ category.id }}">
+        <div class="custom-grid mt-3 gap-3"></div>
       </div>
       {% endfor %}
     </div>
@@ -252,8 +115,73 @@
 </div>
   <script>
     $(document).ready(function() {
+      // 탭 메뉴 클릭 이벤트
+      $('.nav-link').on('click', function() {
+        const categoryId = $(this).closest('.nav-item').data('category-id');
+        console.log(categoryId);
+        loadTabProducts(categoryId, 1);
+      });
+
+      function loadTabProducts(categoryId, page) {
+        $.ajax({
+          url: '{% url "dashboard_shop_home" %}',
+          type: 'POST',
+          data: JSON.stringify({ code: "load_tab_products", category_id: categoryId, page: page }),
+          contentType: 'application/json',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+          },
+          success: function(response) {
+            if (response.status === 'success') {
+              const $tabContent = $('.tab-pane[data-category-id="' + categoryId + '"] > .custom-grid');
+              $tabContent.empty();
+              response.products.forEach(product => {
+                $tabContent.append(`
+                  <div>
+                    <div class="d-flex justify-content-center">
+                      <img src="${product.product_thumbnail_image}" alt="${product.product_name}" class="img-fluid" style="width: 35%; aspect-ratio: 1/1 !important; object-fit: cover;">
+                      <div class="ms-3">
+                        <p class="card-title fw-bold">${product.product_name}</p>
+                        <p class="card-text mt-2 fs-6">${product.product_description}</p>
+                        <p class="card-text mt-2">판매가: <span class="text-decoration-line-through text-secondary">${product.product_sell_price.toLocaleString()}원</span></p>
+                        <p class="card-text">직원가: <span class="fw-bold text-primary fs-5">${product.product_manager_price.toLocaleString()}원</span></p>
+                        <button class="btn btn-outline-primary w-100 p-2 fw-semibold mt-2 view-details" 
+                                data-product-details="${product.product_detail}"
+                                data-product-name="${product.product_name}">
+                            상품 상세보기
+                        </button>
+                      </div>
+                    </div>
+                    <select
+                      class="form-select mt-3 pt-2 pb-2 ps-3 pe-3 option-select"
+                      data-product-id="${product.product_code}"
+                      data-product-name="${product.product_name}"
+                      data-product-price="${product.product_manager_price}"
+                    >
+                      <option class="option-select" value="">옵션 선택</option>
+                      ${product.options.map(option => `
+                          <option value="${option.product_option_code}" 
+                                  data-option-name="${option.product_option_name}"
+                                  data-option-price="${option.product_option_price}">
+                            ${option.product_option_price > 0 ? `${option.product_option_name} (${option.product_option_price.toLocaleString()}원)` : option.product_option_name}
+                          </option>
+                      `).join('')}
+                    </select>
+                    <div class="selected-options p-2 d-flex flex-column gap-2"></div>
+                    <button class="btn btn-primary w-100 p-2 mt-2 fw-semibold add-to-cart" 
+                            data-product-id="${product.product_code}">
+                      장바구니 담기
+                    </button>
+                  </div>
+                `);
+              });
+            }
+          }
+        });
+      }
+
         // 옵션 선택 이벤트
-        $('.option-select').on('change', function() {
+        $(document).on('change', '.option-select', function() {
             if (!$(this).val()) return;
             
             const $select = $(this);
@@ -342,7 +270,7 @@
         });
         
         // 장바구니 담기 버튼 클릭
-        $('.add-to-cart').on('click', function() {
+        $(document).on('click', '.add-to-cart', function() {
             const $button = $(this);
             const productId = $button.data('product-id');
             const $selectedOptionsDiv = $button.siblings('.selected-options');
@@ -398,48 +326,37 @@
         });
 
         // 상품 상세보기 버튼 클릭 이벤트
-        $('.view-details').on('click', function() {
-          const $button = $(this);
-          let productDetails = [];
-          const rawData = $button.attr('data-product-details');
-          console.log('Raw data:', rawData);  // 디버깅용
-          
-          try {
-              if (rawData) {
-                  productDetails = JSON.parse(rawData.replace(/'/g, '"'));
-              }
-              console.log('Parsed details:', productDetails);  // 디버깅용
-          } catch (e) {
-              console.error('Error parsing product details:', e);
-              productDetails = [];
-          }
-          
-          const productName = $button.data('product-name');
-          
-          // 모달 제목 설정
-          $('#productDetailModalLabel').text(productName);
-          
-          // 상세 이미지 컨테이너 초기화
-          const $detailContainer = $('#productDetailImages').empty();
-          
-          if (!productDetails || productDetails.length === 0) {
-              $detailContainer.append('<p class="text-center">상세 이미지가 없습니다.</p>');
-          } else {
-              // 상세 이미지 추가
-              productDetails.forEach(imageUrl => {
-                console.log("/media/"+imageUrl);
-                  const $img = $('<img>', {
-                      src: "/media/"+imageUrl,
-                      class: 'img-fluid',
-                      alt: productName
-                  });
-                  $detailContainer.append($img);
-              });
-          }
-          
-          // 모달 표시
-          $('#productDetailModal').modal('show');
-      });
+        $(document).on('click', '.view-details', function() {
+            const $button = $(this);
+            const rawData = $button.attr('data-product-details').split(',');
+
+            const productName = $button.data('product-name');
+
+            // 모달 제목 설정
+            $('#productDetailModalLabel').text(productName);
+
+            // 상세 이미지 컨테이너 초기화
+            const $detailContainer = $('#productDetailImages').empty();
+
+            if (!rawData || rawData.length === 0) {
+                $detailContainer.append('<p class="text-center">상세 이미지가 없습니다.</p>');
+            } else {
+                // 상세 이미지 추가
+                rawData.forEach(imageUrl => {
+                    const fullImageUrl = "/media/" + imageUrl;  // 이미지 URL 생성
+
+                    const $img = $('<img>', {
+                        src: fullImageUrl,
+                        class: 'img-fluid',
+                        alt: productName
+                    });
+                    $detailContainer.append($img);
+                });
+            }
+
+            // 모달 표시
+            $('#productDetailModal').modal('show');
+        });
 
       // 플로팅 버튼 클릭 시 드롭다운 토글
       $('#floatingButton').on('click', function() {
@@ -528,6 +445,7 @@
 
     // 페이지 로드 시 장바구니 아이템 로드
     loadCartItems();
+    loadTabProducts('recommend', 1);
   });
   </script>
 {% endblock %}
