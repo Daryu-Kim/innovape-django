@@ -119,6 +119,40 @@
     </div>
   </div>
 </div>
+
+<!-- 결제 모달 -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="paymentModalLabel">주문서 및 결제</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+              <div id="cart-items"></div> <!-- 장바구니 내용 -->
+              <hr>
+              <h6>수취인 정보</h6>
+              <p id="recipient-name"></p>
+              <p id="recipient-phone"></p>
+              <p id="recipient-address"></p>
+              <hr>
+              <h6>수령 방법</h6>
+              <select id="delivery-method" class="form-select">
+                  <option value="delivery">택배</option>
+                  <option value="store_pickup">스토어 픽업</option>
+              </select>
+              <p id="shipping-fee">배송비: 0원</p>
+              <hr>
+              <h6>결제 수단</h6>
+              <p>결제 수단: 무통장입금</p>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+              <button type="button" class="btn btn-primary" id="confirm-order">주문하기</button>
+          </div>
+      </div>
+  </div>
+</div>
   <script>
     $(document).ready(function() {
       let currentPage = 1;
@@ -153,6 +187,8 @@
                 $tabContent.empty();
               }
               response.products.forEach(product => {
+                const productOptions = product.options || [];
+                const filteredOptions = productOptions.filter(option => option.product_code === product.product_code);
                 $tabContent.append(`
                   <div>
                     <div class="d-flex justify-content-center">
@@ -176,7 +212,7 @@
                       data-product-price="${product.product_manager_price}"
                     >
                       <option class="option-select" value="">옵션 선택</option>
-                      ${product.options.map(option => `
+                      ${filteredOptions.map(option => `
                           <option value="${option.product_option_code}" 
                                   data-option-name="${option.product_option_name}"
                                   data-option-price="${option.product_option_price}">

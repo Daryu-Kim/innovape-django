@@ -98,7 +98,7 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
         if data.get('code') == "load_tab_products":
             category_id = data.get('category_id')
             page = int(data.get('page', 1))
-            page_size = 24
+            page_size = 12
             start = (page - 1) * page_size
             end = start + page_size
             
@@ -131,6 +131,7 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
                         'product_option_code': option.product_option_code,
                         'product_option_name': option.product_option_name,
                         'product_option_price': option.product_option_price,
+                        'product_code': product.product_code,
                     })
                 product_list.append({
                     'product_code': product.product_code,
