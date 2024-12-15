@@ -76,19 +76,14 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
         context["categories"] = parent_categories
         
         recommended_products = Product.objects.filter(product_category__category_name__in=CATEGORY_LIST, product_is_recommend=True)
-        recommended_products = Product.objects.filter(product_is_recommend=True)
-        recommended_products_options = ProductOptions.objects.filter(product__in=recommended_products)
         new_products = Product.objects.filter(product_category__category_name__in=CATEGORY_LIST, product_is_new=True)
-        new_products_options = ProductOptions.objects.filter(product__in=new_products)
         products = Product.objects.prefetch_related('product_category').only(
             'id', 'product_name', 'product_thumbnail_image', 'product_description', 'product_sell_price', 'product_manager_price'
         ).all()
         product_options = ProductOptions.objects.all()
                 
         context["recommended_products"] = recommended_products
-        context["recommended_products_options"] = recommended_products_options
         context["new_products"] = new_products
-        context["new_products_options"] = new_products_options
         context["products"] = products
         context["product_options"] = product_options
 
