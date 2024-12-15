@@ -72,20 +72,14 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         CATEGORY_LIST = ["입호흡 기기", "폐호흡 기기", "일회용 기기", "입호흡 액상", "폐호흡 액상"]
         
-        parent_categories = Category.objects.filter(category_parent__isnull=True)
+        parent_categories = Category.objects.filter(category_parent__isnull=True).exclude(category_name__in=["EVENT!", "인기 브랜드관"])
         context["categories"] = parent_categories
         
-        recommended_products = Product.objects.prefetch_related('product_category').only(
-            'id', 'product_name', 'product_thumbnail_image', 'product_description', 'product_sell_price', 'product_manager_price'
-        ).filter(product_category__category_name__in=CATEGORY_LIST, product_is_recommend=True)
-        recommended_products_options = ProductOptions.objects.filter(product__in=recommended_products)
-        new_products = Product.objects.prefetch_related('product_category').only(
-            'id', 'product_name', 'product_thumbnail_image', 'product_description', 'product_sell_price', 'product_manager_price'
-        ).filter(product_category__category_name__in=CATEGORY_LIST, product_is_new=True)
+        recommended_products = Product.objects.filter(product_category__category_name__in=CATEGORY_LIST, product_is_recommend=True)
+        recommended_products_options = ProductOptions.objects.filter(product__in=recommended_products).exclude(product_option_display_name__in=["빠른출고", "빠른 출고"])
+        new_products = Product.objects.filter(product_category__category_name__in=CATEGORY_LIST, product_is_new=True)
         new_products_options = ProductOptions.objects.filter(product__in=new_products)
-        products = Product.objects.prefetch_related('product_category').only(
-            'id', 'product_name', 'product_thumbnail_image', 'product_description', 'product_sell_price', 'product_manager_price'
-        ).all()
+        products = Product.objects.all()
         product_options = ProductOptions.objects.all()
                 
         context["recommended_products"] = recommended_products
