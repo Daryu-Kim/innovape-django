@@ -98,7 +98,7 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
         if data.get('code') == "load_tab_products":
             category_id = data.get('category_id')
             page = int(request.POST.get('page', 1))
-            page_size = 10
+            page_size = 1
             start = (page - 1) * page_size
             end = start + page_size
             

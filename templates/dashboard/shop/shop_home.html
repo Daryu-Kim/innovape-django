@@ -73,6 +73,12 @@
       </div>
       {% endfor %}
     </div>
+
+    <div class="d-flex justify-content-center mt-4">
+      <button class="btn btn-link fs-5 text-decoration-none text-secondary" id="next-page">
+        <i class="bi bi-chevron-down"></i>&nbsp;더보기
+      </button>
+    </div>
   </div>
 
  <!-- 플로팅 버튼 -->
@@ -115,11 +121,19 @@
 </div>
   <script>
     $(document).ready(function() {
+      let currentPage = 1;
       // 탭 메뉴 클릭 이벤트
       $('.nav-link').on('click', function() {
+        currentPage = 1;
         const categoryId = $(this).closest('.nav-item').data('category-id');
         console.log(categoryId);
         loadTabProducts(categoryId, 1);
+      });
+
+      $('#next-page').on('click', function() {
+        currentPage++;
+        const categoryId = $('.tab-pane.active').data('category-id');
+        loadTabProducts(categoryId, currentPage);
       });
 
       function loadTabProducts(categoryId, page) {
@@ -134,7 +148,9 @@
           success: function(response) {
             if (response.status === 'success') {
               const $tabContent = $('.tab-pane[data-category-id="' + categoryId + '"] > .custom-grid');
-              $tabContent.empty();
+              if (currentPage === 1) {
+                $tabContent.empty();
+              }
               response.products.forEach(product => {
                 $tabContent.append(`
                   <div>
