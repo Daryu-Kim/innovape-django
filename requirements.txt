@@ -24,6 +24,7 @@ Django==5.1.2
 django-cors-headers==4.6.0
 django-js-asset==2.2.0
 django-mptt==0.16.0
+django-redis==5.4.0
 et_xmlfile==2.0.0
 exceptiongroup==1.2.2
 executing==2.1.0
@@ -102,6 +103,7 @@ python-json-logger==2.0.7
 pytz==2024.2
 PyYAML==6.0.2
 pyzmq==26.2.0
+redis==5.2.1
 referencing==0.35.1
 requests==2.31.0
 requests-toolbelt==1.0.0

@@ -35,6 +35,7 @@ import io
 from django.http import HttpResponse
 import shutil
 import traceback
+from django.core.cache import cache
 
 
 # Create your views here.
@@ -72,21 +73,60 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         CATEGORY_LIST = ["입호흡 기기", "폐호흡 기기", "일회용 기기", "입호흡 액상", "폐호흡 액상"]
         
-        parent_categories = Category.objects.filter(category_parent__isnull=True).exclude(category_name__in=["EVENT!", "인기 브랜드관"])
+        # 카테고리 캐시
+        parent_categories = cache.get('parent_categories')
+        if not parent_categories:
+            parent_categories = Category.objects.filter(category_parent__isnull=True).exclude(category_name__in=["EVENT!", "인기 브랜드관"])
+            cache.set('parent_categories', parent_categories, timeout=900)  # 15분 동안 캐시
+
         context["categories"] = parent_categories
-        
-        recommended_products = Product.objects.filter(product_category__category_name__in=CATEGORY_LIST, product_is_recommend=True)
-        recommended_products_options = ProductOptions.objects.filter(product__in=recommended_products).exclude(product_option_display_name__in=["빠른출고", "빠른 출고"])
-        new_products = Product.objects.filter(product_category__category_name__in=CATEGORY_LIST, product_is_new=True)
-        new_products_options = ProductOptions.objects.filter(product__in=new_products).exclude(product_option_display_name__in=["빠른출고", "빠른 출고"])
-        products = Product.objects.all()
-        product_options = ProductOptions.objects.all().exclude(product_option_display_name__in=["빠른출고", "빠른 출고"])
-                
+
+        # 추천 제품 캐시
+        recommended_products = cache.get('recommended_products')
+        if not recommended_products:
+            recommended_products = Product.objects.filter(product_category__category_name__in=CATEGORY_LIST, product_is_recommend=True)
+            cache.set('recommended_products', recommended_products, timeout=900)
+
         context["recommended_products"] = recommended_products
+
+        # 추천 제품 옵션 캐시
+        recommended_products_options = cache.get('recommended_products_options')
+        if not recommended_products_options:
+            recommended_products_options = ProductOptions.objects.filter(product__in=recommended_products).exclude(product_option_display_name__in=["빠른출고", "빠른 출고"])
+            cache.set('recommended_products_options', recommended_products_options, timeout=900)
+
         context["recommended_products_options"] = recommended_products_options
+
+        # 신규 제품 캐시
+        new_products = cache.get('new_products')
+        if not new_products:
+            new_products = Product.objects.filter(product_category__category_name__in=CATEGORY_LIST, product_is_new=True)
+            cache.set('new_products', new_products, timeout=900)
+
         context["new_products"] = new_products
+
+        # 신규 제품 옵션 캐시
+        new_products_options = cache.get('new_products_options')
+        if not new_products_options:
+            new_products_options = ProductOptions.objects.filter(product__in=new_products).exclude(product_option_display_name__in=["빠른출고", "빠른 출고"])
+            cache.set('new_products_options', new_products_options, timeout=900)
+
         context["new_products_options"] = new_products_options
+
+        # 모든 제품 캐시
+        products = cache.get('all_products')
+        if not products:
+            products = Product.objects.all()
+            cache.set('all_products', products, timeout=900)
+
         context["products"] = products
+
+        # 모든 제품 옵션 캐시
+        product_options = cache.get('all_product_options')
+        if not product_options:
+            product_options = ProductOptions.objects.all().exclude(product_option_display_name__in=["빠른출고", "빠른 출고"])
+            cache.set('all_product_options', product_options, timeout=900)
+
         context["product_options"] = product_options
 
         return context
