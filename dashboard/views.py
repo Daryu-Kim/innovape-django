@@ -97,8 +97,8 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
         data = json.loads(request.body)
         if data.get('code') == "load_tab_products":
             category_id = data.get('category_id')
-            page = int(request.POST.get('page', 1))
-            page_size = 10
+            page = int(data.get('page', 1))
+            page_size = 2
             start = (page - 1) * page_size
             end = start + page_size
             
@@ -140,8 +140,10 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
                     'product_detail': product.product_detail,
                     'options': options_list
                 })
+                
+                is_last_page = len(products) <= page_size
             
-            return JsonResponse({'status': 'success', 'products': product_list})
+            return JsonResponse({'status': 'success', 'products': product_list, 'is_last_page': is_last_page})
         elif data.get('code') == "add_to_cart":
             try:
                 cart_items = data.get('items', [])

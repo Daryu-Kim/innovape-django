@@ -131,8 +131,9 @@
       });
 
       $('#next-page').on('click', function() {
-        currentPage++;
+        currentPage += 1;
         const categoryId = $('.tab-pane.active').data('category-id');
+        console.log(currentPage);
         loadTabProducts(categoryId, currentPage);
       });
 
@@ -191,6 +192,10 @@
                   </div>
                 `);
               });
+
+              if (response.is_last_page) {
+                $('#next-page').hide();
+              }
             }
           }
         });
