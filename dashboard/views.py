@@ -78,9 +78,9 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
         recommended_products = Product.objects.filter(product_category__category_name__in=CATEGORY_LIST, product_is_recommend=True)
         recommended_products_options = ProductOptions.objects.filter(product__in=recommended_products).exclude(product_option_display_name__in=["빠른출고", "빠른 출고"])
         new_products = Product.objects.filter(product_category__category_name__in=CATEGORY_LIST, product_is_new=True)
-        new_products_options = ProductOptions.objects.filter(product__in=new_products)
+        new_products_options = ProductOptions.objects.filter(product__in=new_products).exclude(product_option_display_name__in=["빠른출고", "빠른 출고"])
         products = Product.objects.all()
-        product_options = ProductOptions.objects.all()
+        product_options = ProductOptions.objects.all().exclude(product_option_display_name__in=["빠른출고", "빠른 출고"])
                 
         context["recommended_products"] = recommended_products
         context["recommended_products_options"] = recommended_products_options
