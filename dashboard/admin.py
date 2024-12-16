@@ -50,9 +50,9 @@ admin.site.register(CartItem, CartItemAdmin)
 
 
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('order_code', 'order_consumer', 'order_channel', 'order_status', 'order_payment_method', 'order_payment_amount', 'order_created_datetime', 'order_payment_completed_datetime', 'order_delivery_started_datetime', 'order_delivery_completed_datetime',)
-    search_fields = ('order_code', 'order_number', 'order_product_number', 'order_consumer',)
-    list_filter = ('order_consumer',)
+    list_display = ('order_code', 'order_consumer_id', 'order_channel', 'order_status', 'order_payment_method', 'order_payment_amount', 'order_created_datetime', 'order_payment_completed_datetime', 'order_delivery_started_datetime', 'order_delivery_completed_datetime',)
+    search_fields = ('order_code', 'order_number', 'order_product_number', 'order_consumer_id',)
+    list_filter = ('order_consumer_id', 'order_channel', 'order_status',)
 
 admin.site.register(Order, OrderAdmin)
 

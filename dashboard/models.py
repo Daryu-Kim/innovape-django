@@ -131,7 +131,7 @@ class Consumer(models.Model):
         ('수동주문', '수동주문'),
     ]
 
-    consumer_id = models.CharField(max_length=30, unique=True, verbose_name='고객 아이디')
+    consumer_id = models.CharField(max_length=30, verbose_name='고객 아이디')
     consumer_channel = models.CharField(max_length=30, choices=CHANNEL_CHOICE, default='카페24', verbose_name='고객 채널')
     consumer_grade = models.CharField(max_length=30, choices=GRADE_CHOICE, default='노바', verbose_name='고객 등급')
     consumer_name = models.CharField(max_length=50, verbose_name='고객 이름')
@@ -222,7 +222,7 @@ class Order(models.Model):
         ('수동주문', '수동주문'),
     ]
     
-    order_consumer = models.ForeignKey(Consumer, on_delete=models.SET_NULL, null=True, verbose_name='주문 고객')
+    order_consumer_id = models.CharField(max_length=30, verbose_name='주문 고객 아이디')
     order_channel = models.CharField(max_length=30, choices=ORDER_CHANNEL_CHOICE, default='수동주문', verbose_name='주문 채널')
     order_code = models.CharField(max_length=30, unique=True, verbose_name='주문 관리용 코드')
     order_number = models.CharField(max_length=30, blank=True, verbose_name='주문번호')
