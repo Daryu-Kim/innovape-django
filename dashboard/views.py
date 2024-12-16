@@ -4,6 +4,7 @@ import pprint
 import json
 import re
 import os
+import math
 from collections import defaultdict
 from django.shortcuts import render
 from django.views.generic import TemplateView
@@ -262,21 +263,6 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         
         products = Product.objects.all()
-
-        # API 엔드포인트
-        url = f"https://sa2.esmplus.com/item/v1/categories/sd-cats/0"
-        
-        # API 호출에 필요한 헤더
-        # headers = {
-        #     "Authorization": f"Bearer {settings.GMARKET_API_TOKEN}",
-        #     "Accept": "application/json",
-        #     "Content-Type": "application/json"
-        # }
-        
-        # API 요청
-        response = requests.get(url)
-        pprint.pprint(response.json())
-
         
         context["uploaded_products"] = products.count()
         
@@ -541,6 +527,18 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
             except Exception as e:
                 print(f"Error is : {e}")
                 return JsonResponse({'status': 'error', 'message': str(e)})
+
+        elif request.POST.get("code") == "set-manager-price":
+            print("직원가 자동 세팅 시작")
+            products = Product.objects.all()
+            for product in products:
+                 # 원래 계산식: ((판매가 - 공급가) * 0.4) + 공급가
+                raw_price = ((product.product_sell_price - product.product_supply_price) * 0.4) + product.product_supply_price
+                # 100원 단위 올림 처리
+                rounded_price = math.ceil(raw_price / 100) * 100
+                product.product_manager_price = rounded_price
+                product.save()
+            return JsonResponse({'status': 'success'})
 
 
 class DashboardProductAdd(LoginRequiredMixin, TemplateView):
