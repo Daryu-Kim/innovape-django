@@ -131,8 +131,8 @@ class Consumer(models.Model):
         ('수동주문', '수동주문'),
     ]
 
-    consumer_id = models.CharField(max_length=30, verbose_name='고객 아이디')
-    consumer_channel = models.CharField(max_length=30, choices=CHANNEL_CHOICE, default='카페24', verbose_name='고객 채널')
+    consumer_id = models.CharField(max_length=30, unique=True, verbose_name='고객 아이디')
+    consumer_channel = models.CharField(max_length=30, unique=True, choices=CHANNEL_CHOICE, default='카페24', verbose_name='고객 채널')
     consumer_grade = models.CharField(max_length=30, choices=GRADE_CHOICE, default='노바', verbose_name='고객 등급')
     consumer_name = models.CharField(max_length=50, verbose_name='고객 이름')
     consumer_phone_number = models.CharField(max_length=20, verbose_name='고객 전화번호')
@@ -155,6 +155,7 @@ class Consumer(models.Model):
     class Meta:
         verbose_name = "고객"
         verbose_name_plural = "고객"
+        unique_together = ('consumer_id', 'consumer_channel')
 
     def __str__(self):
         return self.consumer_id
