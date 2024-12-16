@@ -226,6 +226,9 @@
 	.sidebar {
 		min-width: 220px;
 	}
+	.custom-grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
 }
 
 @media (min-width: 1200px) and (max-width: 1399px) {
