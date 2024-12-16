@@ -214,6 +214,16 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
                 return JsonResponse({'status': 'success'})
             except Exception as e:
                 return JsonResponse({'status': 'error', 'message': str(e)})
+        
+        elif data.get('code') == "get_user_info":
+            user_info = {
+                'name': request.user.last_name + request.user.first_name if request.user.last_name and request.user.first_name else request.user.username,
+                'phone': request.user.phone_number if request.user.phone_number else "",
+                'address_default': request.user.address_default if request.user.address_default else "",
+                'address_detail': request.user.address_detail if request.user.address_detail else "",
+                'address_code': request.user.address_code if request.user.address_code else ""
+            }
+            return JsonResponse({'user_info': user_info})
 
 
 class DashboardProductHome(LoginRequiredMixin, TemplateView):

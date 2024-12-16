@@ -123,12 +123,57 @@
 <!-- 결제 모달 -->
 <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-          <div class="modal-header">
-              <h5 class="modal-title" id="paymentModalLabel">주문서 및 결제</h5>
+      <div class="modal-content d-flex flex-column gap-3" style="background-color: #ddd;">
+          <div class="modal-header d-flex justify-content-between align-items-center p-3 bg-light">
+              <h5 class="modal-title fw-bold" id="paymentModalLabel">주문서 및 결제</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
+              <div class="bg-light p-3">
+                <p class="fw-bold fs-5">상품 수령</p>
+                <div class="d-flex align-items-center gap-4 mt-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <input type="radio" class="form-check-input" style="width: 24px; height: 24px;" id="delivery-method-delivery" name="delivery-method" value="delivery" checked>
+                    <label for="delivery-method-delivery" class="form-check-label">택배</label>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <input type="radio" class="form-check-input" style="width: 24px; height: 24px;" id="delivery-method-store-pickup" name="delivery-method" value="store_pickup">
+                    <label for="delivery-method-store-pickup" class="form-check-label">스토어 픽업</label>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-light p-3 mt-2">
+                <p class="fw-bold fs-5">배송지</p>
+                <div class="d-flex flex-column gap-3 mt-3">
+                  <div class="d-flex gap-2">
+                    <p class="mt-3" style="width: 100px;">받는사람 <span class="fw-bold text-primary">*</span></p>
+                    <input type="text" class="form-control p-3" id="recipient-name" placeholder="이름을 입력하세요.">
+                  </div>
+                  <div class="d-flex gap-2">
+                    <p class="mt-3" style="width: 100px;">주소 <span class="fw-bold text-primary">*</span></p>
+                    <div class="d-flex flex-column gap-2 w-100">
+                      <button class="btn btn-outline-primary p-3" id="search-address">주소 검색</button>
+                      <input type="text" class="form-control p-3" id="recipient-address-code" placeholder="우편번호를 입력하세요." disabled>
+                      <input type="text" class="form-control p-3" id="recipient-address-default" placeholder="주소를 입력하세요." disabled>
+                      <input type="text" class="form-control p-3" id="recipient-address-detail" placeholder="상세주소를 입력하세요.">
+                    </div>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <p class="mt-3" style="width: 100px;">휴대폰 <span class="fw-bold text-primary">*</span></p>
+                    <div class="d-flex align-items-center gap-3 w-100">
+                      <input type="text" class="form-control p-3" id="recipient-phone">
+                      <p class="fs-5">-</p>
+                      <input type="text" class="form-control p-3" id="recipient-phone">
+                      <p class="fs-5">-</p>
+                      <input type="text" class="form-control p-3" id="recipient-phone">
+                    </div>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <p class="mt-3" style="width: 100px;">배송메시지</p>
+                    <input type="text" class="form-control p-3" id="recipient-message" placeholder="배송 메시지를 입력하세요.">
+                  </div>
+                </div>
+              </div>
               <div id="cart-items"></div> <!-- 장바구니 내용 -->
               <hr>
               <h6>수취인 정보</h6>
@@ -146,9 +191,9 @@
               <h6>결제 수단</h6>
               <p>결제 수단: 무통장입금</p>
           </div>
-          <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
-              <button type="button" class="btn btn-primary" id="confirm-order">주문하기</button>
+          <div class="modal-footer bg-light p-3 d-flex align-items-center gap-2">
+              <button type="button" class="btn btn-secondary pt-2 pb-2 ps-3 pe-3" data-bs-dismiss="modal">취소</button>
+              <button type="button" class="btn btn-primary pt-2 pb-2 ps-3 pe-3" id="confirm-order">주문하기</button>
           </div>
       </div>
   </div>
@@ -156,6 +201,127 @@
   <script>
     $(document).ready(function() {
       let currentPage = 1;
+      $(document).on('click', '#checkoutButton', async function() {
+        try {
+            const cartItems = await getCartItems(); // 장바구니에서 상품 정보를 가져오는 함수
+            const userInfo = await getUserInfo(); // 사용자 정보를 비동기적으로 가져옴
+            console.log('User Info:', userInfo);  // 디버깅용 로그 추가
+
+            if (!userInfo || !userInfo.name) {
+                alert('사용자 정보를 불러오는 데 실패했습니다.');
+                return;  // 사용자 정보가 없으면 함수 종료
+            }
+
+            // 장바구니 내용 표시
+            const $cartItemsContainer = $('#cart-items');
+            $cartItemsContainer.empty(); // 기존 내용 비우기
+            $.each(cartItems, function(index, item) {
+                $cartItemsContainer.append(`
+                    <div>
+                        <p>${item.product_name} - ${item.quantity}개</p>
+                    </div>
+                `);
+            });
+
+            // 사용자 정보 표시
+            $('#recipient-name').text(`이름: ${userInfo.name}`);
+            $('#recipient-phone').text(`휴대폰: ${userInfo.phone}`);
+            $('#recipient-address').text(`주소: ${userInfo.address}`);
+
+            // 배송비 계산
+            updateShippingFee();
+
+            // 모달 표시
+            $('#paymentModal').modal('show');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('사용자 정보를 불러오는 데 문제가 발생했습니다!');
+        }
+      });
+
+      $(document).on('click', '#confirm-order', function() {
+        const deliveryMethod = $('#delivery-method').val();
+        const shippingFee = deliveryMethod === 'delivery' ? 3000 : 0;
+    
+        // 주문 정보 수집
+        const orderData = {
+            items: getCartItems(),
+            user: getUserInfo(),
+            deliveryMethod: deliveryMethod,
+            shippingFee: shippingFee,
+        };
+    
+        // AJAX 요청으로 주문 처리
+        $.ajax({
+            url: '/order/submit/',  // 주문 처리 URL
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(orderData),
+            success: function(response) {
+                // 주문 성공 처리
+                alert('주문이 완료되었습니다!');
+                $('#paymentModal').modal('hide');  // 모달 닫기
+            },
+            error: function(xhr, status, error) {
+                // 주문 실패 처리
+                alert('주문 처리 중 오류가 발생했습니다.');
+            }
+        });
+      });
+
+      function getCartItems() {
+        return new Promise((resolve, reject) => {
+          $.ajax({
+            url: '{% url "dashboard_shop_home" %}',
+            type: 'POST',
+            data: JSON.stringify({ code: "get_cart_items" }),
+            contentType: 'application/json',
+            headers: {
+              'X-CSRFToken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+              resolve(response.items);
+            },
+            error: function(xhr, status, error) {
+              console.error('Error loading cart items:', error);
+              reject(error);
+            }
+          });
+        });
+      }
+
+      function getUserInfo() {
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: '{% url "dashboard_shop_home" %}',
+                type: 'POST',
+                data: JSON.stringify({ code: "get_user_info" }),
+                contentType: 'application/json',
+                headers: {
+                  'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    resolve(response.user_info);  // 성공 시 사용자 정보 반환
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching user info:', error);
+                    reject(error);  // 실패 시 오류 반환
+                }
+            });
+        });
+      }
+      
+      // 배송비 업데이트 함수
+      function updateShippingFee() {
+          const deliveryMethod = $('#delivery-method').val();
+          const shippingFee = deliveryMethod === 'delivery' ? 3000 : 0; // 택배면 3000원, 스토어 픽업이면 무료
+          $('#shipping-fee').text(`배송비: ${shippingFee.toLocaleString()}원`);
+      }
+      
+      // 수령 방법 변경 시 배송비 업데이트
+      $(document).on('change', '#delivery-method', function() {
+          updateShippingFee();
+      });
       // 탭 메뉴 클릭 이벤트
       $('.nav-link').on('click', function() {
         currentPage = 1;
