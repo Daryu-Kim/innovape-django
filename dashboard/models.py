@@ -131,7 +131,7 @@ class Consumer(models.Model):
         ('수동주문', '수동주문'),
     ]
 
-    consumer_id = models.CharField(max_length=30, unique=True, verbose_name='고객 아이디')
+    consumer_id = models.CharField(max_length=30, verbose_name='고객 아이디')
     consumer_channel = models.CharField(max_length=30, choices=CHANNEL_CHOICE, default='카페24', verbose_name='고객 채널')
     consumer_grade = models.CharField(max_length=30, choices=GRADE_CHOICE, default='노바', verbose_name='고객 등급')
     consumer_name = models.CharField(max_length=50, verbose_name='고객 이름')
