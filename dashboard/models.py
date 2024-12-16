@@ -227,8 +227,8 @@ class Order(models.Model):
     order_code = models.CharField(max_length=30, unique=True, verbose_name='주문 관리용 코드')
     order_number = models.CharField(max_length=30, blank=True, verbose_name='주문번호')
     order_product_order_number = models.CharField(max_length=30, blank=True, verbose_name='상품주문번호')
-    order_product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, verbose_name='주문 상품')
-    order_product_option = models.ForeignKey(ProductOptions, on_delete=models.SET_NULL, null=True, verbose_name='주문 상품 옵션')
+    order_product_code = models.CharField(max_length=30, blank=True, verbose_name='상품코드')
+    order_product_option_code = models.CharField(max_length=30, blank=True, verbose_name='상품옵션코드')
     order_quantity = models.PositiveIntegerField(default=1, verbose_name='주문 수량')
     order_price = models.IntegerField(default=0, verbose_name='주문 가격')
     order_delivery_method = models.CharField(max_length=30, choices=ORDER_DELIVERY_METHOD_CHOICE, default='롯데택배', verbose_name='주문 배송방법')
@@ -266,7 +266,7 @@ class Settle(models.Model):
         ('정산취소', '정산취소'),
     ]
 
-    settle_order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name='정산 주문')
+    settle_order_code = models.CharField(max_length=30, verbose_name='정산 주문 관리용 코드')
     settle_amount = models.IntegerField(default=0, verbose_name='정산 금액')
     settle_status = models.CharField(max_length=30, choices=SETTLE_STATUS_CHOICE, default='정산대기', verbose_name='정산 상태')
     settle_expected_datetime = models.DateTimeField(blank=True, null=True, verbose_name='정산 예상일시')

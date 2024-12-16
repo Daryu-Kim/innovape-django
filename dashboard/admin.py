@@ -51,16 +51,16 @@ admin.site.register(CartItem, CartItemAdmin)
 
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('order_code', 'order_consumer_id', 'order_channel', 'order_status', 'order_payment_method', 'order_payment_amount', 'order_created_datetime', 'order_payment_completed_datetime', 'order_delivery_started_datetime', 'order_delivery_completed_datetime',)
-    search_fields = ('order_code', 'order_number', 'order_product_number', 'order_consumer_id',)
+    search_fields = ('order_code', 'order_number', 'order_product_code', 'order_product_option_code', 'order_consumer_id',)
     list_filter = ('order_consumer_id', 'order_channel', 'order_status',)
 
 admin.site.register(Order, OrderAdmin)
 
 
 class SettleAdmin(admin.ModelAdmin):
-    list_display = ('settle_order', 'settle_amount', 'settle_status', 'settle_expected_datetime', 'settle_completed_datetime', 'settle_created_datetime', 'settle_modified_datetime',)
-    search_fields = ('settle_order',)
-    list_filter = ('settle_order',)
+    list_display = ('settle_order_code', 'settle_amount', 'settle_status', 'settle_expected_datetime', 'settle_completed_datetime', 'settle_created_datetime', 'settle_modified_datetime',)
+    search_fields = ('settle_order_code',)
+    list_filter = ('settle_order_code',)
 
 admin.site.register(Settle, SettleAdmin)
 
