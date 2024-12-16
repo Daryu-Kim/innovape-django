@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Product, ProductOptions, Consumer, CartItem
+from .models import Category, Product, ProductOptions, Consumer, CartItem, Order, Settle
 
 # Register your models here.
 class CategoryAdmin(admin.ModelAdmin):
@@ -47,3 +47,20 @@ class CartItemAdmin(admin.ModelAdmin):
     list_filter = ('member_id', 'product_code', 'product_option_code',)
 
 admin.site.register(CartItem, CartItemAdmin)
+
+
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('order_code', 'order_consumer', 'order_channel', 'order_status', 'order_payment_method', 'order_payment_amount', 'order_created_datetime', 'order_payment_completed_datetime', 'order_delivery_started_datetime', 'order_delivery_completed_datetime',)
+    search_fields = ('order_code', 'order_number', 'order_product_number', 'order_consumer',)
+    list_filter = ('order_consumer',)
+
+admin.site.register(Order, OrderAdmin)
+
+
+class SettleAdmin(admin.ModelAdmin):
+    list_display = ('settle_order', 'settle_amount', 'settle_status', 'settle_expected_datetime', 'settle_completed_datetime', 'settle_created_datetime', 'settle_modified_datetime',)
+    search_fields = ('settle_order',)
+    list_filter = ('settle_order',)
+
+admin.site.register(Settle, SettleAdmin)
+

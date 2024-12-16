@@ -196,6 +196,30 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
 
                 return JsonResponse({'items': items})
             return JsonResponse({'items': []})
+            
+        elif data.get('code') == "get_order_cart_items":
+            if request.user.is_authenticated:
+                cart_items = CartItem.objects.filter(member_id=request.user.username)
+                items = []
+
+                # 상품을 옵션별로 그룹화
+                for item in cart_items:
+                    product = Product.objects.get(product_code=item.product_code)
+                    product_option = ProductOptions.objects.get(product_option_code=item.product_option_code)
+                    items.append({
+                        'product_name': product.product_name,
+                        'product_code': product.product_code,
+                        'product_thumbnail_image': product.product_thumbnail_image.url,
+                        'option_name': product_option.product_option_name,
+                        'option_code': product_option.product_option_code,
+                        'quantity': item.quantity,
+                        'total_price': item.subtotal
+                    })
+
+                pprint.pprint(items)
+
+                return JsonResponse({'items': items})
+            return JsonResponse({'items': []})
         
         elif data.get('code') == "remove_cart_item":
             member_id = request.user.username
@@ -224,6 +248,10 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
                 'address_code': request.user.address_code if request.user.address_code else ""
             }
             return JsonResponse({'user_info': user_info})
+
+        elif data.get('code') == "confirm_order":
+            pprint.pprint(data.get('order_data'))
+            return JsonResponse({'status': 'success'})
 
 
 class DashboardProductHome(LoginRequiredMixin, TemplateView):
