@@ -1,191 +1,118 @@
 {% extends 'logged_base.html' %}
 {% load static %}
-{% block title %}상품 대시보드{% endblock %}
+{% load humanize %}
+{% block title %}주문 대시보드{% endblock %}
 {% block extrahead %}
 <link rel="stylesheet" href="{% static 'css/logged_base.css' %}" />
 <link rel="stylesheet" href="{% static 'css/dashboard/home.css' %}" />
 {% endblock %}
 {% block main_content %}
 <div class="row gap-3">
-	<div class="card p-3 rounded shadow border-info border-2 col-12 col-md-6 col-lg-4" style="background-color: #fff;">
+	<p class="fw-bold fs-2">주문 대시보드</p>
+	<div class="card p-3 rounded shadow border-info border-2 w-100" style="background-color: #fff;">
 		<p class="fw-bold fs-4">
-			주문관리 정보
+			현재 주문 현황
 		</p>
+		<!-- 상품 현황 부분 추가 필요. -->
 		<hr class="mt-3 mb-3" />
-		<div class="row">
-			<div class="d-flex flex-column align-items-center col">
-				<img id="access-naver" src="https://www.naver.com/favicon.ico?1" style="width: 24px; height: 24px;" />
-				<p class="mt-1 shop-name">
-					스마트스토어
-				</p>
-				<span class="fw-bold" id="access-naver-active" style="font-size: 12px;"></span>
+		<div class="row gap-2">
+			<div class="col p-3 card shadow">
+				<p>입금대기</p>
+				<p><a href="{% url 'dashboard_product_list' %}" class="me-1 fw-bold fs-5 text-decoration-underline text-success">{{ deposit_waiting|intcomma }}</a>개</p>
 			</div>
-			<div class="d-flex flex-column align-items-center col">
-				<img id="access-interpark" src="https://qi-o.qoo10cdn.com/shop_favicon.ico"
-					style="width: 24px; height: 24px;" />
-				<p class="mt-1 shop-name">
-					인터파크
-				</p>
-				<span class="fw-bold" id="access-interpark-active" style="font-size: 12px;"></span>
+			<div class="col card p-3 shadow">
+				<p>발주대기</p>
+				<p><a href="{% url 'dashboard_product_inventory' %}" class="me-1 fw-bold fs-5 text-primary text-decoration-underline">{{ order_waiting|intcomma }}</a>개</p>
 			</div>
-			<div class="d-flex flex-column align-items-center col">
-				<img id="access-coupang" src="https://image9.coupangcdn.com/image/coupang/favicon/v2/favicon.ico"
-					style="width: 24px; height: 24px;" />
-				<p class="mt-1 shop-name">
-					쿠팡
-				</p>
-				<span class="fw-bold" id="access-coupang-active" style="font-size: 12px;"></span>
+			<div class="col card p-3 shadow">
+				<p>발송대기</p>
+				<p><a href="{% url 'dashboard_product_outofstock' %}" class="me-1 fw-bold fs-5 text-primary text-decoration-underline">{{ package_waiting|intcomma }}</a>개</p>
 			</div>
-			<div class="d-flex flex-column align-items-center col">
-				<img id="access-sixshop" src="https://static.sixshop.com/resources/images/common/favicon.ico"
-					style="width: 24px; height: 24px;" />
-				<p class="mt-1 shop-name">
-					식스샵
-				</p>
-				<span class="fw-bold" id="access-sixshop-active" style="font-size: 12px;"></span>
+			<div class="col card p-3 shadow">
+				<p>취소요청</p>
+				<p><a href="{% url 'dashboard_product_outofstock' %}" class="me-1 fw-bold fs-5 text-danger text-decoration-underline">{{ cancel_request|intcomma }}</a>개</p>
 			</div>
-			<div class="d-flex flex-column align-items-center col">
-				<img id="access-cafe24" src="https://img.echosting.cafe24.com/imgcafe24com/favicon/cafe24.svg"
-					style="width: 24px; height: 24px;" />
-				<p class="mt-1 shop-name">
-					카페24
-				</p>
-				<span class="fw-bold" id="access-cafe24-active" style="font-size: 12px;"></span>
+			<div class="col card p-3 shadow">
+				<p>환불요청</p>
+				<p><a href="{% url 'dashboard_product_outofstock' %}" class="me-1 fw-bold fs-5 text-danger text-decoration-underline">{{ refund_request|intcomma }}</a>개</p>
+			</div>
+			<div class="col card p-3 shadow">
+				<p>교환요청</p>
+				<p><a href="{% url 'dashboard_product_outofstock' %}" class="me-1 fw-bold fs-5 text-danger text-decoration-underline">{{ exchange_request|intcomma }}</a>개</p>
 			</div>
 		</div>
 	</div>
-	<div class="card p-3 rounded shadow border-primary border-2 col-12 col-md-6 col-lg-4" style="background-color: #fff;">
-		<p class="fw-bold fs-4">
-			신규주문
-		</p>
-		<hr class="mt-3 mb-3" />
-		<div class="row">
-			<div class="d-flex align-items-center justify-content-between">
-				<p class="fs-6">오늘출발</p>
-				<p><span class="fs-5 fw-bold text-primary">0</span> 건</p>
-			</div>
-			<div class="d-flex align-items-center justify-content-between">
-				<p class="fs-6">내일출발</p>
-				<p><span class="fs-5 fw-bold text-primary">0</span> 건</p>
-			</div>
-			<div class="d-flex align-items-center justify-content-between">
-				<p class="fs-6">일반출발</p>
-				<p><span class="fs-5 fw-bold text-primary">0</span> 건</p>
+	<div class="custom-grid mt-4 gap-3">
+		<div class="card p-3">
+			<div class="card-body">
+				<h5 class="card-title">카페24 주문 불러오기</h5>
+				<p class="card-text keep-all mt-2">카페24 주문 정보가 담긴 엑셀 파일을 불러옵니다.</p>
+				<input type="file" class="form-control p-2 mt-3" id="import-cafe24-file" accept=".csv" />
+				<button class="btn btn-primary ps-3 pe-3 pt-1 pb-1 mt-3" id="import-cafe24-btn" >불러오기</a>
 			</div>
 		</div>
-	</div>
-	<div class="card p-3 rounded shadow border-primary border-2 col-12 col-md-6 col-lg-4" style="background-color: #fff;">
-		<p class="fw-bold fs-4">
-			발송대기
-		</p>
-		<hr class="mt-3 mb-3" />
-		<div class="row">
-			<div class="d-flex align-items-center justify-content-between">
-				<p class="fs-6">송장부여</p>
-				<p><span class="fs-5 fw-bold text-primary">0</span> 건</p>
-			</div>
-			<div class="d-flex align-items-center justify-content-between">
-				<p class="fs-6">송장출력</p>
-				<p><span class="fs-5 fw-bold text-primary">0</span> 건</p>
-			</div>
-			<div class="d-flex align-items-center justify-content-between">
-				<p class="fs-6">송장번호 생성오류</p>
-				<p><span class="fs-5 fw-bold text-danger">0</span> 건</p>
+		<div class="card p-3">
+			<div class="card-body">
+				<h5 class="card-title">스마트스토어 주문 불러오기</h5>
+				<p class="card-text keep-all mt-2">스마트스토어 주문 정보를 API로 받아옵니다.</p>
+				<button class="btn btn-primary ps-3 pe-3 pt-1 pb-1 mt-3" id="import-smartstore-btn" >불러오기</a>
 			</div>
 		</div>
-	</div>
-	<div class="card p-3 rounded shadow border-success border-2 col-12 col-md-6 col-lg-4" style="background-color: #fff;">
-		<p class="fw-bold fs-4">
-			배송중
-		</p>
-		<hr class="mt-3 mb-3" />
-		<div class="row">
-			<div class="d-flex align-items-center justify-content-between">
-				<p class="fs-6">수거예정</p>
-				<p><span class="fs-5 fw-bold text-success">0</span> 건</p>
-			</div>
-			<div class="d-flex align-items-center justify-content-between">
-				<p class="fs-6">배송중</p>
-				<p><span class="fs-5 fw-bold text-success">0</span> 건</p>
-			</div>
-			<div class="d-flex align-items-center justify-content-between">
-				<p class="fs-6">7일 배송완료</p>
-				<p><span class="fs-5 fw-bold text-success">0</span> 건</p>
+		<div class="card p-3">
+			<div class="card-body">
+				<h5 class="card-title">쿠팡 주문 불러오기</h5>
+				<p class="card-text keep-all mt-2">쿠팡 주문 정보가 담긴 엑셀 파일을 불러옵니다.</p>
+				<input type="file" class="form-control p-2 mt-3" id="import-coupang-file" accept=".csv" />
+				<button class="btn btn-primary ps-3 pe-3 pt-1 pb-1 mt-3" id="import-coupang-btn" >불러오기</a>
 			</div>
 		</div>
-	</div>
-	<div class="card p-3 rounded shadow border-danger border-2 col-12 col-md-6 col-lg-4" style="background-color: #fff;">
-		<p class="fw-bold fs-4">
-			클레임 요청
-		</p>
-		<hr class="mt-3 mb-3" />
-		<div class="row">
-			<div class="d-flex align-items-center justify-content-between">
-				<p class="fs-6">취소요청</p>
-				<p><span class="fs-5 fw-bold text-danger">0</span> 건</p>
+		<div class="card p-3">
+			<div class="card-body">
+				<h5 class="card-title">ESM+ 주문 불러오기</h5>
+				<p class="card-text keep-all mt-2">ESM+ 주문 정보가 담긴 엑셀 파일을 불러옵니다.</p>
+				<input type="file" class="form-control p-2 mt-3" id="import-esm-file" accept=".csv" />
+				<button class="btn btn-primary ps-3 pe-3 pt-1 pb-1 mt-3" id="import-esm-btn" >불러오기</a>
 			</div>
-			<div class="d-flex align-items-center justify-content-between">
-				<p class="fs-6">환불요청</p>
-				<p><span class="fs-5 fw-bold text-danger">0</span> 건</p>
+		</div>
+		<div class="card p-3">
+			<div class="card-body">
+				<h5 class="card-title">11번가 주문 불러오기</h5>
+				<p class="card-text keep-all mt-2">11번가 주문 정보가 담긴 엑셀 파일을 불러옵니다.</p>
+				<input type="file" class="form-control p-2 mt-3" id="import-11st-file" accept=".csv" />
+				<button class="btn btn-primary ps-3 pe-3 pt-1 pb-1 mt-3" id="import-11st-btn" >불러오기</a>
 			</div>
-			<div class="d-flex align-items-center justify-content-between">
-				<p class="fs-6">교환요청</p>
-				<p><span class="fs-5 fw-bold text-danger">0</span> 건</p>
-			</div>
-			<div class="d-flex align-items-center justify-content-between">
-				<p class="fs-6">재발송요청</p>
-				<p><span class="fs-5 fw-bold text-danger">0</span> 건</p>
+		</div>
+		<div class="card p-3">
+			<div class="card-body">
+				<h5 class="card-title">인터파크 주문 불러오기</h5>
+				<p class="card-text keep-all mt-2">인터파크 주문 정보가 담긴 엑셀 파일을 불러옵니다.</p>
+				<input type="file" class="form-control p-2 mt-3" id="import-interpark-file" accept=".csv" />
+				<button class="btn btn-primary ps-3 pe-3 pt-1 pb-1 mt-3" id="import-interpark-btn" >불러오기</a>
 			</div>
 		</div>
 	</div>
 </div>
-
 <script>
-	$(document).ready(function () {
-		function handleResponse(selector, response) {
-			if (response.status === "success") {
-				$(selector).css({
-					'filter': 'none',
-					'cursor': 'pointer' // 클릭 가능한 상태로 커서 변경
-				});
-				if (response.data === null) {
-					$(selector + "-active").text('수동 연결').addClass('text-warning');
-				} else {
-					$(selector + "-active").text('인증 완료').addClass('text-success');
-				}
-			} else {
-				$(selector).css('filter', 'grayscale(100%)');
-				$(selector + "-active").text('인증 실패').addClass('text-danger');
-			}
-		}
-
-		function ajaxRequest(url, selector, redirectUrl) {
+	$(document).ready(function() {
+		$('#import-smartstore-btn').click(function() {
+			alert('스마트스토어 주문을 불러옵니다.');
 			$.ajax({
-				url: url,
-				success: function (response) {
-					console.log(response);
-					handleResponse(selector, response);
-
-					// 인증이 완료된 경우 클릭 이벤트 추가
-					if (response.status === "success") {
-						$(selector).off('click').on('click', function () {
-							window.open(redirectUrl, '_blank');
-						});
-					}
+				url: '{% url "dashboard_order_home" %}',
+				type: 'POST',
+				headers: {
+					'X-CSRFToken': '{{ csrf_token }}'
 				},
-				error: function () {
-					$(selector).css('filter', 'grayscale(100%)');
-					$(selector + "-active").text('인증 실패').addClass('text-danger');
+				data: JSON.stringify({
+					'code': 'import_smartstore_order'
+				}),
+				success: function(response) {
+					alert("스마트스토어 주문을 불러왔습니다!");
+				},
+				error: function(response) {
+					alert("스마트스토어 주문을 불러오는데 실패했습니다.");
 				}
 			});
-		}
-
-		// 각 플랫폼에 대한 AJAX 요청
-		ajaxRequest('{% url "get_access_naver_info" %}', '#access-naver', 'https://sell.smartstore.naver.com/');
-		ajaxRequest('{% url "get_access_coupang_info" %}', '#access-coupang', 'https://xauth.coupang.com/auth/realms/seller/protocol/openid-connect/auth?response_type=code&client_id=wing&redirect_uri=https%3A%2F%2Fwing.coupang.com%2Fsso%2Flogin?returnUrl%3Dhttps%253A%252F%252Fwing.coupang.com%252F&state=19e22493-c03b-4e56-bfb4-7d0be9334a1a&login=true&ui_locales=ko-KR&scope=openid');
-		ajaxRequest('{% url "get_access_interpark_info" %}', '#access-interpark', 'https://seller.interpark.com/login');
-		ajaxRequest('{% url "get_access_sixshop_info" %}', '#access-sixshop', 'https://www.sixshop.com/member/login');
-		ajaxRequest('{% url "get_access_cafe24_info" %}', '#access-cafe24', 'https://www.cafe24.com/member/login.html');
+		});
 	});
 </script>
 {% endblock %}

@@ -10,7 +10,8 @@ from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
-from .models import Category, Product, ProductOptions, Consumer, CartItem
+from .models import Category, Product, ProductOptions, Consumer, CartItem, Order
+from .order import generate_manual_order_number, generate_manual_order_product_number
 from django.http import JsonResponse
 from bs4 import BeautifulSoup
 from django.utils import timezone
@@ -37,7 +38,8 @@ from django.http import HttpResponse
 import shutil
 import traceback
 from django.core.cache import cache
-
+from .order import generate_order_number
+from .smartstore import get_smartstore_orders
 
 # Create your views here.
 class DashboardHomeView(LoginRequiredMixin, TemplateView):
@@ -65,6 +67,37 @@ class DashboardOrderHome(LoginRequiredMixin, TemplateView):
     template_name = "dashboard/order/order_home.html"
     login_url = reverse_lazy("account_login")
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        deposit_waiting = Order.objects.filter(order_status="입금대기").count()
+        order_waiting = Order.objects.filter(order_status="상품발주대기").count()
+        package_waiting = Order.objects.filter(order_status="상품포장중").count()
+        cancel_request = Order.objects.filter(order_status="취소요청").count()
+        refund_request = Order.objects.filter(order_status="환불요청").count()
+        exchange_request = Order.objects.filter(order_status="교환요청").count()
+        
+        context["deposit_waiting"] = deposit_waiting
+        context["order_waiting"] = order_waiting
+        context["package_waiting"] = package_waiting
+        context["cancel_request"] = cancel_request
+        context["refund_request"] = refund_request
+        context["exchange_request"] = exchange_request
+
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        if data.get('code') == "import_smartstore_order":
+            try:
+                is_success = get_smartstore_orders()
+                if is_success:
+                    return JsonResponse({'status': 'success'})
+                else:
+                    return JsonResponse({'status': 'error', 'message': '스마트스토어 주문을 불러오는데 실패했습니다.'})
+            except Exception as e:
+                return JsonResponse({'status': 'error', 'message': str(e)})
+        return JsonResponse({'status': 'error'})
     
 class DashboardShopHome(LoginRequiredMixin, TemplateView):
     template_name = "dashboard/shop/shop_home.html"
@@ -252,6 +285,50 @@ class DashboardShopHome(LoginRequiredMixin, TemplateView):
 
         elif data.get('code') == "confirm_order":
             pprint.pprint(data.get('order_data'))
+            cart_items = CartItem.objects.filter(member_id=request.user.username)
+            
+            order_delivery_method = "롯데택배" if data.get('order_data').get('deliveryMethod') == "delivery" else "스토어픽업"  
+            order_delivery_fee = 0 if order_delivery_method == "스토어픽업" else 3000
+            order_deposit_bank_info = data.get('order_data').get('depositBank')
+            order_deposit_name = data.get('order_data').get('depositName')
+            
+            try:
+                for cart_item in cart_items:
+                    user_name = request.user.username
+                    order_code = generate_order_number()
+                    order_number = generate_manual_order_number()
+                    order_product_order_number = generate_manual_order_product_number()
+                    
+                    Order.objects.create(
+                        order_consumer_id=user_name,
+                        order_channel="수동주문",
+                        order_code=order_code,
+                        order_number=order_number,
+                        order_product_order_number=order_product_order_number,
+                        order_product_code = cart_item.product_code,
+                        order_product_option_code=cart_item.product_option_code,
+                        order_quantity=cart_item.quantity,
+                        order_price=cart_item.subtotal,
+                        order_delivery_method=order_delivery_method,
+                        order_delivery_fee=order_delivery_fee,
+                        order_status="입금대기",
+                        order_deposit_bank_info=order_deposit_bank_info,
+                        order_deposit_name=order_deposit_name,
+                        order_payment_method="무통장입금",
+                        order_payment_amount=cart_item.subtotal,
+                        order_created_datetime=datetime.now(),
+                        order_modified_datetime=datetime.now(),
+                        order_receiver_name=data.get('order_data').get('recipientName'),
+                        order_receiver_phone_number=data.get('order_data').get('recipientPhone'),
+                        order_receiver_address=data.get('order_data').get('recipientAddressDefault'),
+                        order_receiver_detail_address=data.get('order_data').get('recipientAddressDetail'),
+                        order_receiver_message=data.get('order_data').get('recipientMessage')
+                    )
+                    cart_item.delete()
+                    print(f'주문 생성 완료: {order_code}')
+            except Exception as e:
+                print(f'주문 생성 실패: {e}')
+                return JsonResponse({'status': 'error', 'message': str(e)})
             return JsonResponse({'status': 'success'})
 
 

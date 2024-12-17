@@ -139,9 +139,9 @@ class Consumer(models.Model):
     consumer_email = models.CharField(max_length=50, verbose_name='고객 이메일')
     consumer_verify_info = models.CharField(max_length=100, blank=True, verbose_name='고객 인증정보') # 이름/주민번호앞자리/주민번호뒷자리/발급일자
     consumer_verify_dt = models.DateField(blank=True, null=True, verbose_name='고객 인증일자')
-    consumer_birth = models.DateField(verbose_name='고객 생년월일')
+    consumer_birth = models.DateField(blank=True, null=True, verbose_name='고객 생년월일')
     consumer_area = models.CharField(max_length=10, choices=AREA_CHOICE, blank=True, verbose_name='고객 거주지역')
-    consumer_base_address = models.CharField(max_length=200, verbose_name='고객 기본주소')
+    consumer_base_address = models.CharField(max_length=200, blank=True, verbose_name='고객 기본주소')
     consumer_detail_address = models.CharField(max_length=100, blank=True, verbose_name='고객 상세주소')
     consumer_refund_account = models.CharField(max_length=50, blank=True, verbose_name='고객 환불계좌정보')
     consumer_total_visits = models.IntegerField(default=0, verbose_name='고객 총 방문횟수')
@@ -187,6 +187,7 @@ class CartItem(models.Model):
 class Order(models.Model):
     ORDER_STATUS_CHOICE = [
         ('입금대기', '입금대기'),
+        ('발주대기', '발주대기'),
         ('상품발주대기', '상품발주대기'),
         ('상품발주완료', '상품발주완료'),
         ('상품검수중', '상품검수중'),
