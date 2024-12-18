@@ -18,8 +18,6 @@ class Category(models.Model):
 
 class Product(models.Model):
     product_cafe24_code = models.CharField(max_length=20, blank=True, verbose_name='카페24 상품코드')
-    product_smartstore_code = models.CharField(max_length=20, blank=True, verbose_name='스마트스토어 상품코드')
-    product_smartstore_channel_code = models.CharField(max_length=20, blank=True, verbose_name='스마트스토어 상품채널코드')
     product_coupang_code = models.CharField(max_length=20, blank=True, verbose_name='쿠팡 상품코드')
     product_esm_plus_code = models.CharField(max_length=50, blank=True, verbose_name='ESM+ 상품코드')
     product_esm_plus_gmarket_code = models.CharField(max_length=50, blank=True, verbose_name='ESM+ 지마켓 상품코드')
@@ -33,7 +31,6 @@ class Product(models.Model):
     product_origin_detail = ArrayField(models.CharField(max_length=10000), default=list, blank=True, verbose_name='상품 원본 상세페이지')
     product_option = models.CharField(max_length=1000, blank=True, verbose_name='상품 옵션')
     product_keywords = models.CharField(max_length=1000, blank=True, verbose_name='상품 검색어')
-    product_smartstore_keywords = models.CharField(max_length=1000, blank=True, verbose_name='스마트스토어 검색어')
     product_coupang_keywords = models.CharField(max_length=1000, blank=True, verbose_name='쿠팡 검색어')
     product_consumer_price = models.PositiveIntegerField(default=0, verbose_name='상품 소비자가')
     product_sell_price = models.PositiveIntegerField(default=0, verbose_name='상품 판매가')
@@ -51,7 +48,6 @@ class Product(models.Model):
     product_created_datetime = models.DateTimeField(null=True, blank=True, verbose_name='상품 게시일자')
     product_modified_datetime = models.DateTimeField(null=True, blank=True, verbose_name='상품 수정일자')
     product_cafe24_is_prohibitted = models.BooleanField(default=False, verbose_name='카페24 제한 여부')
-    product_smartstore_is_prohibitted = models.BooleanField(default=False, verbose_name='스마트스토어 제한 여부')
     product_coupang_is_prohibitted = models.BooleanField(default=False, verbose_name='쿠팡 제한 여부')
     product_esm_plus_is_prohibitted = models.BooleanField(default=False, verbose_name='ESM+ 제한 여부')
     product_esm_plus_gmarket_is_prohibitted = models.BooleanField(default=False, verbose_name='ESM+ 지마켓 제한 여부')
@@ -69,7 +65,6 @@ class Product(models.Model):
 class ProductOptions(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='상품')
     product_option_code = models.CharField(max_length=20, blank=True, verbose_name='상품 옵션 코드', unique=True)
-    product_option_smartstore_code = models.CharField(max_length=20, blank=True, verbose_name='상품 옵션 스마트스토어 코드')
     product_option_cafe24_code = models.CharField(max_length=20, blank=True, verbose_name='상품 옵션 카페24 코드')
     product_option_stock = models.IntegerField(default=0, verbose_name='상품 재고수량')
     product_option_title = models.CharField(max_length=50, blank=True, verbose_name='상품 옵션제목')
@@ -122,7 +117,6 @@ class Consumer(models.Model):
     ]
 
     CHANNEL_CHOICE = [
-        ('스마트스토어', '스마트스토어'),
         ('카페24', '카페24'),
         ('쿠팡', '쿠팡'),
         ('ESM+', 'ESM+'),
@@ -187,7 +181,6 @@ class CartItem(models.Model):
 class Order(models.Model):
     ORDER_STATUS_CHOICE = [
         ('입금대기', '입금대기'),
-        ('발주대기', '발주대기'),
         ('상품발주대기', '상품발주대기'),
         ('상품발주완료', '상품발주완료'),
         ('상품검수중', '상품검수중'),
@@ -214,7 +207,6 @@ class Order(models.Model):
     ]
 
     ORDER_CHANNEL_CHOICE = [
-        ('스마트스토어', '스마트스토어'),
         ('카페24', '카페24'),
         ('쿠팡', '쿠팡'),
         ('ESM+', 'ESM+'),

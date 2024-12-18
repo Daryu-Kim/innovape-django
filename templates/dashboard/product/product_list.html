@@ -20,8 +20,6 @@
                                 <option value="name">상품명</option>
                                 <option value="manage_name">상품명 (관리용)</option>
                                 <option value="cafe24_code">카페24 상품코드</option>
-                                <option value="smartstore_code">스마트스토어 상품코드</option>
-                                <option value="smartstore_channel_code">스마트스토어 채널 상품코드</option>
                                 <option value="coupang_code">쿠팡 상품코드</option>
                                 <option value="code">상품 분류코드</option>
                                 <option value="author">상품 게시자</option>
@@ -91,12 +89,10 @@
     </div>
     <div class="d-flex justify-content-start gap-2">
         <a href="{% url 'dashboard_product_add' %}" class="btn btn-success ps-3 pe-3 pt-2 pb-2">상품 등록</a>
-        <button id="product-smartstore-first-upload-btn" class="btn btn-primary pt-2 pb-2 ps-3 pe-3">스마트스토어 미업로드 상품 업로드</button>
         <button id="product-coupang-first-upload-btn" class="btn btn-primary pt-2 pb-2 ps-3 pe-3">쿠팡 미업로드 상품 업로드</button>
         <button id="product-esm-plus-first-upload-btn" class="btn btn-primary pt-2 pb-2 ps-3 pe-3">G마켓 / 옥션 미업로드 상품 업로드</button>
         <button id="product-cafe24-first-upload-btn" class="btn btn-primary pt-2 pb-2 ps-3 pe-3">카페24 미업로드 상품 업로드</button>
         <button id="product-cafe24-option-first-upload-btn" class="btn btn-primary pt-2 pb-2 ps-3 pe-3">카페24 미업로드 상품 옵션 업로드</button>
-        <button id="product-smartstore-all-upload-update-btn" class="btn btn-primary pt-2 pb-2 ps-3 pe-3">전체 상품 업로드 / 업데이트</button>
     </div>
     <div class="table-wrapper">
         <table class="table table-hover" id="product-table">
@@ -597,135 +593,6 @@
                 a.click();
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
-                
-                // 3초 후 프로그레스 바 숨김
-                setTimeout(function() {
-                    $("#upload-progress-bar").hide();
-                    $("#upload-progress")
-                        .removeClass('bg-success')
-                        .addClass('progress-bar-animated');
-                }, 3000);
-            },
-            error: function(xhr, status, error) {
-                // 에러 시 처리
-                $("#upload-progress")
-                    .removeClass('progress-bar-animated')
-                    .addClass('bg-danger')
-                    .width('100%')
-                    .text('업로드 실패');
-                
-                // 3초 후 프로그레스 바 숨김
-                setTimeout(function() {
-                    $("#upload-progress-bar").hide();
-                    $("#upload-progress")
-                        .removeClass('bg-danger')
-                        .addClass('progress-bar-animated');
-                }, 3000);
-            }
-        });
-    });
-
-    $("#product-smartstore-first-upload-btn").click(function (e) {
-        e.preventDefault();
-        
-        // 프로그레스 바 초기화 및 표시
-        $("#upload-progress").width('0%').text('0%');
-        $("#upload-progress-bar").show();
-        alert("스마트스토어 미업로드 상품 업로드를 시작합니다.");
-        
-        $.ajax({
-            url: "{% url 'dashboard_product_list' %}",
-            method: "POST",
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            data: {
-                code: "product_smartstore_first_upload"
-            },
-            xhr: function() {
-                var xhr = new window.XMLHttpRequest();
-                xhr.upload.addEventListener('progress', function(evt) {
-                    if (evt.lengthComputable) {
-                        var percentComplete = evt.loaded / evt.total;
-                        var percentValue = Math.round(percentComplete * 100) + '%';
-                        $("#upload-progress")
-                            .width(percentValue)
-                            .text(percentValue);
-                    }
-                }, false);
-                return xhr;
-            },
-            success: function (response) {
-                console.log(response);
-                // 성공 시 처리
-                $("#upload-progress")
-                    .removeClass('progress-bar-animated')
-                    .addClass('bg-success')
-                    .text('업로드 완료!');
-                
-                // 3초 후 프로그레스 바 숨김
-                setTimeout(function() {
-                    $("#upload-progress-bar").hide();
-                    $("#upload-progress")
-                        .removeClass('bg-success')
-                        .addClass('progress-bar-animated');
-                }, 3000);
-            },
-            error: function(xhr, status, error) {
-                // 에러 시 처리
-                $("#upload-progress")
-                    .removeClass('progress-bar-animated')
-                    .addClass('bg-danger')
-                    .width('100%')
-                    .text('업로드 실패');
-                
-                // 3초 후 프로그레스 바 숨김
-                setTimeout(function() {
-                    $("#upload-progress-bar").hide();
-                    $("#upload-progress")
-                        .removeClass('bg-danger')
-                        .addClass('progress-bar-animated');
-                }, 3000);
-            }
-        });
-    });
-
-    $("#product-smartstore-all-upload-update-btn").click(function (e) {
-        e.preventDefault();
-        
-        // 프로그레스 바 초기화 및 표시
-        $("#upload-progress").width('0%').text('0%');
-        $("#upload-progress-bar").show();
-        
-        $.ajax({
-            url: "{% url 'dashboard_product_list' %}",
-            method: "POST",
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            data: {
-                code: "product_upload"
-            },
-            xhr: function() {
-                var xhr = new window.XMLHttpRequest();
-                xhr.upload.addEventListener('progress', function(evt) {
-                    if (evt.lengthComputable) {
-                        var percentComplete = evt.loaded / evt.total;
-                        var percentValue = Math.round(percentComplete * 100) + '%';
-                        $("#upload-progress")
-                            .width(percentValue)
-                            .text(percentValue);
-                    }
-                }, false);
-                return xhr;
-            },
-            success: function (response) {
-                console.log(response);
-                // 성공 시 처리
-                $("#upload-progress")
-                    .removeClass('progress-bar-animated')
-                    .addClass('bg-success')
-                    .text('업로드 완료!');
                 
                 // 3초 후 프로그레스 바 숨김
                 setTimeout(function() {

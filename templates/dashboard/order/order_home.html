@@ -53,13 +53,6 @@
 		</div>
 		<div class="card p-3">
 			<div class="card-body">
-				<h5 class="card-title">스마트스토어 주문 불러오기</h5>
-				<p class="card-text keep-all mt-2">스마트스토어 주문 정보를 API로 받아옵니다.</p>
-				<button class="btn btn-primary ps-3 pe-3 pt-1 pb-1 mt-3" id="import-smartstore-btn" >불러오기</a>
-			</div>
-		</div>
-		<div class="card p-3">
-			<div class="card-body">
 				<h5 class="card-title">쿠팡 주문 불러오기</h5>
 				<p class="card-text keep-all mt-2">쿠팡 주문 정보가 담긴 엑셀 파일을 불러옵니다.</p>
 				<input type="file" class="form-control p-2 mt-3" id="import-coupang-file" accept=".csv" />
@@ -92,27 +85,4 @@
 		</div>
 	</div>
 </div>
-<script>
-	$(document).ready(function() {
-		$('#import-smartstore-btn').click(function() {
-			alert('스마트스토어 주문을 불러옵니다.');
-			$.ajax({
-				url: '{% url "dashboard_order_home" %}',
-				type: 'POST',
-				headers: {
-					'X-CSRFToken': '{{ csrf_token }}'
-				},
-				data: JSON.stringify({
-					'code': 'import_smartstore_order'
-				}),
-				success: function(response) {
-					alert("스마트스토어 주문을 불러왔습니다!");
-				},
-				error: function(response) {
-					alert("스마트스토어 주문을 불러오는데 실패했습니다.");
-				}
-			});
-		});
-	});
-</script>
 {% endblock %}

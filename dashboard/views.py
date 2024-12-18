@@ -27,7 +27,7 @@ import pandas as pd
 from django.core.files.storage import FileSystemStorage
 from django.conf import settings
 import http.client
-from innovape.views import get_access_naver_info, get_access_cafe24_info, get_access_interpark_info, get_access_sixshop_info, get_access_coupang_info, smartstore_product_upload
+from innovape.views import get_access_naver_info, get_access_cafe24_info, get_access_interpark_info, get_access_sixshop_info, get_access_coupang_info
 import time
 from .coupang import coupang_product_upload
 from .esm_plus import esm_plus_product_upload_excel
@@ -39,7 +39,6 @@ import shutil
 import traceback
 from django.core.cache import cache
 from .order import generate_order_number
-from .smartstore import get_smartstore_orders
 
 # Create your views here.
 class DashboardHomeView(LoginRequiredMixin, TemplateView):
@@ -85,19 +84,6 @@ class DashboardOrderHome(LoginRequiredMixin, TemplateView):
         context["exchange_request"] = exchange_request
 
         return context
-    
-    def post(self, request, *args, **kwargs):
-        data = json.loads(request.body)
-        if data.get('code') == "import_smartstore_order":
-            try:
-                is_success = get_smartstore_orders()
-                if is_success:
-                    return JsonResponse({'status': 'success'})
-                else:
-                    return JsonResponse({'status': 'error', 'message': '스마트스토어 주문을 불러오는데 실패했습니다.'})
-            except Exception as e:
-                return JsonResponse({'status': 'error', 'message': str(e)})
-        return JsonResponse({'status': 'error'})
     
 class DashboardShopHome(LoginRequiredMixin, TemplateView):
     template_name = "dashboard/shop/shop_home.html"
@@ -964,10 +950,6 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                 queryset = queryset.filter(product_manage_name__icontains=search_field)
             elif search_title == 'cafe24_code':
                 queryset = queryset.filter(product_cafe24_code__icontains=search_field)
-            elif search_title == 'smartstore_code':
-                queryset = queryset.filter(product_smartstore_code__icontains=search_field)
-            elif search_title == 'smartstore_channel_code':
-                queryset = queryset.filter(product_smartstore_channel_code__icontains=search_field)
             elif search_title == 'coupang_code':
                 queryset = queryset.filter(product_coupang_code__icontains=search_field)
             elif search_title == 'code':
@@ -1052,39 +1034,7 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
         return super().render_to_response(context, **response_kwargs)
     
     def post(self, request, *args, **kwargs):
-        if request.POST.get("code") == "product_upload":
-            products = Product.objects.all()
-            
-            # 스마트스토어 상품 업로드
-            for product in products:
-                # 특정 카테고리에 속한 상품만 업로드
-                UPLOAD_CATEGORY_CODES = ['43', '51', '124', '137', '138', '125']
-                if (product.product_category.filter(category_code__in=UPLOAD_CATEGORY_CODES).exists() and 
-                    not product.product_smartstore_is_prohibitted):
-                    try:
-                        smartstore_product_upload(product.product_code, product.product_smartstore_code)
-                    except Exception as e:
-                        print(f"Error uploading product {product.product_code}: {str(e)}")
-                    
-            return JsonResponse({"status": "success"})
-        elif request.POST.get("code") == "product_smartstore_first_upload":
-            products = Product.objects.filter(
-                Q(product_smartstore_code__isnull=True) | Q(product_smartstore_code=''),
-                product_smartstore_is_prohibitted=False
-            )
-            
-            # 스마트스토어 상품 업로드
-            for product in products:
-                # 특정 카테고리에 속한 상품만 업로드
-                UPLOAD_CATEGORY_CODES = ['43', '51', '124', '137', '138', '125']
-                if product.product_category.filter(category_code__in=UPLOAD_CATEGORY_CODES).exists():
-                    try:
-                        smartstore_product_upload(product.product_code, product.product_smartstore_code)
-                    except Exception as e:
-                        print(f"Error uploading product {product.product_code}: {str(e)}")
-                    
-            return JsonResponse({"status": "success"})
-        elif request.POST.get("code") == "product_coupang_first_upload":
+        if request.POST.get("code") == "product_coupang_first_upload":
             try:
                 products = Product.objects.filter(
                     Q(product_coupang_code__isnull=True) | Q(product_coupang_code=''),
