@@ -42,15 +42,15 @@
                         class="btn btn-link ms-2 tooltip-btn"
                         data-bs-toggle="tooltip"
                         data-bs-placement="bottom"
-                        title="도매사 상품 페이지에서 F12를 눌러 html 코드를 복사 / 붙여넣기하세요."
+                        title="도매사 상품 페이지 URL을 입력하세요."
                     >
                         <i class="bi bi-info-circle"></i>
                     </button>
                 </td>
                 <td>
                     <div class="input-group">
-                        <textarea id="input-html-content" class="form-control p-2" rows="5" cols="50" placeholder="공급사 상품 URL 입력" aria-label="공급사 상품 URL 입력"
-                            aria-describedby="button-addon2"></textarea>
+                        <input id="input-product-url" class="form-control p-2" placeholder="공급사 상품 URL 입력" aria-label="공급사 상품 URL 입력"
+                            aria-describedby="button-addon2"></input>
                         <button id="detail-dropdown-btn" class="btn btn-outline-secondary dropdown-toggle p-2 fs-6" type="button" data-bs-toggle="dropdown"
                             aria-expanded="false">공급사 선택 후 적용</button>
                         <ul id="dropdown" class="dropdown-menu dropdown-menu-end p-2">
@@ -774,10 +774,10 @@
         });
 
         $('.detail-convert-btn').click(function() {
-            const htmlContent = $('#input-html-content').val();
+            const productUrl = $('#input-product-url').val();
 
-            if (htmlContent.length < 1) {
-                alert("HTML 코드를 입력해주세요!");
+            if (productUrl.length < 1) {
+                alert("상품 URL을 입력해주세요!");
                 return false;
             }
 
@@ -799,7 +799,7 @@
                 data : {
                     "code" : 'parse_html',
                     "mall" : $(this).text(),
-                    "html_content" : htmlContent,
+                    "product_url" : productUrl,
                 },
                 success : function(result) {
                     console.log(result);

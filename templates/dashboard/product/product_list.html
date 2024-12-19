@@ -93,6 +93,7 @@
         <button id="product-esm-plus-first-upload-btn" class="btn btn-primary pt-2 pb-2 ps-3 pe-3">G마켓 / 옥션 미업로드 상품 업로드</button>
         <button id="product-cafe24-first-upload-btn" class="btn btn-primary pt-2 pb-2 ps-3 pe-3">카페24 미업로드 상품 업로드</button>
         <button id="product-cafe24-option-first-upload-btn" class="btn btn-primary pt-2 pb-2 ps-3 pe-3">카페24 미업로드 상품 옵션 업로드</button>
+        <button id="selenium-test-btn" class="btn btn-primary pt-2 pb-2 ps-3 pe-3">셀레니움 테스트</button>
     </div>
     <div class="table-wrapper">
         <table class="table table-hover" id="product-table">
@@ -534,6 +535,46 @@
                         .removeClass('bg-danger')
                         .addClass('progress-bar-animated');
                 }, 3000);
+            }
+        });
+    });
+
+    $("#selenium-test-btn").click(function (e) {
+        e.preventDefault();
+        
+        // 프로그레스 바 초기화 및 표시
+        $("#upload-progress").width('0%').text('0%');
+        $("#upload-progress-bar").show();
+        alert("쿠팡 미업로드 상품 업로드를 시작합니다.");
+
+        $.ajax({
+            url: "{% url 'dashboard_product_list' %}",
+            method: "POST",
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            xhr: function() {
+                var xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener('progress', function(evt) {
+                    if (evt.lengthComputable) {
+                        var percentComplete = evt.loaded / evt.total;
+                        var percentValue = Math.round(percentComplete * 100) + '%';
+                        $("#upload-progress")
+                            .width(percentValue)
+                            .text(percentValue);
+                    }
+                }, false);
+                return xhr;
+            },
+            data: {
+                code: "selenium_test"
+            },
+            success: function (response) {
+                alert("테스트 완료!");
+                console.log(response);
+            },
+            error: function(xhr, status, error) {
+                alert("테스트 실패!");
             }
         });
     });
