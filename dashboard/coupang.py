@@ -38,7 +38,7 @@ def coupang_product_upload(product_codes):
         product = Product.objects.get(product_code=product_code)
         product_options = ProductOptions.objects.filter(product=product)
         
-        for product_option in product_options:
+        for index, product_option in enumerate(product_options):
           if "빠른 출고" in product_option.product_option_display_name or "빠른출고" in product_option.product_option_display_name:
             continue
           
@@ -97,19 +97,22 @@ def coupang_product_upload(product_codes):
           ws.cell(row=current_row, column=62, value=sell_price)  # BJ열
           
           # 할인율기준가 입력
-          ws.cell(row=current_row, column=63, value=consumer_price)  # BK열
+          ws.cell(row=current_row, column=64, value=consumer_price)  # BK열
           
           # 재고수량 입력
-          ws.cell(row=current_row, column=64, value=product_option.product_option_stock)  # BL열
+          ws.cell(row=current_row, column=65, value=product_option.product_option_stock)  # BL열
           
           # 출고리드타임 입력
-          ws.cell(row=current_row, column=65, value=4)  # BM열
+          ws.cell(row=current_row, column=66, value=4)  # BM열
           
           # 성인상품 입력
           ws.cell(row=current_row, column=69, value="Y")  # BQ열
           
           # 업체상품코드 입력
           ws.cell(row=current_row, column=73, value=f"{product_code}/{product_option.product_option_code}")  # BU열
+          
+          # 바코드
+          ws.cell(row=current_row, column=75, value="[바코드없음]제조사에서 바코드를 제공 받지 못함")
           
           # 상품고시정보 카테고리 입력
           ws.cell(row=current_row, column=89, value="기타 재화")  # CK열
@@ -130,14 +133,19 @@ def coupang_product_upload(product_codes):
           ws.cell(row=current_row, column=94, value="상품 상세페이지 참조")  # CP열
           
           # 상품 대표이미지 파일명 입력
-          ws.cell(row=current_row, column=104, value=product.product_thumbnail_image.url.split("/")[-1])  # CZ열
+          thumbnail_filename = product.product_thumbnail_image.url.split("/")[-1]  # 원래 파일명
+          thumbnail_name_without_extension = ".".join(thumbnail_filename.split(".")[:-1])  # 확장자 제거
+          fixed_thumbnail_filename = f"{thumbnail_name_without_extension}.jpg"  # 확장자를 jpg로 고정
+          ws.cell(row=current_row, column=104, value=fixed_thumbnail_filename)  # CZ열
           
           # 상품 상세 설명 파일명 입력
           detail_images = [image.replace('product_detail_images/', '') for image in product.product_detail]
-          detail_images_string = ','.join(detail_images)
+          fixed_detail_images = [f"{'.'.join(img.split('.')[:-1])}.jpg" for img in detail_images]
+          detail_images_string = ','.join(fixed_detail_images)
           ws.cell(row=current_row, column=110, value=detail_images_string)  # DF열
           
-          current_row += 1
+          if index != (len(product_options) - 1):
+            current_row += 1
         
       except Exception as e:
         print(f"Error processing product {product_code}: {e}")

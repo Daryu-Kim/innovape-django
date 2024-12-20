@@ -39,6 +39,7 @@ class Product(models.Model):
     product_manager_price = models.PositiveIntegerField(default=0, verbose_name='상품 관리자가')
     product_thumbnail_image = models.ImageField(upload_to='product_thumbnail_images/', verbose_name='상품 이미지')
     product_origin_thumbnail_image = models.CharField(max_length=1000, blank=True, verbose_name='상품 원본 이미지')
+    product_origin_url = models.CharField(max_length=1000, blank=True, verbose_name='상품 원본 URL')
     product_related_products = models.ManyToManyField('self', blank=True, verbose_name='관련 상품 (추천 상품)')
     product_seo_title = models.CharField(max_length=100, blank=True, verbose_name='검색용 사이트 제목')
     product_seo_author = models.CharField(max_length=50, blank=True, verbose_name='검색용 게시자')

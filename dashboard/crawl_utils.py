@@ -10,13 +10,17 @@ from bs4 import BeautifulSoup
 import requests
 import base64
 import json
+import platform
+from PIL import Image
+from io import BytesIO
 
+service = Service('chromedriver/chromedriver.exe') if platform.system() == 'Windows' else Service('chromedriver/chromedriver')
+chrome_options = webdriver.ChromeOptions()
+if platform.system() != 'Windows':
+  chrome_options.add_argument('--headless')
 
 def medusa_crawl(product_url):
   try:
-    chrome_options = webdriver.ChromeOptions()
-    # chrome_options.add_argument('--headless')
-    service = Service('chromedriver/chromedriver.exe')
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
     print(config("MEDUSA_LOGIN_URL"))
@@ -32,14 +36,15 @@ def medusa_crawl(product_url):
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "cp500")))
     driver.get(product_url)
     
-    last_height = driver.execute_script("return document.body.scrollHeight")
+    current_height = 0
+
     while True:
-      driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-      time.sleep(3)
+      driver.execute_script("window.scrollBy(0, 1000);")
+      current_height += 1000
       new_height = driver.execute_script("return document.body.scrollHeight")
-      if new_height == last_height:
+      time.sleep(1)
+      if new_height <= current_height:
         break
-      last_height = new_height
       
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     options = []
@@ -141,11 +146,7 @@ def medusa_crawl(product_url):
     return None
 
 def siasiucp_crawl(product_url):
-  
   try:
-    chrome_options = webdriver.ChromeOptions()
-    # chrome_options.add_argument('--headless')
-    service = Service('chromedriver/chromedriver.exe')
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
     print(config("SIASIUCP_LOGIN_URL"))
@@ -169,7 +170,6 @@ def siasiucp_crawl(product_url):
       new_height = driver.execute_script("return document.body.scrollHeight")
       time.sleep(1)
       if new_height <= current_height:
-        time.sleep(1)
         break
       
     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -272,4 +272,100 @@ def siasiucp_crawl(product_url):
     print(e)
     return None
   
-def coupang_test(product_url):
+def check_origin_base_url(product_url):
+  if product_url.startswith("https://medusamall.com/"):
+    data = medusa_images_crawl(product_url)
+    
+  return data
+
+def get_header_by_base_url(product_url):
+  if product_url.startswith("https://medusamall.com/"):
+    headers = {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      "Referer": config("MEDUSA_BASE_URL"),  # 요청을 보낸 페이지의 URL로 설정
+    }
+  
+  return headers
+  
+def medusa_images_crawl(product_url):
+  try:
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+    
+    print(config("MEDUSA_LOGIN_URL"))
+    driver.get(config("MEDUSA_LOGIN_URL"))
+    
+    print(config("MEDUSA_LOGIN_ID"), config("MEDUSA_LOGIN_PASSWORD"))
+    id = driver.find_element(By.ID, "member_id")
+    passwd = driver.find_element(By.ID, "member_passwd")
+    id.send_keys(config("MEDUSA_LOGIN_ID"))
+    passwd.send_keys(config("MEDUSA_LOGIN_PASSWORD"))
+    passwd.send_keys(Keys.ENTER)
+    
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "cp500")))
+    driver.get(product_url)
+    
+    current_height = 0
+
+    while True:
+      driver.execute_script("window.scrollBy(0, 1000);")
+      current_height += 1000
+      new_height = driver.execute_script("return document.body.scrollHeight")
+      time.sleep(1)
+      if new_height <= current_height:
+        break
+      
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    
+    thumbnail_image_url = ""
+    detail_image_urls = []
+
+    img_tags = soup.select("#prdDetail > div.cont img")
+    thumbnail_img_tag = soup.select("#big_img_box > div > img")[0]
+
+    # 썸네일 크롤링
+    thumbnail_src = thumbnail_img_tag.get("src")
+    if thumbnail_src:
+      if not thumbnail_src.startswith("data:image/"): # URL 방식의 이미지 처리
+        # URL이 상대 경로인 경우 절대 경로로 변환
+        if not thumbnail_src.startswith(
+            "http://"
+        ) and not thumbnail_src.startswith("https://"):
+          thumbnail_src = "https:" + thumbnail_src
+    thumbnail_image_url = thumbnail_src
+
+    # 상세페이지 크롤링
+    for img in img_tags:
+      src = img.get("src")
+      if src:
+        if not src.startswith("data:image/"):  # URL 방식의 이미지 처리
+          # URL이 상대 경로인 경우 절대 경로로 변환
+          if not src.startswith("http://") and not src.startswith(
+              "https://"
+          ):
+            src = config("MEDUSA_BASE_URL") + src.replace("//", "/")
+      detail_image_urls.append(src)
+    
+    driver.quit()
+    return {
+      'thumbnail_image_url': thumbnail_image_url,
+      'detail_image_urls': detail_image_urls
+    }
+  except Exception as e:
+    print(e)
+    return None
+  
+def convert_image(product_origin_url):
+  try:
+    headers = get_header_by_base_url(product_origin_url)
+    response = requests.get(product_origin_url, headers=headers)
+    response.raise_for_status()  # 요청 실패 시 예외 발생
+    image = Image.open(BytesIO(response.content))
+    
+    # GIF 파일인 경우 JPG로 변환
+    output = BytesIO()
+    image = image.convert('RGB')  # RGB로 변환 (GIF 포함)
+    image.save(output, format='JPEG')  # JPEG로 저장
+    return output.getvalue(), 'jpg'  # 변환된 이미지 데이터와 확장자 반환
+  except Exception as e:
+    print(f"Error processing image from {product_origin_url}: {e}")
+    return None, None

@@ -39,7 +39,7 @@ import shutil
 import traceback
 from django.core.cache import cache
 from .order import generate_order_number
-from .crawl_utils import medusa_crawl, siasiucp_crawl
+from .crawl_utils import medusa_crawl, siasiucp_crawl, check_origin_base_url, convert_image
 
 # Create your views here.
 class DashboardHomeView(LoginRequiredMixin, TemplateView):
@@ -699,6 +699,7 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
                     "product_seo_keywords": data["product_seo_keywords"],
                     "product_author": request.user,
                     "product_created_datetime": timezone.now(),
+                    "product_origin_url": data["product_origin_url"],
                 },
             )
             # 상품코드,자체상품코드,품목명,재고수량,옵션추가금액
@@ -860,6 +861,7 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                 ).order_by('product_code').values_list('product_code', flat=True)
                 
                 # 엑셀 파일 생성
+                print('엑셀 생성')
                 excel_filename = coupang_product_upload(products)
                 
                 if excel_filename:
@@ -868,6 +870,7 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                     
                     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
                         # 엑셀 파일 추가
+                        print('엑셀 추가')
                         excel_path = os.path.join(settings.MEDIA_ROOT, 'upload_forms', excel_filename)
                         zip_file.write(excel_path, excel_filename)
                         
@@ -875,27 +878,27 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                         for product_code in products:
                             product = Product.objects.get(product_code=product_code)
                             
-                            # 썸네일 이미지 추가
-                            if product.product_thumbnail_image:
-                                thumb_path = os.path.join(settings.MEDIA_ROOT, str(product.product_thumbnail_image))
-                                if os.path.exists(thumb_path):
-                                    # 임시 파일로 복사하면서 원본 속성 유지
-                                    temp_thumb = os.path.join(settings.MEDIA_ROOT, 'temp', os.path.basename(thumb_path))
-                                    os.makedirs(os.path.dirname(temp_thumb), exist_ok=True)
-                                    shutil.copy2(thumb_path, temp_thumb)  # copy2는 메타데이터를 포함한 복사
-                                    zip_file.write(temp_thumb, f'images/thumbnails/{os.path.basename(thumb_path)}')
-                                    os.remove(temp_thumb)  # 임시 파일 삭제
+                            if product.product_origin_url:
+                                data = check_origin_base_url(product.product_origin_url)
                                 
-                            # 상세 이미지들 추가
-                            for detail_image in product.product_detail:
-                                detail_path = os.path.join(settings.MEDIA_ROOT, detail_image)
-                                if os.path.exists(detail_path):
-                                    # 임시 파일로 복사하면서 원본 속성 유지
-                                    temp_detail = os.path.join(settings.MEDIA_ROOT, 'temp', os.path.basename(detail_path))
-                                    os.makedirs(os.path.dirname(temp_detail), exist_ok=True)
-                                    shutil.copy2(detail_path, temp_detail)
-                                    zip_file.write(temp_detail, f'images/details/{os.path.basename(detail_path)}')
-                                    os.remove(temp_detail)  # 임시 파일 삭제
+                                # 썸네일 이미지 추가
+                                print('썸네일 추가')
+                                try:
+                                    thumbnail_data, thumbnail_ext = convert_image(data['thumbnail_image_url'])
+                                    thumbnail_image_name = f"{product_code}.{thumbnail_ext}"  # 이미지 이름 설정
+                                    zip_file.writestr(f'images/thumbnails/{thumbnail_image_name}', thumbnail_data)  # ZIP 파일에 직접 추가
+                                except Exception as e:
+                                    print(f"썸네일 이미지 가져오기 실패: {e}")
+                                    
+                                # 상세 이미지 추가
+                                print('상세페이지 추가')
+                                for index, detail_image in enumerate(data['detail_image_urls']):
+                                    try:
+                                        detail_data, detail_ext = convert_image(detail_image)
+                                        detail_image_name = f"{product_code}_{index}.{detail_ext}"
+                                        zip_file.writestr(f'images/details/{detail_image_name}', detail_data)  # ZIP 파일에 직접 추가
+                                    except Exception as e:
+                                        print(f"상세 이미지 가져오기 실패: {e}")
                     
                     # ZIP 파일 응답 생성
                     zip_buffer.seek(0)
