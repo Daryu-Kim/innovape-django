@@ -109,7 +109,7 @@ def coupang_product_upload(product_codes):
           ws.cell(row=current_row, column=69, value="Y")  # BQ열
           
           # 업체상품코드 입력
-          ws.cell(row=current_row, column=73, value=f"{product_code}/{product_option.product_option_code}")  # BU열
+          ws.cell(row=current_row, column=74, value=f"{product_code}/{product_option.product_option_code}")  # BU열
           
           # 바코드
           ws.cell(row=current_row, column=75, value="[바코드없음]제조사에서 바코드를 제공 받지 못함")
