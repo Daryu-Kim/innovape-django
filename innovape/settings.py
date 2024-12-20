@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 from decouple import Config, RepositoryEnv
+import platform
 
 # .env 파일의 절대 경로 설정
 ENV_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
@@ -88,29 +89,30 @@ WSGI_APPLICATION = 'innovape.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# 디버깅용
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'postgres',  # 생성한 데이터베이스 이름
-#         'USER': 'postgres',  # 생성한 사용자 이름
-#         'PASSWORD': 'Dlshqpdlvm00^^',  # 생성한 사용자 비밀번호
-#         'HOST': 'localhost',  # 만약 외부 IP에서 접속할 경우, IP 주소로 변경
-#         'PORT': '5432',  # PostgreSQL 기본 포트
-#     }
-# }
-
-# 프로덕션용
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'innovape',  # 생성한 데이터베이스 이름
-        'USER': 'innovape',  # 생성한 사용자 이름
-        'PASSWORD': 'Dlshqpdlvm00^^',  # 생성한 사용자 비밀번호
-        'HOST': 'localhost',  # 만약 외부 IP에서 접속할 경우, IP 주소로 변경
-        'PORT': '5432',  # PostgreSQL 기본 포트
+if platform.system() == 'Windows':
+    # 디버깅용
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'postgres',  # 생성한 데이터베이스 이름
+            'USER': 'postgres',  # 생성한 사용자 이름
+            'PASSWORD': 'Dlshqpdlvm00^^',  # 생성한 사용자 비밀번호
+            'HOST': 'localhost',  # 만약 외부 IP에서 접속할 경우, IP 주소로 변경
+            'PORT': '5432',  # PostgreSQL 기본 포트
+        }
     }
-}
+else:
+    # 프로덕션용
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'innovape',  # 생성한 데이터베이스 이름
+            'USER': 'innovape',  # 생성한 사용자 이름
+            'PASSWORD': 'Dlshqpdlvm00^^',  # 생성한 사용자 비밀번호
+            'HOST': 'localhost',  # 만약 외부 IP에서 접속할 경우, IP 주소로 변경
+            'PORT': '5432',  # PostgreSQL 기본 포트
+        }
+    }
 
 
 # Password validation
