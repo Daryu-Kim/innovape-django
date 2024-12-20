@@ -49,6 +49,14 @@
 		</div>
 		<div class="card p-3">
 			<div class="card-body">
+				<h5 class="card-title">상품 URL 동기화하기</h5>
+				<p class="card-text keep-all mt-2">현재 시점까지의 모든 상품의 URL 정보가 담긴 엑셀 파일을 불러옵니다.</p>
+				<input type="file" class="form-control p-2 mt-3" id="import-url-file" accept=".xls,.xlsx" />
+				<button class="btn btn-primary ps-3 pe-3 pt-1 pb-1 mt-3" id="import-url-btn" >불러오기</a>
+			</div>
+		</div>
+		<div class="card p-3">
+			<div class="card-body">
 				<h5 class="card-title">직원가 자동 세팅</h5>
 				<p class="card-text keep-all mt-2">모든 상품의 직원가를 자동으로 세팅합니다.</p>
 				<button class="btn btn-primary ps-3 pe-3 pt-1 pb-1 mt-3" id="set-manager-price-btn">세팅하기</a>
@@ -197,6 +205,75 @@
 				},
 				error: function(xhr, status, error) {
 					alert("카페24 상품 옵션 불러오기에 실패했습니다!");
+				}
+			});
+		});
+
+		$("#import-url-btn").click(function() {
+			urlFile = $("#import-url-file")[0].files[0];
+
+			if (!urlFile) {
+				alert("파일을 등록해주세요!");
+				return false;
+			}
+
+			var formData = new FormData();
+			formData.append("url", urlFile);
+
+			// 진행 상황을 보여줄 모달 추가
+			var modalHtml = `
+				<div class="modal fade" id="progressModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title">상품 업로드 진행 중...</h5>
+							</div>
+							<div class="modal-body">
+								<div class="progress">
+									<div class="progress-bar progress-bar-striped progress-bar-animated" 
+										role="progressbar" style="width: 0%">0%</div>
+								</div>
+								<p id="progressStatus" class="mt-2 mb-0">처리 중입니다...</p>
+							</div>
+						</div>
+					</div>
+				</div>`;
+
+			$('body').append(modalHtml);
+			var progressModal = new bootstrap.Modal(document.getElementById('progressModal'));
+			progressModal.show();
+
+			$.ajax({
+				url: '{% url "dashboard_product_home" %}',
+				type: 'POST',
+				timeout: 3600000, // 1시간으로 늘림
+				data: formData,
+				headers: {
+					'X-CSRFToken': '{{ csrf_token }}'
+				},
+				processData: false,
+				contentType: false,
+				xhr: function() {
+					var xhr = new window.XMLHttpRequest();
+					xhr.upload.addEventListener("progress", function(evt) {
+						if (evt.lengthComputable) {
+							var percentComplete = evt.loaded / evt.total;
+							$('.progress-bar').css('width', percentComplete * 100 + '%');
+							$('.progress-bar').text(Math.round(percentComplete * 100) + '%');
+						}
+					}, false);
+					return xhr;
+				},
+				success: function(response) {
+					progressModal.hide();
+					$('#progressModal').remove();
+					alert("상품 URL 불러오기에 성공했습니다!");
+					window.location.reload();
+				},
+				error: function(xhr, status, error) {
+					progressModal.hide();
+					$('#progressModal').remove();
+					alert("상품 URL 불러오기에 실패했습니다! 다시 시도해주세요.");
 				}
 			});
 		});

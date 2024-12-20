@@ -13,6 +13,7 @@ import json
 import platform
 from PIL import Image
 from io import BytesIO
+from .models import Product
 
 service = Service('chromedriver/chromedriver.exe') if platform.system() == 'Windows' else Service('chromedriver/chromedriver')
 chrome_options = webdriver.ChromeOptions()
@@ -369,3 +370,15 @@ def convert_image(product_origin_url):
   except Exception as e:
     print(f"Error processing image from {product_origin_url}: {e}")
     return None, None
+  
+def convert_origin_url_to_product(datas):
+  try:
+    for data in datas:
+      print(data)
+      product = Product.objects.get(product_code=data['상품코드'])
+      product.product_origin_url = data['URL']
+      product.save()
+    return True
+  except Exception as e:
+    print(f'ERROR: {e}')
+    return False

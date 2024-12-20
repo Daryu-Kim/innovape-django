@@ -39,7 +39,7 @@ import shutil
 import traceback
 from django.core.cache import cache
 from .order import generate_order_number
-from .crawl_utils import medusa_crawl, siasiucp_crawl, check_origin_base_url, convert_image
+from .crawl_utils import medusa_crawl, siasiucp_crawl, check_origin_base_url, convert_image, convert_origin_url_to_product
 
 # Create your views here.
 class DashboardHomeView(LoginRequiredMixin, TemplateView):
@@ -603,6 +603,24 @@ class DashboardProductHome(LoginRequiredMixin, TemplateView):
                 product.product_manager_price = rounded_price
                 product.save()
             return JsonResponse({'status': 'success'})
+        
+        elif request.FILES.get('url'):
+            try:
+                excel_file = request.FILES['url']
+                try:
+                    df = pd.read_excel(excel_file)
+                    result = []
+                    
+                    for index, row in df.iterrows():
+                        row_dict = row.to_dict()
+                        result.append(row_dict)
+                    convert_origin_url_to_product(result)
+                    return JsonResponse({'status': 'success'})
+                except Exception as e:
+                    return JsonResponse({'status': 'error', 'message': str(e)})
+                
+            except Exception as e:
+                return JsonResponse({'status': 'error', 'message': str(e)})
 
 
 class DashboardProductAdd(LoginRequiredMixin, TemplateView):
@@ -1003,13 +1021,6 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                     'status': 'error',
                     'message': str(e)
                 })
-        elif request.POST.get("code") == "selenium_test":
-            try:
-                #is_successed = medusa_crawl()
-                
-                return JsonResponse({'status': 'success', 'data': is_successed})
-            except Exception as e:
-                return JsonResponse({'status': 'error', 'message': str(e)})
 
 class DashboardProductCategory(LoginRequiredMixin, TemplateView):
     template_name = "dashboard/product/product_add.html"
