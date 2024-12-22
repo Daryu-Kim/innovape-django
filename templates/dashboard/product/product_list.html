@@ -147,8 +147,9 @@
             },
             columns: [
                 {
+                    data: 'product_code',
                     render: function (data, type, row) {
-                        return `<div class="d-flex justify-content-center" style="width: 64px;"><input type="checkbox" class="select-checkbox form-check-input"></div>`;
+                        return `<div class="d-flex justify-content-center" style="width: 64px;"><input type="checkbox" class="select-checkbox form-check-input" value="${data}"></div>`;
                     }
                 },
                 {
@@ -540,6 +541,11 @@
 
     $("#product-coupang-first-upload-btn").click(function (e) {
         e.preventDefault();
+        checkboxValue = []
+
+        $(".select-checkbox:checked").each(function () {
+            checkboxValue.push($(this).val())
+        })
         
         // 프로그레스 바 초기화 및 표시
         $("#upload-progress").width('0%').text('0%');
@@ -553,7 +559,8 @@
                 'X-CSRFToken': '{{ csrf_token }}'
             },
             data: {
-                code: "product_coupang_first_upload"
+                code: "product_coupang_first_upload",
+                datas: JSON.stringify(checkboxValue)
             },
             xhrFields: {
                 responseType: 'blob'

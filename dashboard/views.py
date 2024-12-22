@@ -847,6 +847,7 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                     for category in product.product_category.all()
                 ])
                 data.append({
+                    
                     'product_thumbnail_image': product.product_thumbnail_image.url if product.product_thumbnail_image else None,
                     'product_code': product.product_code,
                     'product_name': product.product_name,
@@ -873,10 +874,23 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         if request.POST.get("code") == "product_coupang_first_upload":
             try:
-                products = Product.objects.filter(
-                    Q(product_coupang_code__isnull=True) | Q(product_coupang_code=''),
-                    product_coupang_is_prohibitted=False,
-                ).exclude(product_origin_url='').order_by('product_code').values_list('product_code', flat=True)
+                datas = request.POST.get('datas')
+                if datas:
+                    checkbox_values = json.loads(datas)
+                print(checkbox_values)
+                if checkbox_values:
+                    products = Product.objects.filter(
+                        product_code__in=checkbox_values,
+                        product_coupang_code='',
+                        product_coupang_is_prohibitted=False,
+                    ).exclude(
+                        product_origin_url=''
+                    ).order_by('product_code').values_list('product_code', flat=True)
+                else:
+                    products = Product.objects.filter(
+                        Q(product_coupang_code__isnull=True) | Q(product_coupang_code=''),
+                        product_coupang_is_prohibitted=False,
+                    ).exclude(product_origin_url='').order_by('product_code').values_list('product_code', flat=True)
                 
                 # 엑셀 파일 생성
                 print('엑셀 생성')
