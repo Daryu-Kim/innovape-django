@@ -875,8 +875,8 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
             try:
                 products = Product.objects.filter(
                     Q(product_coupang_code__isnull=True) | Q(product_coupang_code=''),
-                    product_coupang_is_prohibitted=False
-                ).order_by('product_code').values_list('product_code', flat=True)
+                    product_coupang_is_prohibitted=False,
+                ).exclude(product_origin_url='').order_by('product_code').values_list('product_code', flat=True)
                 
                 # 엑셀 파일 생성
                 print('엑셀 생성')
