@@ -39,7 +39,7 @@ import shutil
 import traceback
 from django.core.cache import cache
 from .order import generate_order_number
-from .crawl_utils import medusa_crawl, siasiucp_crawl, check_origin_base_url, convert_image, convert_origin_url_to_product
+from .crawl_utils import crawl_product, convert_image, convert_origin_url_to_product
 
 # Create your views here.
 class DashboardHomeView(LoginRequiredMixin, TemplateView):
@@ -641,12 +641,7 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         if request.POST.get("code") == "parse_html":
             product_url = request.POST.get("product_url")
-
-            if request.POST.get("mall") == "메두사":
-                data = medusa_crawl(product_url)
-
-            elif request.POST.get("mall") == "샤슈컴퍼니":
-                data = siasiucp_crawl(product_url)
+            data = crawl_product(product_url)
 
             return JsonResponse(
                 {
@@ -911,7 +906,7 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                             product = Product.objects.get(product_code=product_code)
                             
                             if product.product_origin_url:
-                                data = check_origin_base_url(product.product_origin_url)
+                                data = crawl_product(product.product_origin_url)
                                 
                                 # 썸네일 이미지 추가
                                 print('썸네일 추가')

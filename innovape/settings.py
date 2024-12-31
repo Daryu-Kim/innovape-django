@@ -101,6 +101,18 @@ if platform.system() == 'Windows':
             'PORT': '5432',  # PostgreSQL 기본 포트
         }
     }
+elif platform.system() == 'Darwin':
+    # 디버깅용 (가게 맥)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'postgres',  # 생성한 데이터베이스 이름
+            'USER': 'iMac27',  # 생성한 사용자 이름
+            'PASSWORD': 'Dlshqpdlvm00^^',  # 생성한 사용자 비밀번호
+            'HOST': 'localhost',  # 만약 외부 IP에서 접속할 경우, IP 주소로 변경
+            'PORT': '5432',  # PostgreSQL 기본 포트
+        }
+    }
 else:
     # 프로덕션용
     DATABASES = {
