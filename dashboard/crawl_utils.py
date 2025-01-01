@@ -378,7 +378,7 @@ def convert_origin_url_to_product(datas):
     for data in datas:
       crawl_data = crawl_product(data['URL'])
       detail_urls = []
-      for detail_origin_url in data['product_detail_origin_urls']:
+      for detail_origin_url in crawl_data['detail_image_urls']:
         detail_urls.append(detail_origin_url)
       price_data = data['사전등록'].split(',')
 
