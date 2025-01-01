@@ -7,6 +7,8 @@
 {% block main_content %}
 <div class="row gap-3">
     <p class="fw-bold fs-2">상품 등록</p>
+    <input class="d-none" id="detail-origin-urls" />
+    <input class="d-none" id="thumbnail-origin-urls" />
     <table class="table">
         <thead>
             <th colspan="2">
@@ -550,6 +552,7 @@
             }
 
             var productDetailSrcArray = [];
+            var productDetailOriginSrcArray = [];
 
             if ($("#detail-modal img").length > 0) {
                 $("#detail-modal img").each(function() {
@@ -559,6 +562,10 @@
                     }
                 });
             }
+
+            $.each($("#detail-origin-urls").val().split(','), function(index, item) {
+                productDetailOriginSrcArray.push(item)
+            })
 
             const productData = {
                 "product_code": $("#product-code").val(),
@@ -581,7 +588,9 @@
                 "product_seo_keywords": $("#product-seo-keywords").val(),
                 "product_option_name": $("#product-option-name").val(),
                 "product_option_title": $("#product-option-title").val(),
-                "product_origin_url": $("#input-product-url").val()
+                "product_origin_url": $("#input-product-url").val(),
+                "product_thumbnail_origin_urls": $("#thumbnail-origin-urls").val(),
+                "product_detail_origin_urls": productDetailOriginSrcArray
             };
 
             var productOptionsData = {
@@ -815,6 +824,8 @@
                     $("#detail-view-btn").removeClass('btn-secondary');
                     $("#detail-view-btn").removeAttr('disabled');
                     $("#product-option-name").val(result['data']['options']);
+                    $("#detail-origin-urls").val(result['data']['detail_image_urls'].join(','));
+                    $("#thumbnail-origin-urls").val(result['data']['thumbnail_image_url'])
                 },
                 error : function(xhr, status, error) {
                     alert(xhr.responseJSON.message)

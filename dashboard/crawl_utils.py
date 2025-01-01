@@ -102,8 +102,8 @@ def crawl_product(product_url):
         current_height = 0
 
         while True:
-            driver.execute_script("window.scrollBy(0, 1000);")
-            current_height += 1000
+            driver.execute_script("window.scrollBy(0, 2000);")
+            current_height += 2000
             new_height = driver.execute_script("return document.body.scrollHeight")
             time.sleep(1)
             if new_height <= current_height:
@@ -124,7 +124,7 @@ def crawl_product(product_url):
         option_tags = soup.select(option_selector)
 
         if not option_tags:
-            option_tags = soup.select(option_selector.replace('optgroup', ''))
+            option_tags = soup.select(option_selector.replace('optgroup > ', ''))
 
         # 공급가 크롤링
         if supply_price_tag:
@@ -175,7 +175,10 @@ def crawl_product(product_url):
                     binary_data = base64.b64decode(encoded)
                 else:  # URL 방식의 이미지 처리
                     if not src.startswith("http://") and not src.startswith("https://"):
-                        src = base_url + src.replace("//", "/")
+                        if src.startswith("//cafe24.poxo.com"):
+                            src = "https:" + src
+                        else:
+                            src = base_url + src.replace("//", "/")
 
                     try:
                         headers = {
@@ -224,9 +227,9 @@ def get_header_by_base_url(product_url):
   
   return headers
   
-def convert_image(product_origin_url):
+def convert_image(product_origin_url, product_url):
   try:
-    headers = get_header_by_base_url(product_origin_url)
+    headers = get_header_by_base_url(product_url)
     response = requests.get(product_origin_url, headers=headers)
     response.raise_for_status()  # 요청 실패 시 예외 발생
     image = Image.open(BytesIO(response.content))
@@ -243,9 +246,15 @@ def convert_image(product_origin_url):
 def convert_origin_url_to_product(datas):
   try:
     for data in datas:
+      crawl_data = crawl_product(data['URL'])
+      detail_urls = []
+      for detail_origin_url in data['product_detail_origin_urls']:
+        detail_urls.append(detail_origin_url)
       print(data)
       product = Product.objects.get(product_code=data['상품코드'])
       product.product_origin_url = data['URL']
+      product.product_origin_thumbnail_image = crawl_data['thumbnail_image_url']
+      product.product_origin_detail = detail_urls
       product.save()
     return True
   except Exception as e:

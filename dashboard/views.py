@@ -670,6 +670,7 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
             # 상세페이지 업로드
             product_detail_images_path = os.path.join(settings.MEDIA_ROOT, 'product_detail_images')
             details = []
+            detail_urls = []
 
             if not os.path.exists(product_detail_images_path):
                 os.makedirs(product_detail_images_path)
@@ -693,6 +694,10 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
                 file_url = f"product_detail_images/{detail_image_name}"
 
                 details.append(file_url)
+            
+            for detail_origin_url in data['product_detail_origin_urls']:
+                detail_urls.append(detail_origin_url)
+
             # 제품 업데이트 또는 생성
             new_product, created = Product.objects.update_or_create(
                 product_code=data["product_code"],
@@ -713,6 +718,8 @@ class DashboardProductAdd(LoginRequiredMixin, TemplateView):
                     "product_author": request.user,
                     "product_created_datetime": timezone.now(),
                     "product_origin_url": data["product_origin_url"],
+                    "product_origin_detail": detail_urls,
+                    "product_origin_thumbnail_image": data["product_thumbnail_origin_urls"],
                 },
             )
             # 상품코드,자체상품코드,품목명,재고수량,옵션추가금액
@@ -906,12 +913,10 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                             product = Product.objects.get(product_code=product_code)
                             
                             if product.product_origin_url:
-                                data = crawl_product(product.product_origin_url)
-                                
                                 # 썸네일 이미지 추가
                                 print('썸네일 추가')
                                 try:
-                                    thumbnail_data, thumbnail_ext = convert_image(data['thumbnail_image_url'])
+                                    thumbnail_data, thumbnail_ext = convert_image(product.product_origin_thumbnail_image, product.product_origin_url)
                                     thumbnail_image_name = f"{product_code}.{thumbnail_ext}"  # 이미지 이름 설정
                                     zip_file.writestr(f'images/thumbnails/{thumbnail_image_name}', thumbnail_data)  # ZIP 파일에 직접 추가
                                 except Exception as e:
@@ -919,9 +924,9 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                                     
                                 # 상세 이미지 추가
                                 print('상세페이지 추가')
-                                for index, detail_image in enumerate(data['detail_image_urls']):
+                                for index, detail_image in enumerate(product.product_origin_detail):
                                     try:
-                                        detail_data, detail_ext = convert_image(detail_image)
+                                        detail_data, detail_ext = convert_image(detail_image, product.product_origin_url)
                                         detail_image_name = f"{product_code}_{index}.{detail_ext}"
                                         zip_file.writestr(f'images/details/{detail_image_name}', detail_data)  # ZIP 파일에 직접 추가
                                     except Exception as e:
