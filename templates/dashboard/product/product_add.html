@@ -53,18 +53,7 @@
                     <div class="input-group">
                         <input id="input-product-url" class="form-control p-2" placeholder="공급사 상품 URL 입력" aria-label="공급사 상품 URL 입력"
                             aria-describedby="button-addon2"></input>
-                        <button id="detail-dropdown-btn" class="btn btn-outline-secondary dropdown-toggle p-2 fs-6" type="button" data-bs-toggle="dropdown"
-                            aria-expanded="false">공급사 선택 후 적용</button>
-                        <ul id="dropdown" class="dropdown-menu dropdown-menu-end p-2">
-                            <li><button class="dropdown-item p-1 rounded detail-convert-btn">메두사</button></li>
-                            <li><button class="dropdown-item p-1 rounded detail-convert-btn" disabled>베이프컴퍼니</button></li>
-                            <li><button class="dropdown-item p-1 rounded detail-convert-btn" disabled>베이프토피아</button></li>
-                            <li><button class="dropdown-item p-1 rounded detail-convert-btn" disabled>베이프몬스터</button></li>
-                            <li><button class="dropdown-item p-1 rounded detail-convert-btn" disabled>퓨어클라우드</button></li>
-                            <li><button class="dropdown-item p-1 rounded detail-convert-btn">샤슈컴퍼니</button></li>
-                            <li><button class="dropdown-item p-1 rounded detail-convert-btn" disabled>붐붐리퀴드</button></li>
-                            <li><button class="dropdown-item p-1 rounded detail-convert-btn">팀 베놈</button></li>
-                        </ul>
+                        <button id="detail-convert-btn" class="btn btn-outline-primary p-2 fs-6">적용</button>
                     </div>
                 </td>
             </tr>
@@ -783,7 +772,7 @@
             
         });
 
-        $('.detail-convert-btn').click(function() {
+        $('#detail-convert-btn').click(function() {
             const productUrl = $('#input-product-url').val();
 
             if (productUrl.length < 1) {
@@ -793,8 +782,7 @@
 
             $('#detail-modal .modal-body').html('')
             $('#thumbnail-img').removeAttr('src');
-            $("#detail-dropdown-btn").attr('aria-expanded', false);
-            $("#detail-dropdown-btn").attr('disabled', 'disabled');
+            $("#detail-convert-btn").attr('disabled', 'disabled');
             $("#dropdown").removeClass('show');
             $("#detail-view-btn").addClass('btn-secondary');
             $("#detail-view-btn").removeClass('btn-primary');
@@ -819,7 +807,7 @@
                         $('#detail-modal .modal-body').append(`<img src="${element}" class="w-100" />`)
                     });
                     $('#thumbnail-img').attr('src', `data:image/png;base64,${result['data']['thumbnail_binary_data']}`)
-                    $("#detail-dropdown-btn").removeAttr('disabled');
+                    $("#detail-convert-btn").removeAttr('disabled');
                     $("#detail-view-btn").addClass('btn-primary');
                     $("#detail-view-btn").removeClass('btn-secondary');
                     $("#detail-view-btn").removeAttr('disabled');
@@ -829,7 +817,7 @@
                 },
                 error : function(xhr, status, error) {
                     alert(xhr.responseJSON.message)
-                    $("#detail-dropdown-btn").removeAttr('disabled');
+                    $("#detail-convert-btn").removeAttr('disabled');
                 }
             })
         })

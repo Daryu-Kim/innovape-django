@@ -916,7 +916,7 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                                 # 썸네일 이미지 추가
                                 print('썸네일 추가')
                                 try:
-                                    thumbnail_data, thumbnail_ext = convert_image(product.product_origin_thumbnail_image, product.product_origin_url)
+                                    thumbnail_data, thumbnail_ext = convert_image(product.product_origin_thumbnail_image, product.product_origin_url, 'thumbnail')
                                     thumbnail_image_name = f"{product_code}.{thumbnail_ext}"  # 이미지 이름 설정
                                     zip_file.writestr(f'images/thumbnails/{thumbnail_image_name}', thumbnail_data)  # ZIP 파일에 직접 추가
                                 except Exception as e:
@@ -926,7 +926,7 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                                 print('상세페이지 추가')
                                 for index, detail_image in enumerate(product.product_origin_detail):
                                     try:
-                                        detail_data, detail_ext = convert_image(detail_image, product.product_origin_url)
+                                        detail_data, detail_ext = convert_image(detail_image, product.product_origin_url, 'detail')
                                         detail_image_name = f"{product_code}_{index}.{detail_ext}"
                                         zip_file.writestr(f'images/details/{detail_image_name}', detail_data)  # ZIP 파일에 직접 추가
                                     except Exception as e:
