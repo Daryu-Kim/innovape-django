@@ -382,14 +382,15 @@ def convert_origin_url_to_product(datas):
         detail_urls.append(detail_origin_url)
       price_data = data['사전등록'].split(',')
 
-      product = Product.objects.get(product_code=data['상품코드'])
-      product.product_origin_url = data['URL']
-      product.product_origin_thumbnail_image = crawl_data['thumbnail_image_url']
-      product.product_origin_detail = detail_urls
-      product.product_consumer_price = int(price_data[-1])
-      product.product_sell_price = int(price_data[-1])
-      product.product_supply_price = crawl_data['supply_price']
-      product.save()
+      if Product.objects.filter(product_code=data['상품코드']).exists():
+        product = Product.objects.get(product_code=data['상품코드'])
+        product.product_origin_url = data['URL']
+        product.product_origin_thumbnail_image = crawl_data['thumbnail_image_url']
+        product.product_origin_detail = detail_urls
+        product.product_consumer_price = int(price_data[-1])
+        product.product_sell_price = int(price_data[-1])
+        product.product_supply_price = crawl_data['supply_price']
+        product.save()
     return True
   except Exception as e:
     print(f'ERROR: {e}')
