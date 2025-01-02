@@ -886,7 +886,8 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                         product_coupang_code='',
                         product_coupang_is_prohibitted=False,
                     ).exclude(
-                        product_origin_url=''
+                        product_origin_url='',
+                        product_origin_thumbnail_image=''
                     ).order_by('product_code').values_list('product_code', flat=True)
                 else:
                     products = Product.objects.filter(

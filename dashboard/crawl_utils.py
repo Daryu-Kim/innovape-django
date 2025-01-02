@@ -168,45 +168,51 @@ def crawl_product(product_url):
         
         driver = webdriver.Chrome(service=service, options=chrome_options)
         
-        print(login_url)
         driver.get(login_url)
-        
-        print(login_id, login_password)
-        id = driver.find_element(By.ID, id_selector)
-        id.click()
-        pyperclip.copy(login_id)
-        actions = ActionChains(driver)
-        actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
-        time.sleep(1)
 
-        passwd = driver.find_element(By.ID, pw_selector)
-        passwd.click()
-        pyperclip.copy(login_password)
-        actions = ActionChains(driver)
-        actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
-        time.sleep(1)
-        passwd.send_keys(Keys.ENTER)
+        if login_url.startswith("https://nid.naver.com/"):
+            id = driver.find_element(By.ID, id_selector)
+            id.click()
+            pyperclip.copy(login_id)
+            actions = ActionChains(driver)
+            actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
+            time.sleep(1)
+
+            passwd = driver.find_element(By.ID, pw_selector)
+            passwd.click()
+            pyperclip.copy(login_password)
+            actions = ActionChains(driver)
+            actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
+            time.sleep(0.5)
+            passwd.send_keys(Keys.ENTER)
+        else:
+            id = driver.find_element(By.ID, id_selector)
+            passwd = driver.find_element(By.ID, pw_selector)
+            id.send_keys(login_id)
+            passwd.send_keys(login_password)
+            passwd.send_keys(Keys.ENTER)
         
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, class_name)))
+        WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CLASS_NAME, class_name)))
         driver.get(product_url)
         
         current_height = 0
 
-        try:
-            # 버튼이 존재하는지 확인하고 클릭하기
-            button = WebDriverWait(driver, 2).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "button[data-shp-inventory='detailitm']"))
-            )
-            button.click()  # 버튼 클릭
-        except Exception:
-            # 버튼이 없거나 클릭할 수 없는 경우 아무 작업도 하지 않음
-            pass
+        if product_url.startswith("https://smartstore.naver.com/"):
+            try:
+                # 버튼이 존재하는지 확인하고 클릭하기
+                button = WebDriverWait(driver, 2).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "button[data-shp-inventory='detailitm']"))
+                )
+                button.click()  # 버튼 클릭
+            except Exception:
+                # 버튼이 없거나 클릭할 수 없는 경우 아무 작업도 하지 않음
+                pass
 
         while True:
-            driver.execute_script("window.scrollBy(0, 2000);")
-            current_height += 2000
+            driver.execute_script("window.scrollBy(0, 1000);")
+            current_height += 1000
             new_height = driver.execute_script("return document.body.scrollHeight")
-            time.sleep(1)
+            time.sleep(0.2)
             if new_height <= current_height:
                 break
             
