@@ -16,11 +16,68 @@ import platform
 from PIL import Image
 from io import BytesIO
 from .models import Product
+import os
+import pprint
 
 service = Service('chromedriver/chromedriver.exe') if platform.system() == 'Windows' else Service('chromedriver/chromedriver')
 chrome_options = webdriver.ChromeOptions()
 if platform.system() != 'Windows' and platform.system() != 'Darwin':
   chrome_options.add_argument('--headless')
+
+def get_product_images(product_code):
+  try:
+    product = Product.objects.get(product_code=product_code)
+    product_thumbnail_url = product.product_origin_thumbnail_image
+    product_detail_urls = product.product_origin_detail
+    
+    thumbnail_path = None  # 초기화 추가
+
+    # 썸네일 이미지 다운로드 및 변환
+    if product_thumbnail_url:
+        thumbnail_data, extension = convert_thumbnail_image(product_thumbnail_url, product.product_origin_url, 'thumbnail')
+        if thumbnail_data:
+            # 이미지 저장 경로 설정
+            thumbnail_path = f'media/product_thumbnail_images/{product_code}.{extension.lower()}'
+            os.makedirs(os.path.dirname(thumbnail_path), exist_ok=True)
+            with open(thumbnail_path, 'wb') as f:
+                f.write(thumbnail_data)
+            # 이미지 필드 저장
+            product.product_thumbnail_name = f'{product_code}.{extension.lower()}'
+            product.save()
+
+    # 상세 이미지 다운로드
+    detail_images = []
+    for index, url in enumerate(product_detail_urls):
+        headers = get_header_by_base_url(product.product_origin_url, 'detail')
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()  # 요청 실패 시 예외 발생
+        
+        # Content-Type 헤더에서 확장자 추출
+        extension = url.split('/')[-1].split('.')[-1]
+
+        if response:
+            # 이미지 저장 경로 설정
+            detail_path = f'media/product_detail_images/{product_code}_{index}.{extension.lower()}'
+            os.makedirs(os.path.dirname(detail_path), exist_ok=True)
+            with open(detail_path, 'wb') as f:
+                f.write(response.content)
+            detail_images.append(f'{product_code}_{index}.{extension.lower()}')
+    # 이미지 필드 저장
+    product.product_detail = detail_images
+    product.save()
+
+    pprint.pprint({
+        "thumbnail_path": thumbnail_path,
+        "detail_images": detail_images
+    })
+
+    return {
+        "thumbnail_path": thumbnail_path,
+        "detail_images": detail_images
+    }
+  except Exception as e:
+    print(f"Error in get_product_images: {e}")
+
 
 def get_crawl_parameters(product_url):
     if product_url.startswith("https://medusamall.com/"):
@@ -375,6 +432,26 @@ def convert_image(product_origin_url, product_url, code):
     image = image.convert('RGB')  # RGB로 변환 (GIF 포함)
     image.save(output, format='JPEG')  # JPEG로 저장
     return output.getvalue(), 'jpg'  # 변환된 이미지 데이터와 확장자 반환
+  except Exception as e:
+    print(f"Error processing image from {product_origin_url}: {e}")
+    return None, None
+  
+def convert_thumbnail_image(product_origin_url, product_url, code):
+  try:
+    headers = get_header_by_base_url(product_url, code)
+    response = requests.get(product_origin_url, headers=headers)
+    response.raise_for_status()  # 요청 실패 시 예외 발생
+    
+    # Content-Type 헤더에서 확장자 추출
+    content_type = response.headers.get('Content-Type')
+    extension = content_type.split('/')[-1]
+
+    # 이미지 크기 조정
+    image = Image.open(BytesIO(response.content))
+    image = image.resize((1000, 1000), Image.LANCZOS)  # 1000x1000으로 조정
+    output = BytesIO()
+    image.save(output, format=extension.upper())  # 원래 확장자에 맞춰 저장
+    return output.getvalue(), extension.lower()  # 다운로드된 이미지 데이터와 확장자 반환
   except Exception as e:
     print(f"Error processing image from {product_origin_url}: {e}")
     return None, None

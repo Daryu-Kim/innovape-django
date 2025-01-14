@@ -37,7 +37,11 @@ def esm_plus_product_upload_excel(product_codes):
             for product_code in product_chunk:
                 try:
                     product = Product.objects.get(product_code=product_code)
-                    product_options = ProductOptions.objects.filter(product=product)
+                    product_options = ProductOptions.objects.filter(product=product).exclude(
+                        product_option_display_name__icontains="빠른 출고"
+                    ).exclude(
+                        product_option_display_name__icontains="빠른출고"
+                    )
 
                     # 무작위 가격 인상률 계산 (15 ~ 40%)
                     price_increase_rate = random.uniform(1.15, 1.40)
@@ -94,14 +98,13 @@ def esm_plus_product_upload_excel(product_codes):
                     # 옵션
                     first_option = product_options.first()
                     ## 옵션 타입
-                    ws.cell(row=current_row, column=23, value="2개조합형")  # W열
+                    ws.cell(row=current_row, column=23, value="단독형")  # W열
                     ## 옵션명
-                    ws.cell(row=current_row, column=24, value=f"출고방식 선택,{first_option.product_option_title}")  # X열
+                    ws.cell(row=current_row, column=24, value=f"색상")  # X열
                     ## 옵션 입력값
                     option_values = []
                     for product_option in product_options:
-                        option_display = product_option.product_option_display_name.split('/')
-                        option_line = f"{option_display[0]},{option_display[1]},정상,노출,{product_option.product_option_stock},{product_option.product_option_stock}"
+                        option_line = f"{product_option.product_option_name},정상,노출,{product_option.product_option_stock},{product_option.product_option_stock}"
                         option_values.append(option_line)
                     
                     # 모든 옵션을 줄바꿈으로 연결
@@ -110,13 +113,13 @@ def esm_plus_product_upload_excel(product_codes):
 
                     # 상품이미지
                     ## 기본이미지
-                    ws.cell(row=current_row, column=26, value=product.product_origin_thumbnail_image)  # Z열
+                    ws.cell(row=current_row, column=26, value=f'https://gi.esmplus.com/innobite02/product_thumbnail_images/{product.product_thumbnail_name}')  # Z열
                     ## 상품상세설명
-                    image_urls = product.product_origin_detail
+                    image_urls = product.product_detail
                     html_description = "<div>"
 
                     for url in image_urls:
-                        html_description += f'<img src="{url}" style="width: 100%;">'
+                        html_description += f'<img src="https://gi.esmplus.com/innobite02/product_detail_images/{url}" style="width: 100%;">'
 
                     html_description += "</div>"
 

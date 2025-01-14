@@ -39,7 +39,7 @@ import shutil
 import traceback
 from django.core.cache import cache
 from .order import generate_order_number
-from .crawl_utils import crawl_product, convert_image, convert_origin_url_to_product
+from .crawl_utils import crawl_product, convert_image, convert_origin_url_to_product, convert_thumbnail_image, get_product_images
 
 # Create your views here.
 class DashboardHomeView(LoginRequiredMixin, TemplateView):
@@ -850,7 +850,7 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                 ])
                 data.append({
                     
-                    'product_thumbnail_image': product.product_thumbnail_image.url if product.product_thumbnail_image else None,
+                    'product_thumbnail_image': product.product_thumbnail_name,
                     'product_code': product.product_code,
                     'product_name': product.product_name,
                     'product_categories': categories,
@@ -917,7 +917,7 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                                 # 썸네일 이미지 추가
                                 print('썸네일 추가')
                                 try:
-                                    thumbnail_data, thumbnail_ext = convert_image(product.product_origin_thumbnail_image, product.product_origin_url, 'thumbnail')
+                                    thumbnail_data, thumbnail_ext = convert_thumbnail_image(product.product_origin_thumbnail_image, product.product_origin_url, 'thumbnail')
                                     thumbnail_image_name = f"{product_code}.{thumbnail_ext}"  # 이미지 이름 설정
                                     zip_file.writestr(f'images/thumbnails/{thumbnail_image_name}', thumbnail_data)  # ZIP 파일에 직접 추가
                                 except Exception as e:
@@ -988,7 +988,14 @@ class DashboardProductList(LoginRequiredMixin, TemplateView):
                 products = Product.objects.filter(
                     Q(product_esm_plus_code__isnull=True) | Q(product_esm_plus_code=''),
                     product_esm_plus_is_prohibitted=False
+                ).exclude(
+                    product_origin_url='',
+                ).exclude(
+                    product_origin_thumbnail_image=''
                 ).values_list('product_code', flat=True)
+
+                for product in products:
+                    get_product_images(product)
                 
                 # 엑셀 파일 생성
                 result_files = esm_plus_product_upload_excel(products)
